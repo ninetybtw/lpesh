@@ -595,7 +595,6 @@ function initApp() {
         renderDisciplines();
         renderTopics();
         renderContent();
-        enableFocusMode();
       });
     });
   }
