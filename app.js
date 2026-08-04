@@ -192,6 +192,7 @@ function initApp() {
         renderDisciplines();
         renderTopics();
         renderContent();
+        enableFocusMode();
       });
     });
   }
@@ -208,6 +209,7 @@ function initApp() {
         activeTopic = activeDiscipline.topics.find(t => t.id === btn.dataset.topic);
         renderTopics();
         renderContent();
+        enableFocusMode();
       });
     });
   }
@@ -323,7 +325,7 @@ function initApp() {
     }
   }
 
-    const appLayout = document.getElementById('appLayout');
+  const appLayout = document.getElementById('appLayout');
 
   function enableFocusMode() {
     appLayout?.classList.add('is-focus-mode');

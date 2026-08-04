@@ -96,8 +96,8 @@
     <main class="app-page">
       <section class="app-shell">
         <div class="container">
-          <div class="app">
-            <aside class="panel">
+          <div class="app" id="appLayout">
+            <aside class="panel" id="disciplinesPanel">
               <div class="panel__head">
                 <div class="panel__title">Дисциплины</div>
                 <div class="panel__subtitle">
@@ -107,7 +107,7 @@
               <div class="catalog" id="disciplineList"></div>
             </aside>
 
-            <aside class="panel">
+            <aside class="panel" id="topicsPanel">
               <div class="panel__head">
                 <div class="panel__title">Темы</div>
                 <div class="panel__subtitle">
@@ -117,7 +117,17 @@
               <div class="topics" id="topicList"></div>
             </aside>
 
-            <section class="panel content">
+            <section class="panel content" id="contentPanel">
+              <button
+                class="content__toggle"
+                id="expandPanelsBtn"
+                type="button"
+                data-toggle-panel
+                aria-label="Показать дисциплины и темы"
+                title="Показать дисциплины и темы"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
               <div class="content__scroll" id="contentView"></div>
             </section>
           </div>

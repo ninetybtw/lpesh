@@ -54,27 +54,34 @@ body {
   max-width: 220px;
 }
 
-.panel__toggle {
+.content__toggle {
   display: none;
-  margin-top: 14px;
-  width: 100%;
-  text-align: left;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #d3d8ee;
-  font-size: 13px;
-  font-weight: 700;
   transition:
     background var(--transition),
     border-color var(--transition),
     color var(--transition);
 }
 
-.panel__toggle:hover {
+.content__toggle:hover {
   border-color: rgba(107, 130, 255, 0.55);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.content__toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .catalog,
@@ -114,16 +121,19 @@ body {
 
 .content {
   padding: 0;
+  position: relative;
 }
 
 .content__scroll {
   height: 100%;
   padding: 28px 26px 32px;
   overflow: auto;
+  transition: padding var(--transition);
 }
 
 .app.is-focus-mode {
   grid-template-columns: 0 0 1fr;
+  transition: grid-template-columns var(--transition);
 }
 
 .app.is-focus-mode #disciplinesPanel,
@@ -141,14 +151,12 @@ body {
   pointer-events: none;
 }
 
-.app.is-focus-mode #contentPanel {
-  grid-column: 1 / -1;
+.app.is-focus-mode .content__toggle {
+  display: flex;
 }
 
-.app.is-focus-mode .panel__toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.app.is-focus-mode .content__scroll {
+  padding-top: 70px;
 }
 
 .breadcrumbs {
@@ -435,13 +443,13 @@ body {
   border: 1px solid var(--color-border);
 }
 
-[data-theme="light"] .panel__toggle {
+[data-theme="light"] .content__toggle {
   background: #f8f9fd;
   border: 1px solid var(--color-border);
   color: #1a1f2e;
 }
 
-[data-theme="light"] .panel__toggle:hover {
+[data-theme="light"] .content__toggle:hover {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
   color: var(--color-primary-dark);
