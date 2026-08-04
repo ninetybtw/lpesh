@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Статьи</title>
+    <meta
+      name="description"
+      content="Каталог статей LexPrep: разборы дел, шпаргалки, судебная практика и советы по подготовке к экзаменам."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/article.css" />
+  </head>
+  <body>
+    <main class="articles-page">
+      <section class="articles-shell">
+        <div class="container">
+          <div class="articles-hero">
+            <div>
+              <div class="eyebrow">LexPrep / База статей</div>
+              <h1 class="page-title">Статьи для подготовки, практики и экзамена</h1>
+              <p class="page-subtitle">
+                Разборы дел, шпаргалки по темам и личный опыт подготовки — публикуй свои материалы и сохраняй полезное в личную подборку.
+              </p>
+            </div>
+            <div class="hero-actions">
+              <button class="write-btn" type="button" id="writeArticleBtn">Написать статью</button>
+            </div>
+          </div>
+
+          <div class="articles-layout">
+            <section class="articles-feed" aria-label="Каталог статей">
+              <div class="feed-head">
+                <div>
+                  <h2 class="section-title">Каталог статей</h2>
+                  <p class="section-subtitle">Как на главной, только в отдельном каталоге с быстрыми фильтрами.</p>
+                </div>
+                <div class="feed-meta">
+                  <span class="meta-chip is-active" id="articlesCountChip">0 статей</span>
+                  <span class="meta-chip" id="articlesPageChip">Страница 1</span>
+                </div>
+              </div>
+
+              <div class="articles-grid" id="articlesGrid"></div>
+
+              <nav class="pagination" aria-label="Переключение страниц" id="pagination"></nav>
+            </section>
+
+            <aside class="articles-sidebar" aria-label="Фильтры статей">
+              <div class="sidebar-card sidebar-card--sticky">
+                <div class="sidebar-head">
+                  <h2 class="sidebar-title">Сортировка и фильтр</h2>
+                </div>
+
+                <div class="filter-group">
+                  <div class="filter-label">Статус</div>
+                  <div class="filter-list" id="statusFilters">
+                    <button class="filter-chip is-active" type="button" data-filter="all">Все статьи</button>
+                    <button class="filter-chip" type="button" data-filter="liked">Понравившиеся</button>
+                    <button class="filter-chip" type="button" data-filter="read">Прочитанные</button>
+                    <button class="filter-chip" type="button" data-filter="unread">Не прочитанные</button>
+                    <button class="filter-chip" type="button" data-filter="saved">Сохранённые</button>
+                  </div>
+                </div>
+
+                <div class="filter-group">
+                  <label class="filter-label" for="sortSelect">Сортировка</label>
+                  <select class="sort-select" id="sortSelect">
+                    <option value="new">Сначала новые</option>
+                    <option value="popular">Сначала популярные</option>
+                    <option value="readTime">Сначала короткие</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <div class="filter-label">Раздел</div>
+                  <div class="filter-list" id="topicFilters">
+                    <button class="filter-chip is-soft-active is-active" type="button" data-topic="all">Все разделы</button>
+                    <button class="filter-chip" type="button" data-topic="exam">Экзамен</button>
+                    <button class="filter-chip" type="button" data-topic="practice">Практика ВС РФ</button>
+                    <button class="filter-chip" type="button" data-topic="cases">Казусы</button>
+                    <button class="filter-chip" type="button" data-topic="notes">Шпаргалки</button>
+                  </div>
+                </div>
+
+                <div class="sidebar-note">
+                  <strong>Подсказка:</strong> понравившиеся и сохранённые подборки удобно использовать как личный список повторения перед экзаменом.
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <template id="articleCardTemplate">
+      <article class="article-card">
+        <div class="article-card__cover article-card__cover--gradient"></div>
+        <div class="article-card__body">
+          <div class="article-card__top">
+            <span class="article-card__tag"></span>
+            <button class="article-card__save" type="button" aria-label="Сохранить статью">★</button>
+          </div>
+          <h3 class="article-card__title"></h3>
+          <p class="article-card__text"></p>
+          <div class="article-card__meta">
+            <div class="article-card__author">
+              <span class="article-card__avatar"></span>
+              <div class="article-card__author-meta">
+                <span class="article-card__name"></span>
+                <span class="article-card__date"></span>
+              </div>
+            </div>
+            <div class="article-card__stats"></div>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="article.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<script>
+  (function () {
+    const saved = localStorage.getItem('lexprep-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход и регистрация — LexPrep</title>
+<meta name="description" content="Войдите в аккаунт LexPrep или зарегистрируйтесь, чтобы начать подготовку к экзаменам.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/global.css">
+<link rel="stylesheet" href="./styles/style.css">
+<link rel="stylesheet" href="./styles/auth.css">
+</head>
+<body>
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="container header__inner">
+    <a href="index.html" class="logo"><span class="logo__icon"></span><span class="logo__text">LexPrep</span></a>
+    <div class="header__actions">
+      <a href="index.html" class="btn btn--ghost">На главную</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему" aria-pressed="false">
+        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="auth-section">
+    <div class="container">
+      <div class="auth-layout">
+        <!-- LEFT: brand panel -->
+        <div class="auth-visual">
+          <span class="auth-badge">ИИ, который знает право</span>
+          <h1 class="auth-visual__title">Всё для подготовки к экзамену — в одном аккаунте</h1>
+          <p class="auth-visual__text">Конспекты, ИИ-карточки, тесты и судебная практика сохраняются в твоём профиле и всегда под рукой.</p>
+
+          <ul class="auth-visual__list">
+            <li>
+              <span class="auth-visual__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v5H4zM14 4h6v5h-6zM10 19h6v-5h-6z"/><path d="M7 9v4a2 2 0 0 0 2 2h1M17 9v4a2 2 0 0 1-2 2h-1"/></svg>
+              </span>
+              <span>Прогресс по всем темам сохраняется автоматически</span>
+            </li>
+            <li>
+              <span class="auth-visual__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="12" rx="2"/><path d="M9 8h6M9 11h4"/><circle cx="17" cy="17" r="3.2"/><path d="M15.6 17l1 1.1L18.6 16" /></svg>
+              </span>
+              <span>ИИ-карточки подстраиваются под твой уровень</span>
+            </li>
+            <li>
+              <span class="auth-visual__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 5M17 6h3a3 3 0 0 1-3 5"/><path d="M12 14v4"/><path d="M9 21l1-2h4l1 2"/></svg>
+              </span>
+              <span>Бонусы к подписке за полезные правки</span>
+            </li>
+          </ul>
+
+          <div class="auth-visual__stats">
+            <div class="auth-stat"><span class="auth-stat__num">12</span><span class="auth-stat__label">отраслей права</span></div>
+            <div class="auth-stat"><span class="auth-stat__num">247</span><span class="auth-stat__label">тем в базе</span></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: auth card -->
+        <div class="auth-card">
+          <div class="auth-tabs" id="authTabs">
+            <button class="auth-tab is-active" data-tab="login" type="button">Вход</button>
+            <button class="auth-tab" data-tab="register" type="button">Регистрация</button>
+          </div>
+
+          <form class="auth-panel is-active" id="loginPanel" data-panel="login">
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input class="form-input" type="email" id="loginEmail" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Пароль</label>
+              <input class="form-input" type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+            <a href="#" class="auth-forgot">Забыли пароль?</a>
+            <button type="submit" class="btn btn--primary btn--block btn--lg">Войти</button>
+            <p class="auth-switch">Нет аккаунта? <button type="button" class="auth-switch__link" data-switch="register">Зарегистрироваться</button></p>
+          </form>
+
+          <form class="auth-panel" id="registerPanel" data-panel="register">
+            <div class="form-group">
+              <label for="regName">Имя</label>
+              <input class="form-input" type="text" id="regName" placeholder="Как вас зовут" required>
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Email</label>
+              <input class="form-input" type="email" id="regEmail" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Пароль</label>
+              <input class="form-input" type="password" id="regPassword" placeholder="Минимум 8 символов" minlength="8" required>
+            </div>
+            <div class="form-group">
+              <label for="regPasswordConfirm">Повторите пароль</label>
+              <input class="form-input" type="password" id="regPasswordConfirm" placeholder="Ещё раз пароль" minlength="8" required>
+            </div>
+            <label class="auth-checkbox">
+              <input type="checkbox" required>
+              <span>Согласен с <a href="#">условиями использования</a></span>
+            </label>
+            <button type="submit" class="btn btn--primary btn--block btn--lg">Создать аккаунт</button>
+            <p class="auth-switch">Уже есть аккаунт? <button type="button" class="auth-switch__link" data-switch="login">Войти</button></p>
+          </form>
+
+          <div class="auth-success" id="authSuccess">
+            <p>✓ Демо-режим: бэкенд ещё не подключён — это визуальный прототип формы.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer__bottom">
+    <p>© 2026 LexPrep. Все права защищены.</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script src="auth.js"></script>
+</body>
+</html>

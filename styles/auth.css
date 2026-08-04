@@ -1,0 +1,243 @@
+/* ==========================================================================
+AUTH.CSS — страница входа/регистрации (положить в /styles/ рядом с style.css)
+========================================================================== */
+
+.auth-section {
+  padding: 56px 24px 96px;
+  min-height: calc(100vh - 76px);
+  display: flex;
+  align-items: center;
+}
+
+.auth-layout {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  min-height: 600px;
+}
+
+/* ---- LEFT: brand panel ---- */
+.auth-visual {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  min-height: 100%;
+}
+.auth-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.auth-visual__title {
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.auth-visual__text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+.auth-visual__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+}
+.auth-visual__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+}
+.auth-visual__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  flex-shrink: 0;
+}
+.auth-visual__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.auth-visual__stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 8px;
+}
+.auth-stat {
+  display: flex;
+  flex-direction: column;
+}
+.auth-stat__num {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+}
+.auth-stat__label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---- RIGHT: auth card ---- */
+.auth-card {
+  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--color-bg-alt);
+  border-radius: 999px;
+  padding: 5px;
+  margin-bottom: 28px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.auth-tab.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.auth-panel {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+.auth-panel.is-active {
+  display: flex;
+}
+.auth-panel .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-panel .form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.auth-panel .form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--color-text);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.auth-panel .form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+.auth-forgot {
+  align-self: flex-end;
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-top: -8px;
+  text-decoration: none;
+}
+.auth-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.auth-checkbox input {
+  margin-top: 3px;
+  accent-color: var(--color-primary);
+}
+.auth-checkbox a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.auth-switch__link {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+}
+.auth-success {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.auth-success.is-visible {
+  display: flex;
+}
+
+@media (max-width: 860px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .auth-visual {
+    padding: 36px 28px;
+  }
+  .auth-card {
+    padding: 36px 28px;
+  }
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Учебная программа</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/app.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner">
+        <a href="index.html" class="logo">
+          <span class="logo__icon"></span>
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li>
+              <a href="index.html#features" class="nav__link">Возможности</a>
+            </li>
+            <li><a href="index.html#demo" class="nav__link">Демо</a></li>
+            <li>
+              <a href="index.html#how" class="nav__link">Как это работает</a>
+            </li>
+            <li><a href="index.html#articles" class="nav__link">Статьи</a></li>
+            <li><a href="index.html#pricing" class="nav__link">Тарифы</a></li>
+            <li><a href="index.html#faq" class="nav__link">FAQ</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="index.html" class="btn btn--ghost">На главную</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">V</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="#" class="profile-dropdown__item">Мой профиль</a>
+              <a href="#" class="profile-dropdown__item">Мои тесты</a>
+              <button
+                type="button"
+                class="profile-dropdown__item profile-dropdown__item--danger"
+                id="logoutBtn"
+              >
+                Выйти
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            aria-label="Переключить тему"
+            aria-pressed="false"
+          >
+            <svg
+              class="theme-toggle__icon theme-toggle__icon--sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+              />
+            </svg>
+            <svg
+              class="theme-toggle__icon theme-toggle__icon--moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-page">
+      <section class="app-shell">
+        <div class="container">
+          <div class="app">
+            <aside class="panel">
+              <div class="panel__head">
+                <div class="panel__title">Дисциплины</div>
+                <div class="panel__subtitle">
+                  Выбери предмет и тему для подготовки
+                </div>
+              </div>
+              <div class="catalog" id="disciplineList"></div>
+            </aside>
+
+            <aside class="panel">
+              <div class="panel__head">
+                <div class="panel__title">Темы</div>
+                <div class="panel__subtitle">
+                  Структура внутри выбранной дисциплины
+                </div>
+              </div>
+              <div class="topics" id="topicList"></div>
+            </aside>
+
+            <section class="panel content">
+              <div class="content__scroll" id="contentView"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
