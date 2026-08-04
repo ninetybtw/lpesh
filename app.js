@@ -1,40 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  initProfileMenu();
   initApp();
 });
 
-function initTheme() {
-  const saved = localStorage.getItem('lexprep-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const root = document.documentElement;
-
-  root.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
-
-  const themeToggle = document.getElementById('themeToggle');
-  if (!themeToggle) return;
-
-  themeToggle.addEventListener('click', () => {
-    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    localStorage.setItem('lexprep-theme', next);
-  });
-}
-
-function initProfileMenu() {
-  const profileBtn = document.getElementById('profileBtn');
-  const profileDropdown = document.getElementById('profileDropdown');
-
-  if (!profileBtn || !profileDropdown) return;
-
-  profileBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    profileDropdown.classList.toggle('is-open');
-  });
-
-  document.addEventListener('click', () => {
-    profileDropdown.classList.remove('is-open');
-  });
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function initApp() {
@@ -207,7 +181,7 @@ function initApp() {
   function renderDisciplines() {
     disciplineList.innerHTML = DATA.map(d => `
       <button class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
-        ${d.title}
+        ${escapeHtml(d.title)}
       </button>
     `).join('');
 
@@ -225,7 +199,7 @@ function initApp() {
   function renderTopics() {
     topicList.innerHTML = activeDiscipline.topics.map(t => `
       <button class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
-        ${t.title}
+        ${escapeHtml(t.title)}
       </button>
     `).join('');
 
@@ -243,13 +217,13 @@ function initApp() {
       <div class="breadcrumbs">
         <span>LexPrep</span>
         <span>→</span>
-        <span>${activeDiscipline.title}</span>
+        <span>${escapeHtml(activeDiscipline.title)}</span>
         <span>→</span>
-        <span>${activeTopic.title}</span>
+        <span>${escapeHtml(activeTopic.title)}</span>
       </div>
 
-      <h1 class="topic-title">${activeTopic.title}</h1>
-      <p class="topic-desc">${activeTopic.description}</p>
+      <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
+      <p class="topic-desc">${escapeHtml(activeTopic.description)}</p>
 
       <div class="topic-tabs">
         <span class="topic-tab is-active">Конспект</span>
@@ -269,12 +243,12 @@ function initApp() {
         <div id="questionsWrap">
           ${activeTopic.test.map((q, qIndex) => `
             <div class="question" data-question="${qIndex}">
-              <h4>${qIndex + 1}. ${q.question}</h4>
+              <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
               <div class="answers">
                 ${q.options.map((option, i) => `
                   <label class="answer">
                     <input type="radio" name="q-${qIndex}" value="${i}">
-                    <span>${option}</span>
+                    <span>${escapeHtml(option)}</span>
                   </label>
                 `).join('')}
               </div>
@@ -311,7 +285,7 @@ function initApp() {
 
           if (!chosen) {
             resultBox.className = 'question-result is-wrong';
-            resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${q.options[q.correct]}</strong>.<br>${q.explanation}`;
+            resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${escapeHtml(q.options[q.correct])}</strong>.<br>${escapeHtml(q.explanation)}`;
             return;
           }
 
@@ -320,14 +294,14 @@ function initApp() {
           if (chosenIndex === q.correct) {
             score++;
             resultBox.className = 'question-result is-correct';
-            resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${q.explanation}`;
+            resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation)}`;
           } else {
             resultBox.className = 'question-result is-wrong';
             resultBox.innerHTML = `
               Неверно.<br>
-              <strong>Твой ответ:</strong> ${q.options[chosenIndex]}<br>
-              <strong>Правильный ответ:</strong> ${q.options[q.correct]}<br>
-              <strong>Почему не так:</strong> ${q.explanation}
+              <strong>Твой ответ:</strong> ${escapeHtml(q.options[chosenIndex])}<br>
+              <strong>Правильный ответ:</strong> ${escapeHtml(q.options[q.correct])}<br>
+              <strong>Почему не так:</strong> ${escapeHtml(q.explanation)}
             `;
           }
         });
