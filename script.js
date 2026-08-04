@@ -69,15 +69,18 @@ function initAccordion() {
   items.forEach(item => {
     const trigger = item.querySelector('.accordion__trigger');
     const panel = item.querySelector('.accordion__panel');
+    trigger.setAttribute('aria-expanded', 'false');
     trigger.addEventListener('click', () => {
       const isOpen = item.classList.contains('is-open');
       items.forEach(other => {
         other.classList.remove('is-open');
         other.querySelector('.accordion__panel').style.maxHeight = null;
+        other.querySelector('.accordion__trigger').setAttribute('aria-expanded', 'false');
       });
       if (!isOpen) {
         item.classList.add('is-open');
         panel.style.maxHeight = panel.scrollHeight + 'px';
+        trigger.setAttribute('aria-expanded', 'true');
       }
     });
   });
@@ -127,6 +130,16 @@ function initFeedbackForm() {
       setTimeout(() => success.classList.remove('is-visible'), 4000);
     }
   });
+}
+
+/* ---------------- Helpers ---------------- */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /* ---------------- Demo navigation (Avito-style) ---------------- */
@@ -226,9 +239,9 @@ function initDemoNavigation() {
       return;
     }
     topicContainer.innerHTML = `
-      <div class="demo__topic-title">${topic.title}</div>
+      <div class="demo__topic-title">${escapeHtml(topic.title)}</div>
       <div class="demo__topic-tags">
-        ${topic.tags.map(tag => `<span class="demo__topic-tag">${tag}</span>`).join('')}
+        ${topic.tags.map(tag => `<span class="demo__topic-tag">${escapeHtml(tag)}</span>`).join('')}
       </div>
     `;
   }
