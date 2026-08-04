@@ -71,10 +71,14 @@ body {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #f0f4ff;
+  opacity: 0;
+  transform: scale(0.85);
   transition:
     background var(--transition),
     border-color var(--transition),
-    color var(--transition);
+    color var(--transition),
+    opacity 0.35s ease 0.15s,
+    transform 0.35s ease 0.15s;
 }
 
 .content__toggle:hover {
@@ -132,31 +136,31 @@ body {
   height: 100%;
   padding: 28px 26px 32px;
   overflow: auto;
-  transition: padding var(--transition);
+  transition: padding 0.5s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .app.is-focus-mode {
   grid-template-columns: 0 0 1fr;
-  transition: grid-template-columns var(--transition);
+}
+
+#disciplinesPanel,
+#topicsPanel {
+  overflow: hidden;
+  transition: opacity 0.35s ease;
 }
 
 .app.is-focus-mode #disciplinesPanel,
 .app.is-focus-mode #topicsPanel {
   min-width: 0;
   width: 0;
-  overflow: hidden;
-}
-
-.app.is-focus-mode #disciplinesPanel .panel__head,
-.app.is-focus-mode #disciplinesPanel .catalog,
-.app.is-focus-mode #topicsPanel .panel__head,
-.app.is-focus-mode #topicsPanel .topics {
   opacity: 0;
   pointer-events: none;
 }
 
 .app.is-focus-mode .content__toggle {
   display: flex;
+  opacity: 1;
+  transform: scale(1);
 }
 
 .app.is-focus-mode .content__scroll {
@@ -241,21 +245,6 @@ body {
 .theory ul {
   padding-left: 18px;
   margin-top: 8px;
-}
-
-.test-launch {
-  margin-top: 28px;
-}
-
-.test-box {
-  margin-top: 30px;
-  padding-top: 26px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  display: none;
-}
-
-.test-box.is-open {
-  display: block;
 }
 
 .test-box__title {
