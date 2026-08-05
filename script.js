@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccordion();
   initDemoNavigation();
   initHeroMock();
-  initThemeToggle();
   initFeedbackForm();
   initRevealOnScroll();
   initAuthState();
@@ -272,19 +271,6 @@ function initRevealOnScroll() {
   items.forEach(item => observer.observe(item));
 }
 
-function initThemeToggle() {
-  const toggle = document.getElementById('themeToggle');
-  const root = document.documentElement;
-  if (!toggle) return;
-  toggle.setAttribute('aria-pressed', root.getAttribute('data-theme') === 'dark');
-  toggle.addEventListener('click', () => {
-    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    localStorage.setItem('lexprep-theme', next);
-    toggle.setAttribute('aria-pressed', next === 'dark');
-  });
-}
-
 function initAuthState() {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   document.body.classList.toggle('is-authed', !!user);
@@ -294,7 +280,17 @@ function initAuthState() {
     const nameEl = document.getElementById('profileName');
     const avatarEl = document.getElementById('profileAvatar');
     if (nameEl) nameEl.textContent = user.name || 'Профиль';
-    if (avatarEl) avatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
+    if (avatarEl) {
+      if (user.avatar) {
+        avatarEl.textContent = '';
+        avatarEl.style.backgroundImage = `url(${user.avatar})`;
+        avatarEl.classList.add('has-image');
+      } else {
+        avatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
+        avatarEl.style.backgroundImage = '';
+        avatarEl.classList.remove('has-image');
+      }
+    }
   }
 
   const profileBtn = document.getElementById('profileBtn');
