@@ -18,6 +18,99 @@ body {
   max-width: 1320px;
 }
 
+.app-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.app-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-search__icon {
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+.app-search__input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #f5f7ff;
+  font-family: inherit;
+  font-size: 14.5px;
+}
+
+.app-search__input:focus {
+  outline: none;
+}
+
+.app-search__input::placeholder {
+  color: #7985ab;
+}
+
+.app-toolbar__exam {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.search-result-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.search-result-btn__topic {
+  font-weight: 700;
+}
+
+.search-result-btn__discipline {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.notepad__textarea {
+  width: 100%;
+  min-height: 260px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #f5f7ff;
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.6;
+  resize: vertical;
+  margin-top: 14px;
+}
+
+.notepad__textarea:focus {
+  outline: none;
+  border-color: rgba(111, 135, 255, 0.5);
+}
+
+.notepad__status {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6dd6a6;
+  min-height: 18px;
+}
+
 .app {
   display: grid;
   grid-template-columns: 260px 1fr 1.25fr;
@@ -413,19 +506,51 @@ body {
   text-align: center;
 }
 
-.flashcard-controls {
+.flashcards__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.flashcards__due {
+  color: #9ca8cb;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.flashcard-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin-top: 18px;
+  gap: 6px;
+  margin-top: 14px;
 }
 
-.flashcard-progress {
-  color: #9ca8cb;
-  font-size: 14px;
-  font-weight: 700;
-  min-width: 60px;
+.flashcard-box__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.flashcard-box__dot.is-filled {
+  background: #6f87ff;
+}
+
+.flashcard-grade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.cards-empty {
+  padding: 32px;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
   text-align: center;
 }
 
@@ -518,6 +643,18 @@ body {
   border: 1px solid var(--color-border);
 }
 
+[data-theme="light"] .question-result.is-correct {
+  background: rgba(31, 183, 116, 0.1);
+  border: 1px solid rgba(31, 183, 116, 0.28);
+  color: #178a58;
+}
+
+[data-theme="light"] .question-result.is-wrong {
+  background: rgba(225, 77, 77, 0.08);
+  border: 1px solid rgba(225, 77, 77, 0.24);
+  color: #b8362f;
+}
+
 [data-theme="light"] .content__toggle {
   background: #f8f9fd;
   border: 1px solid var(--color-border);
@@ -549,8 +686,49 @@ body {
 }
 
 [data-theme="light"] .flashcard-hint,
-[data-theme="light"] .flashcard-progress {
+[data-theme="light"] .flashcards__due {
   color: #6b7285;
+}
+
+[data-theme="light"] .flashcard-box__dot {
+  background: var(--color-border);
+}
+
+[data-theme="light"] .flashcard-box__dot.is-filled {
+  background: var(--color-primary);
+}
+
+[data-theme="light"] .cards-empty {
+  border-color: var(--color-border);
+}
+
+[data-theme="light"] .app-search {
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+}
+
+[data-theme="light"] .app-search__input {
+  color: #14161f;
+}
+
+[data-theme="light"] .app-search__input::placeholder {
+  color: #8f96a8;
+}
+
+[data-theme="light"] .search-result-btn__discipline {
+  opacity: 0.65;
+}
+
+[data-theme="light"] .notepad__textarea {
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  color: #14161f;
+}
+
+@media (max-width: 1100px) {
+  .app-toolbar {
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 1100px) {

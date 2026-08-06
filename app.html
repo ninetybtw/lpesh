@@ -70,6 +70,14 @@
     <main class="app-page">
       <section class="app-shell">
         <div class="container">
+          <div class="app-toolbar">
+            <div class="app-search">
+              <span class="app-search__icon">🔍</span>
+              <input type="search" id="topicSearch" class="app-search__input" placeholder="Найти тему по всем дисциплинам..." autocomplete="off" />
+            </div>
+            <a href="exam.html" class="btn btn--primary app-toolbar__exam">📝 Пробный экзамен</a>
+          </div>
+
           <div class="app" id="appLayout">
             <aside class="panel" id="disciplinesPanel">
               <div class="panel__head">
@@ -109,6 +117,8 @@
       </section>
     </main>
 
+    <script src="data.js"></script>
+    <script src="progress.js"></script>
     <script src="script.js"></script>
     <script src="app.js"></script>
   </body>

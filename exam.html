@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Пробный экзамен</title>
+    <meta
+      name="description"
+      content="Пробный экзамен LexPrep: случайная подборка вопросов по всем дисциплинам с таймером, как на настоящем зачёте."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/app.css" />
+    <link rel="stylesheet" href="./styles/exam.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner">
+        <a href="index.html" class="logo">
+          <span class="logo__icon"></span>
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="index.html#articles" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="profile.html" class="profile-dropdown__item">Мой профиль</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="exam-page">
+      <div class="container exam-container">
+        <!-- SETUP -->
+        <section class="exam-card" data-exam-view="setup">
+          <div class="eyebrow">LexPrep / Пробный экзамен</div>
+          <h1 class="exam-title">Собери себе билет</h1>
+          <p class="topic-desc">
+            Случайная подборка вопросов по выбранным дисциплинам с таймером — как на настоящем зачёте.
+            Если есть отмеченные слабые места из прошлых тестов, они попадут в начало билета.
+          </p>
+
+          <p class="exam-setup__weak-hint" id="weakHint"></p>
+
+          <div class="exam-setup__grid">
+            <div class="form-group">
+              <label for="examDiscipline">Дисциплина</label>
+              <select class="form-input" id="examDiscipline"></select>
+            </div>
+            <div class="form-group">
+              <label for="examCount">Количество вопросов</label>
+              <select class="form-input" id="examCount">
+                <option value="10">10</option>
+                <option value="15" selected>15</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="examTime">Время на вопрос</label>
+              <select class="form-input" id="examTime">
+                <option value="60">1 минута</option>
+                <option value="90" selected>1,5 минуты</option>
+                <option value="0">Без ограничения</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="exam-setup__checkbox">
+            <input type="checkbox" id="examWeakFirst" checked />
+            Сначала слабые места (если есть)
+          </label>
+
+          <button class="btn btn--primary btn--lg" id="startExamBtn">Начать экзамен</button>
+        </section>
+
+        <!-- RUNNING -->
+        <section class="exam-card" data-exam-view="running" hidden>
+          <div class="exam-running__head">
+            <span class="exam-running__progress" id="examProgress"></span>
+            <span class="exam-timer" id="examTimer"></span>
+          </div>
+          <div class="exam-running__topic" id="examTopicLabel"></div>
+
+          <div class="question" id="examQuestionBox"></div>
+
+          <div class="exam-running__actions">
+            <button class="btn btn--outline" type="button" id="examPrevBtn">← Назад</button>
+            <button class="btn btn--ghost profile-danger-text" type="button" id="examFinishBtn">Завершить досрочно</button>
+            <button class="btn btn--primary" type="button" id="examNextBtn">Далее →</button>
+          </div>
+        </section>
+
+        <!-- RESULTS -->
+        <section class="exam-card" data-exam-view="results" hidden>
+          <div class="exam-results__summary">
+            <div class="eyebrow">Результат экзамена</div>
+            <h1 class="exam-title" id="examScoreTitle"></h1>
+            <p class="topic-desc" id="examScoreMsg"></p>
+          </div>
+
+          <h2 class="profile-subheading">По дисциплинам и темам</h2>
+          <div class="exam-breakdown" id="examBreakdown"></div>
+
+          <h2 class="profile-subheading">Разбор вопросов</h2>
+          <div id="examReview"></div>
+
+          <div class="exam-results__actions">
+            <button class="btn btn--primary" type="button" id="retryWeakBtn" hidden>Пройти неверные ещё раз</button>
+            <a href="app.html" class="btn btn--outline">Вернуться в тренажёр</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="progress.js"></script>
+    <script src="script.js"></script>
+    <script src="exam.js"></script>
+  </body>
+</html>

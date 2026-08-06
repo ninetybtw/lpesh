@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initInfoForm(user);
   initPayment();
   initSubscription();
+  initStats();
   initThemeSwitch();
   initNotificationsSwitch();
   initPrivacyModal();
@@ -196,6 +197,50 @@ function initSubscription() {
   });
 
   applyState();
+}
+
+/* ---------------- Stats (real data from LexPrepProgress) ---------------- */
+function initStats() {
+  if (typeof LexPrepProgress === 'undefined' || typeof LEXPREP_DATA === 'undefined') return;
+
+  const stats = LexPrepProgress.getStats(LEXPREP_DATA);
+  document.getElementById('statTopics').textContent = stats.topicsTouched;
+  document.getElementById('statTests').textContent = stats.testsCount;
+  document.getElementById('statAvg').textContent = stats.avgScorePercent === null ? '—' : `${stats.avgScorePercent}%`;
+  document.getElementById('statStreak').textContent = stats.streakDays;
+
+  const recentList = document.getElementById('recentResultsList');
+  if (stats.recent.length) {
+    recentList.innerHTML = stats.recent.map(r => {
+      const percent = Math.round((r.score / r.total) * 100);
+      const scoreClass = percent >= 80 ? 'results-row__score--good' : percent >= 50 ? 'results-row__score--mid' : 'results-row__score--bad';
+      return `
+        <div class="results-row">
+          <span class="results-row__topic">${escapeAttr(r.title)}</span>
+          <span class="results-row__score ${scoreClass}">${r.score} / ${r.total}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const weak = LexPrepProgress.getWeakQuestions(LEXPREP_DATA, 5);
+  const weakList = document.getElementById('weakSpotsList');
+  const reviewLink = document.getElementById('reviewWeakLink');
+  if (weak.length) {
+    weakList.innerHTML = weak.map(w => `
+      <div class="results-row">
+        <span class="results-row__topic">${escapeAttr(w.topicTitle)}</span>
+        <span class="results-row__score results-row__score--bad">${escapeAttr(w.question.question)}</span>
+      </div>
+    `).join('');
+    reviewLink.hidden = false;
+  }
+}
+
+function escapeAttr(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 /* ---------------- Theme switch (single source of truth for the whole site) ---------------- */

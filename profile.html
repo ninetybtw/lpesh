@@ -207,42 +207,37 @@
               <section class="profile-section" id="section-stats" data-section-panel="stats">
                 <div class="profile-card">
                   <h2 class="profile-card__title">Статистика</h2>
-                  <p class="profile-card__subtitle">Демо-данные — покажем реальный прогресс, когда подключим бэкенд.</p>
+                  <p class="profile-card__subtitle">Реальный прогресс из тренажёра и пробных экзаменов — хранится в этом браузере, пока нет бэкенда.</p>
 
-                  <div class="stats-grid">
+                  <div class="stats-grid" id="statsGrid">
                     <div class="stat-tile">
-                      <span class="stat-tile__num">14</span>
-                      <span class="stat-tile__label">тем пройдено</span>
+                      <span class="stat-tile__num" id="statTopics">0</span>
+                      <span class="stat-tile__label">тем затронуто</span>
                     </div>
                     <div class="stat-tile">
-                      <span class="stat-tile__num">27</span>
+                      <span class="stat-tile__num" id="statTests">0</span>
                       <span class="stat-tile__label">тестов решено</span>
                     </div>
                     <div class="stat-tile">
-                      <span class="stat-tile__num">82%</span>
+                      <span class="stat-tile__num" id="statAvg">—</span>
                       <span class="stat-tile__label">средний результат</span>
                     </div>
                     <div class="stat-tile">
-                      <span class="stat-tile__num">6</span>
+                      <span class="stat-tile__num" id="statStreak">0</span>
                       <span class="stat-tile__label">дней подряд</span>
                     </div>
                   </div>
 
                   <h3 class="profile-subheading">Последние тесты</h3>
-                  <div class="results-list">
-                    <div class="results-row">
-                      <span class="results-row__topic">Недействительность сделок</span>
-                      <span class="results-row__score results-row__score--good">13 / 15</span>
-                    </div>
-                    <div class="results-row">
-                      <span class="results-row__topic">Меры пресечения</span>
-                      <span class="results-row__score results-row__score--good">12 / 15</span>
-                    </div>
-                    <div class="results-row">
-                      <span class="results-row__topic">Исковая давность</span>
-                      <span class="results-row__score results-row__score--mid">9 / 15</span>
-                    </div>
+                  <div class="results-list" id="recentResultsList">
+                    <p class="topic-desc">Пока нет ни одной попытки — пройди тест в тренажёре или пробный экзамен.</p>
                   </div>
+
+                  <h3 class="profile-subheading">Слабые места</h3>
+                  <div class="results-list" id="weakSpotsList">
+                    <p class="topic-desc">Слабые места пока не отмечены.</p>
+                  </div>
+                  <a href="exam.html" class="btn btn--outline profile-weak-cta" id="reviewWeakLink" hidden>Повторить слабые места на экзамене</a>
                 </div>
               </section>
 
@@ -327,6 +322,8 @@
       </div>
     </div>
 
+    <script src="data.js"></script>
+    <script src="progress.js"></script>
     <script src="script.js"></script>
     <script src="profile.js"></script>
   </body>
