@@ -38,8 +38,14 @@ body {
 }
 
 .app-search__icon {
-  font-size: 15px;
+  display: inline-flex;
   opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.app-search__icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .app-search__input {
@@ -63,6 +69,11 @@ body {
 .app-toolbar__exam {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.app-toolbar__exam svg {
+  width: 17px;
+  height: 17px;
 }
 
 .search-result-btn {
@@ -103,12 +114,19 @@ body {
 }
 
 .notepad__status {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 8px;
   font-size: 13px;
   font-weight: 700;
   color: #6dd6a6;
   min-height: 18px;
+}
+
+.notepad__status svg {
+  width: 14px;
+  height: 14px;
 }
 
 .app {
@@ -545,6 +563,11 @@ body {
   justify-content: center;
   gap: 14px;
   margin-top: 16px;
+}
+
+.flashcard-grade svg {
+  width: 17px;
+  height: 17px;
 }
 
 .cards-empty {

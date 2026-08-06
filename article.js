@@ -1,4 +1,7 @@
+const userArticles = JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]');
+
 const articles = [
+  ...userArticles,
   { id: 1, tag: 'Экзамен', title: 'Как разобрать любой казус по обязательствам за 15 минут', text: 'Пошаговый алгоритм разбора задач для семинара с примерами из практики ВС РФ и готовой схемой ответа на экзамене.', author: 'Мария А.', date: '4 августа', likes: 128, readTime: 6, liked: true, read: true, saved: true, topic: 'cases' },
   { id: 2, tag: 'Практика ВС РФ', title: 'Что изменилось в позиции судов по неустойке и как это использовать в курсовой', text: 'Короткий обзор свежих подходов и готовые формулировки, которые можно встроить в письменную работу без воды.', author: 'Даниил К.', date: '3 августа', likes: 94, readTime: 8, liked: false, read: true, saved: false, topic: 'practice' },
   { id: 3, tag: 'Шпаргалки', title: 'Меры пресечения: компактная схема ответа без лишней теории', text: 'Собрал структуру ответа по главе 13 УПК РФ, чтобы можно было повторить тему за 5–7 минут прямо перед парой.', author: 'Виктор П.', date: '2 августа', likes: 151, readTime: 5, liked: true, read: false, saved: true, topic: 'notes' },
@@ -133,7 +136,10 @@ function renderArticles() {
     fragment.querySelector('.article-card__text').textContent = article.text;
     fragment.querySelector('.article-card__name').textContent = article.author;
     fragment.querySelector('.article-card__date').textContent = article.date;
-    fragment.querySelector('.article-card__stats').textContent = `${article.likes} ❤ · ${article.readTime} мин`;
+    fragment.querySelector('.article-card__stats').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.7-10-9.3C.5 8.4 2 4.5 5.7 4c2-.3 3.7.7 4.8 2.3C11.6 4.7 13.3 3.7 15.3 4c3.7.5 5.2 4.4 3.7 7.7C19.5 16.3 12 21 12 21z"/></svg>
+      ${article.likes} · ${article.readTime} мин
+    `;
     fragment.querySelector('.article-card__avatar').textContent = article.author.charAt(0).toUpperCase();
 
     if (article.saved) {
@@ -191,7 +197,7 @@ sortSelect.addEventListener('change', () => {
 });
 
 writeArticleBtn.addEventListener('click', () => {
-  window.alert('Здесь можно открыть форму публикации статьи или модальное окно создания материала.');
+  window.location.href = 'write-article.html';
 });
 
 renderArticles();

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Написать статью</title>
+    <meta
+      name="description"
+      content="Опубликуй разбор дела, шпаргалку или личный опыт подготовки в каталоге статей LexPrep."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/write-article.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner">
+        <a href="index.html" class="logo">
+          <span class="logo__icon"></span>
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="index.html#features" class="nav__link">Возможности</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="article.html" class="btn btn--ghost">← К статьям</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="profile.html" class="profile-dropdown__item">Мой профиль</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="write-page">
+      <section class="write-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Новая статья</div>
+          <h1 class="write-title">Написать статью</h1>
+          <p class="topic-desc">
+            Разбор дела, шпаргалка по теме или личный опыт подготовки — материал появится в общем каталоге сразу после публикации.
+            Демо-режим: без модерации и без реальной отправки на сервер.
+          </p>
+
+          <div class="write-author">
+            <span class="write-author__avatar" id="authorAvatar">U</span>
+            <div>
+              <div class="write-author__name" id="authorName">Профиль</div>
+              <div class="write-author__hint">Статья будет опубликована от твоего имени</div>
+            </div>
+          </div>
+
+          <form class="profile-card write-form" id="articleForm">
+            <div class="form-group form-group--full">
+              <label for="articleTitle">Заголовок</label>
+              <input class="form-input" type="text" id="articleTitle" placeholder="Например: Как разобрать любой казус по обязательствам за 15 минут" required />
+            </div>
+
+            <div class="form-group">
+              <label for="articleTopic">Раздел</label>
+              <select class="form-input" id="articleTopic" required>
+                <option value="">Выбери раздел</option>
+                <option value="exam">Экзамен</option>
+                <option value="practice">Практика ВС РФ</option>
+                <option value="cases">Казусы</option>
+                <option value="notes">Шпаргалки</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="articleReadEstimate">Время чтения</label>
+              <input class="form-input" type="text" id="articleReadEstimate" value="Посчитаем автоматически" disabled />
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="articleExcerpt">Краткое описание</label>
+              <textarea class="form-textarea" id="articleExcerpt" placeholder="1–2 предложения, которые увидят в карточке статьи в каталоге" required></textarea>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="articleBody">Текст статьи</label>
+              <textarea class="form-textarea write-form__body" id="articleBody" placeholder="Основной текст статьи. Пиши так, как объяснял бы одногруппнику." required></textarea>
+              <span class="write-form__counter" id="bodyCounter">0 символов</span>
+            </div>
+
+            <div class="profile-form__submit-row form-group--full">
+              <button type="submit" class="btn btn--primary btn--lg">Опубликовать</button>
+              <a href="article.html" class="btn btn--ghost">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="validation.js"></script>
+    <script src="script.js"></script>
+    <script src="write-article.js"></script>
+  </body>
+</html>

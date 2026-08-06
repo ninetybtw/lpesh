@@ -120,9 +120,16 @@ function initHeroMock() {
 function initFeedbackForm() {
   const form = document.getElementById('feedbackForm');
   const success = document.getElementById('feedbackSuccess');
+  const emailInput = document.getElementById('fbEmail');
   if (!form) return;
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    if (emailInput && !validateEmailField(emailInput)) {
+      emailInput.focus();
+      return;
+    }
+
     form.reset();
     if (success) {
       success.classList.add('is-visible');

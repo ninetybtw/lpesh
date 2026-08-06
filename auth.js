@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.addEventListener('submit', (e) => {
       e.preventDefault();
       const isRegister = panel.dataset.panel === 'register';
+      const emailInput = document.getElementById(isRegister ? 'regEmail' : 'loginEmail');
+
+      if (!validateEmailField(emailInput)) {
+        emailInput.focus();
+        return;
+      }
 
       if (isRegister) {
         const password = document.getElementById('regPassword').value;
@@ -38,10 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      const email = emailInput.value.trim();
       const name = isRegister
         ? document.getElementById('regName').value
-        : document.getElementById('loginEmail').value.split('@')[0];
-      localStorage.setItem('lexprep_user', JSON.stringify({ name }));
+        : email.split('@')[0];
+      localStorage.setItem('lexprep_user', JSON.stringify({ name, email }));
       if (success) success.classList.add('is-visible');
       setTimeout(() => { window.location.href = 'index.html'; }, 900);
     });

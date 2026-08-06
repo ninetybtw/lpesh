@@ -263,6 +263,15 @@ button { cursor: pointer; }
   color: #fff;
 }
 
+.article-card__save svg {
+  width: 16px;
+  height: 16px;
+}
+
+.article-card__save.is-saved svg {
+  fill: currentColor;
+}
+
 .article-card__title {
   margin: 16px 0 10px;
   font-size: 24px;
@@ -337,6 +346,16 @@ button { cursor: pointer; }
 .article-card__stats {
   flex-shrink: 0;
   text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.article-card__stats svg {
+  width: 13px;
+  height: 13px;
+  color: #ff6b81;
+  flex-shrink: 0;
 }
 
 .articles-sidebar {

@@ -229,6 +229,18 @@ AUTH.CSS — страница входа/регистрации (положит�
   display: flex;
 }
 
+.auth-success p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-success__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 860px) {
   .auth-layout {
     grid-template-columns: 1fr;

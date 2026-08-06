@@ -120,9 +120,16 @@ function initInfoForm(user) {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    const emailInput = document.getElementById('fieldEmail');
+    if (!validateEmailField(emailInput)) {
+      emailInput.focus();
+      return;
+    }
+
     const updated = saveUser({
       name: document.getElementById('fieldName').value.trim() || 'Профиль',
-      email: document.getElementById('fieldEmail').value.trim(),
+      email: emailInput.value.trim(),
       university: document.getElementById('fieldUniversity').value.trim(),
       course: document.getElementById('fieldCourse').value.trim()
     });

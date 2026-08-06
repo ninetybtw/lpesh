@@ -278,13 +278,13 @@ function initApp() {
 
     let saveTimer = null;
     textarea.addEventListener('input', () => {
-      status.textContent = '';
+      status.innerHTML = '';
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => {
         const allNotes = getNotes();
         allNotes[activeTopic.id] = textarea.value;
         localStorage.setItem('lexprep_notes', JSON.stringify(allNotes));
-        status.textContent = '✓ Сохранено';
+        status.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg> Сохранено';
       }, 500);
     });
   }
@@ -340,8 +340,14 @@ function initApp() {
       ` : `
         <p class="flashcard-hint">Оцени, знал(а) ли ты ответ</p>
         <div class="flashcard-grade">
-          <button class="btn btn--outline" type="button" id="gradeWrongBtn">😕 Не знал(а)</button>
-          <button class="btn btn--primary" type="button" id="gradeRightBtn">✅ Знал(а)</button>
+          <button class="btn btn--outline" type="button" id="gradeWrongBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+            Не знал(а)
+          </button>
+          <button class="btn btn--primary" type="button" id="gradeRightBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 5-5"/></svg>
+            Знал(а)
+          </button>
         </div>
       `}
     `;
