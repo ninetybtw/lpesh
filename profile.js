@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStats();
   initThemeSwitch();
   initNotificationsSwitch();
+  initPasswordForm();
   initPrivacyModal();
   initDangerZone();
 });
@@ -289,6 +290,56 @@ function initNotificationsSwitch() {
   });
 
   syncSwitch();
+}
+
+/* ---------------- Password change (demo: nothing is stored, only validated) ---------------- */
+function initPasswordForm() {
+  const form = document.getElementById('passwordForm');
+  if (!form) return;
+
+  const currentInput = document.getElementById('currentPassword');
+  const newInput = document.getElementById('newPassword');
+  const confirmInput = document.getElementById('newPasswordConfirm');
+  const rulesList = document.getElementById('newPasswordRules');
+  const success = document.getElementById('passwordSuccess');
+
+  newInput.addEventListener('input', () => {
+    const status = getPasswordRuleStatus(newInput.value);
+    rulesList.querySelectorAll('[data-rule]').forEach(item => {
+      item.classList.toggle('is-met', !!status[item.dataset.rule]);
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    success.classList.remove('is-visible');
+
+    if (!currentInput.value) {
+      markFieldInvalid(currentInput, 'Введи текущий пароль.');
+      currentInput.focus();
+      return;
+    }
+    clearFieldInvalid(currentInput);
+
+    if (!isPasswordValid(newInput.value)) {
+      markFieldInvalid(newInput, 'Пароль не соответствует требованиям выше.');
+      newInput.focus();
+      return;
+    }
+    clearFieldInvalid(newInput);
+
+    if (newInput.value !== confirmInput.value) {
+      markFieldInvalid(confirmInput, 'Пароли не совпадают.');
+      confirmInput.focus();
+      return;
+    }
+    clearFieldInvalid(confirmInput);
+
+    form.reset();
+    rulesList.querySelectorAll('[data-rule]').forEach(item => item.classList.remove('is-met'));
+    success.classList.add('is-visible');
+    setTimeout(() => success.classList.remove('is-visible'), 3000);
+  });
 }
 
 /* ---------------- Privacy documents modal ---------------- */

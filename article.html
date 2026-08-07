@@ -111,8 +111,7 @@
                   <div class="filter-list" id="statusFilters">
                     <button class="filter-chip is-active" type="button" data-filter="all">Все статьи</button>
                     <button class="filter-chip" type="button" data-filter="liked">Понравившиеся</button>
-                    <button class="filter-chip" type="button" data-filter="read">Прочитанные</button>
-                    <button class="filter-chip" type="button" data-filter="unread">Не прочитанные</button>
+                    <button class="filter-chip" type="button" data-filter="history">История просмотров</button>
                     <button class="filter-chip" type="button" data-filter="saved">Сохранённые</button>
                   </div>
                 </div>
@@ -140,6 +139,13 @@
                 <div class="sidebar-note">
                   <strong>Подсказка:</strong> понравившиеся и сохранённые подборки удобно использовать как личный список повторения перед экзаменом.
                 </div>
+              </div>
+
+              <div class="sidebar-card" id="historyCard" hidden>
+                <div class="sidebar-head">
+                  <h2 class="sidebar-title sidebar-title--sm">Недавно просмотрено</h2>
+                </div>
+                <div class="history-list" id="historyList"></div>
               </div>
             </aside>
           </div>
@@ -172,6 +178,29 @@
         </div>
       </article>
     </template>
+
+    <div class="article-modal-overlay" id="articleModalOverlay" hidden>
+      <div class="article-modal" role="dialog" aria-modal="true" aria-labelledby="articleModalTitle">
+        <div class="article-modal__head">
+          <span class="article-card__tag" id="articleModalTag"></span>
+          <button class="article-modal__close" type="button" id="articleModalClose" aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <h2 class="article-modal__title" id="articleModalTitle"></h2>
+        <div class="article-modal__meta">
+          <div class="article-card__author">
+            <span class="article-card__avatar" id="articleModalAvatar"></span>
+            <div class="article-card__author-meta">
+              <span class="article-card__name" id="articleModalAuthor"></span>
+              <span class="article-card__date" id="articleModalDate"></span>
+            </div>
+          </div>
+          <div class="article-card__stats" id="articleModalStats"></div>
+        </div>
+        <div class="article-modal__body" id="articleModalBody"></div>
+      </div>
+    </div>
 
     <script src="script.js"></script>
     <script src="article.js" defer></script>

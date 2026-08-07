@@ -39,7 +39,7 @@ EXAM.CSS — страница пробного экзамена: карточк�
 }
 
 .exam-setup__grid .form-input {
-  background: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #f5f7ff;
 }
@@ -174,9 +174,10 @@ EXAM.CSS — страница пробного экзамена: карточк�
 }
 
 [data-theme="light"] .exam-setup__grid .form-input {
-  background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid var(--color-border);
   color: #14161f;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5f6d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 [data-theme="light"] .exam-setup__grid .form-group label {

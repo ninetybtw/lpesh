@@ -159,7 +159,7 @@ AUTH.CSS — страница входа/регистрации (положит�
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
-  background: var(--color-white);
+  background-color: var(--color-white);
   font-family: inherit;
   font-size: 14.5px;
   color: var(--color-text);

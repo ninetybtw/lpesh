@@ -228,6 +228,40 @@ body {
   }
 }
 
+/* ---------------- Password rules checklist ---------------- */
+.password-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+
+.password-rules__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: color var(--transition);
+}
+
+.password-rules__item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity var(--transition), color var(--transition);
+}
+
+.password-rules__item.is-met {
+  color: var(--color-success);
+}
+
+.password-rules__item.is-met svg {
+  opacity: 1;
+}
+
 /* ---------------- Payment ---------------- */
 .payment-card {
   display: flex;
