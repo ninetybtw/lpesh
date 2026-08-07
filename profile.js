@@ -215,6 +215,7 @@ function initStats() {
   document.getElementById('statTests').textContent = stats.testsCount;
   document.getElementById('statAvg').textContent = stats.avgScorePercent === null ? '—' : `${stats.avgScorePercent}%`;
   document.getElementById('statStreak').textContent = stats.streakDays;
+  document.getElementById('statCards').textContent = stats.cardsReviewed;
 
   const recentList = document.getElementById('recentResultsList');
   if (stats.recent.length) {

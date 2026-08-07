@@ -173,8 +173,10 @@ const LexPrepProgress = (function () {
       recent.push({ date: a.date, title: 'Пробный экзамен', score: a.score, total: a.total });
     });
 
+    let cardsReviewed = 0;
     Object.keys(data.cards).forEach(key => {
       touchedTopics.add(key.split('::')[0]);
+      cardsReviewed += data.cards[key].reviews || 0;
     });
 
     recent.sort((a, b) => b.date - a.date);
@@ -184,6 +186,7 @@ const LexPrepProgress = (function () {
       testsCount,
       avgScorePercent: scoreTotal ? Math.round((scoreSum / scoreTotal) * 100) : null,
       streakDays: computeStreak(activityDays),
+      cardsReviewed,
       recent: recent.slice(0, 6)
     };
   }

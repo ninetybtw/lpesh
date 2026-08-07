@@ -466,6 +466,52 @@ body {
   perspective: 1400px;
   cursor: pointer;
   user-select: none;
+  border-radius: 20px;
+  animation: cardFadeIn 0.35s ease both;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.flashcard--correct,
+.flashcard--wrong {
+  animation: cardGradeFlash 0.26s ease;
+}
+
+@keyframes cardGradeFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(111, 135, 255, 0);
+  }
+  40% {
+    box-shadow: 0 0 0 6px var(--flash-color, rgba(111, 135, 255, 0.35));
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(111, 135, 255, 0);
+  }
+}
+
+.flashcard--correct {
+  --flash-color: rgba(52, 199, 89, 0.4);
+}
+
+.flashcard--wrong {
+  --flash-color: rgba(255, 69, 58, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashcard,
+  .flashcard--correct,
+  .flashcard--wrong {
+    animation: none !important;
+  }
 }
 
 .flashcard__inner {
@@ -536,6 +582,107 @@ body {
   color: #9ca8cb;
   font-size: 13.5px;
   font-weight: 700;
+}
+
+.flashcards__meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mode-toggle__btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #9ca8cb;
+  transition: background var(--transition), color var(--transition);
+}
+
+.mode-toggle__btn.is-active {
+  background: #6f87ff;
+  color: #fff;
+}
+
+.voice-trainer {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.voice-trainer__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.voice-mic-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.voice-mic-btn.is-recording {
+  border-color: #ff453a;
+  color: #ff453a;
+  animation: micPulse 1s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 69, 58, 0.12); }
+}
+
+.voice-trainer__input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.voice-trainer__actions {
+  margin-top: 12px;
+}
+
+.voice-verdict {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.voice-verdict--good {
+  background: rgba(52, 199, 89, 0.14);
+  color: #34c759;
+}
+
+.voice-verdict--mid {
+  background: rgba(255, 204, 0, 0.14);
+  color: #e6b800;
+}
+
+.voice-verdict--bad {
+  background: rgba(255, 69, 58, 0.14);
+  color: #ff453a;
+}
+
+.voice-verdict__note {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca8cb;
 }
 
 .flashcard-box {
@@ -719,6 +866,29 @@ body {
 
 [data-theme="light"] .flashcard-box__dot.is-filled {
   background: var(--color-primary);
+}
+
+[data-theme="light"] .mode-toggle {
+  background: #f3f5fb;
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .mode-toggle__btn {
+  color: #687087;
+}
+
+[data-theme="light"] .mode-toggle__btn.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+[data-theme="light"] .voice-trainer {
+  background: #f8f9fd;
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .voice-verdict__note {
+  color: #6b7285;
 }
 
 [data-theme="light"] .cards-empty {

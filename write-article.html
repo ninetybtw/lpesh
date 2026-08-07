@@ -42,6 +42,7 @@
         </nav>
 
         <div class="header__actions">
+          <a href="index.html" class="btn btn--ghost">На главную</a>
           <a href="article.html" class="btn btn--ghost">← К статьям</a>
 
           <div class="profile-menu" id="profileMenu">
@@ -106,7 +107,29 @@
 
             <div class="form-group form-group--full">
               <label for="articleBody">Текст статьи</label>
-              <textarea class="form-textarea write-form__body" id="articleBody" placeholder="Основной текст статьи. Пиши так, как объяснял бы одногруппнику." required></textarea>
+
+              <div class="editor-toolbar" role="toolbar" aria-label="Форматирование текста">
+                <button type="button" class="editor-toolbar__btn editor-toolbar__btn--bold" data-cmd="bold" title="Жирный (Ctrl+B)">Ж</button>
+                <button type="button" class="editor-toolbar__btn editor-toolbar__btn--italic" data-cmd="italic" title="Курсив (Ctrl+I)">К</button>
+                <button type="button" class="editor-toolbar__btn editor-toolbar__btn--underline" data-cmd="underline" title="Подчёркнутый (Ctrl+U)">Ч</button>
+                <button type="button" class="editor-toolbar__btn" data-cmd="formatBlock" data-value="H3" title="Подзаголовок">H3</button>
+                <span class="editor-toolbar__divider"></span>
+                <button type="button" class="editor-toolbar__btn" data-cmd="insertUnorderedList" title="Маркированный список">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+                <button type="button" class="editor-toolbar__btn" data-cmd="insertOrderedList" title="Нумерованный список">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><path d="M4 6h1v3"/><path d="M4 10h2"/><path d="M4 14h2v2h-2v2h2"/></svg>
+                </button>
+                <button type="button" class="editor-toolbar__btn" data-cmd="formatBlock" data-value="BLOCKQUOTE" title="Цитата">
+                  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 7c-2 0-3 1.5-3 4v6h6v-6H7c0-1.5 1-2 3-2V7c-1 0-2 0-3 0zm10 0c-2 0-3 1.5-3 4v6h6v-6h-3c0-1.5 1-2 3-2V7c-1 0-2 0-3 0z"/></svg>
+                </button>
+                <span class="editor-toolbar__divider"></span>
+                <button type="button" class="editor-toolbar__btn" data-cmd="removeFormat" title="Очистить форматирование">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+
+              <div class="form-textarea write-form__body" id="articleBody" contenteditable="true" data-placeholder="Основной текст статьи. Пиши так, как объяснял бы одногруппнику." role="textbox" aria-multiline="true" aria-label="Текст статьи"></div>
               <span class="write-form__counter" id="bodyCounter">0 символов</span>
             </div>
 

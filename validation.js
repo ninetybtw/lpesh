@@ -41,3 +41,18 @@ function validateEmailField(input) {
   clearFieldInvalid(input);
   return true;
 }
+
+function getPasswordRuleStatus(password) {
+  const value = String(password || '');
+  return {
+    length: value.length >= 8,
+    letter: /[a-zA-Zа-яёА-ЯЁ]/.test(value),
+    digit: /\d/.test(value),
+    case: /[a-zа-яё]/.test(value) && /[A-ZА-ЯЁ]/.test(value)
+  };
+}
+
+function isPasswordValid(password) {
+  const status = getPasswordRuleStatus(password);
+  return Object.keys(status).every(rule => status[rule]);
+}

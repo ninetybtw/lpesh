@@ -24,6 +24,39 @@ function estimateReadTime(text) {
   return Math.max(1, Math.round(words / 180));
 }
 
+function initEditorToolbar(editor) {
+  const buttons = document.querySelectorAll('.editor-toolbar__btn');
+
+  function syncActiveStates() {
+    buttons.forEach(btn => {
+      const cmd = btn.dataset.cmd;
+      if (cmd === 'formatBlock' || cmd === 'removeFormat') return;
+      let isActive = false;
+      try {
+        isActive = document.queryCommandState(cmd);
+      } catch (e) {
+        isActive = false;
+      }
+      btn.classList.toggle('is-active', isActive);
+    });
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      editor.focus();
+      const cmd = btn.dataset.cmd;
+      const value = btn.dataset.value || undefined;
+      document.execCommand(cmd, false, value);
+      syncActiveStates();
+    });
+  });
+
+  editor.addEventListener('keyup', syncActiveStates);
+  editor.addEventListener('mouseup', syncActiveStates);
+  editor.addEventListener('focus', syncActiveStates);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
@@ -50,11 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const counter = document.getElementById('bodyCounter');
 
   bodyInput.addEventListener('input', () => {
-    const length = bodyInput.value.length;
+    const length = bodyInput.textContent.length;
     counter.textContent = `${length} символов`;
     counter.classList.toggle('is-ok', length >= 100);
-    readEstimate.value = `~${estimateReadTime(bodyInput.value)} мин чтения`;
+    readEstimate.value = `~${estimateReadTime(bodyInput.textContent)} мин чтения`;
   });
+
+  initEditorToolbar(bodyInput);
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -81,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearFieldInvalid(excerptInput);
     }
 
-    if (bodyInput.value.trim().length < 100) {
+    if (bodyInput.textContent.trim().length < 100) {
       markFieldInvalid(bodyInput, 'Текст статьи должен быть не короче 100 символов.');
       valid = false;
     } else {
@@ -99,11 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tag: TOPIC_LABELS[topicSelect.value],
       title: titleInput.value.trim(),
       text: excerptInput.value.trim(),
-      body: bodyInput.value.trim(),
+      body: bodyInput.innerHTML.trim(),
       author: user.name || 'Аноним',
       date: formatArticleDate(new Date()),
       likes: 0,
-      readTime: estimateReadTime(bodyInput.value),
+      readTime: estimateReadTime(bodyInput.textContent),
       liked: false,
       read: false,
       saved: false,

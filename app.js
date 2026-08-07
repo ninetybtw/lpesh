@@ -26,7 +26,29 @@ function initApp() {
   let cardQueue = [];
   let cardPos = 0;
   let cardFlipped = false;
+  let cardMode = 'text';
+  let voiceAnswerResult = null;
   let searchQuery = '';
+
+  const RU_STOPWORDS = new Set(['это', 'что', 'как', 'для', 'при', 'или', 'если', 'его', 'она', 'они', 'все', 'был', 'быть', 'есть', 'так', 'также', 'между', 'может', 'могут', 'который', 'которая', 'которые', 'том', 'том,', 'года', 'году']);
+
+  function extractKeywords(text) {
+    return Array.from(new Set(
+      String(text || '')
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9\s]/gi, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 3 && !RU_STOPWORDS.has(w))
+    ));
+  }
+
+  function checkVoiceAnswer(spokenText, cardBack) {
+    const keywords = extractKeywords(cardBack);
+    if (!keywords.length) return { ratio: 0, matched: [], total: 0 };
+    const spokenLower = String(spokenText || '').toLowerCase();
+    const matched = keywords.filter(k => spokenLower.includes(k));
+    return { ratio: matched.length / keywords.length, matched, total: keywords.length };
+  }
 
   function buildCardQueue(forceAll) {
     const cards = activeTopic.cards || [];
@@ -35,6 +57,7 @@ function initApp() {
       : LexPrepProgress.getDueCardIndexes(activeTopic.id, cards);
     cardPos = 0;
     cardFlipped = false;
+    voiceAnswerResult = null;
   }
 
   function selectTopic(discipline, topic) {
@@ -148,7 +171,13 @@ function initApp() {
         ${activeTopic.cards && activeTopic.cards.length ? `
           <div class="flashcards__meta">
             <span class="flashcards__due" id="cardsDueLabel"></span>
-            <button class="btn btn--ghost" type="button" id="reviewAllBtn">Повторить всё</button>
+            <div class="flashcards__meta-actions">
+              <div class="mode-toggle" role="tablist" aria-label="Режим тренировки">
+                <button class="mode-toggle__btn ${cardMode === 'text' ? 'is-active' : ''}" type="button" data-mode="text">Текст</button>
+                <button class="mode-toggle__btn ${cardMode === 'voice' ? 'is-active' : ''}" type="button" data-mode="voice">Голос</button>
+              </div>
+              <button class="btn btn--ghost" type="button" id="reviewAllBtn">Повторить всё</button>
+            </div>
           </div>
           <div id="cardSessionArea"></div>
         ` : `<p class="topic-desc">Для этой темы карточки пока не добавлены.</p>`}
@@ -210,6 +239,17 @@ function initApp() {
         renderCardSession();
       });
     }
+
+    const modeToggleBtns = contentView.querySelectorAll('.mode-toggle__btn');
+    modeToggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        cardMode = btn.dataset.mode;
+        voiceAnswerResult = null;
+        cardFlipped = false;
+        modeToggleBtns.forEach(b => b.classList.toggle('is-active', b.dataset.mode === cardMode));
+        renderCardSession();
+      });
+    });
 
     if (checkBtn) {
       checkBtn.addEventListener('click', () => {
@@ -335,6 +375,27 @@ function initApp() {
       <div class="flashcard-box" aria-label="Уровень запоминания карточки">
         ${[1, 2, 3, 4, 5].map(n => `<span class="flashcard-box__dot ${n <= state.box ? 'is-filled' : ''}"></span>`).join('')}
       </div>
+      ${!cardFlipped && cardMode === 'voice' ? `
+        <div class="voice-trainer">
+          <p class="flashcard-hint">Ответь голосом или текстом — черновая проверка подскажет, близко ли ты к ответу</p>
+          <div class="voice-trainer__row">
+            <button class="btn btn--outline voice-mic-btn" type="button" id="voiceMicBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+              <span id="voiceMicLabel">Записать ответ</span>
+            </button>
+            <input type="text" class="form-input voice-trainer__input" id="voiceAnswerInput" placeholder="Или впиши ответ своими словами">
+          </div>
+          <div class="voice-trainer__actions">
+            <button class="btn btn--primary" type="button" id="voiceCheckBtn">Проверить</button>
+          </div>
+          ${voiceAnswerResult ? `
+            <div class="voice-verdict voice-verdict--${voiceAnswerResult.ratio >= 0.5 ? 'good' : voiceAnswerResult.ratio > 0.15 ? 'mid' : 'bad'}">
+              ${voiceAnswerResult.ratio >= 0.5 ? 'Похоже на верный ответ' : voiceAnswerResult.ratio > 0.15 ? 'Есть совпадения, но не всё' : 'Похоже, ответ далёк от правильного'}
+              <span class="voice-verdict__note">Черновая проверка по ключевым словам — это не настоящий ИИ. Окончательную оценку поставь сам(а) после того, как увидишь правильный ответ.</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
       ${!cardFlipped ? `
         <p class="flashcard-hint">Нажми на карточку, чтобы перевернуть · ${cardPos + 1} из ${cardQueue.length}</p>
       ` : `
@@ -355,17 +416,72 @@ function initApp() {
     const flashcard = document.getElementById('flashcard');
     flashcard.addEventListener('click', () => {
       cardFlipped = !cardFlipped;
+      voiceAnswerResult = null;
       renderCardSession();
     });
+
+    const voiceAnswerInput = document.getElementById('voiceAnswerInput');
+    const voiceMicBtn = document.getElementById('voiceMicBtn');
+    const voiceMicLabel = document.getElementById('voiceMicLabel');
+    const voiceCheckBtn = document.getElementById('voiceCheckBtn');
+
+    if (voiceMicBtn) {
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognitionCtor) {
+        voiceMicBtn.disabled = true;
+        voiceMicLabel.textContent = 'Голосовой ввод не поддерживается в этом браузере';
+      } else {
+        voiceMicBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const recognition = new SpeechRecognitionCtor();
+          recognition.lang = 'ru-RU';
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+
+          voiceMicBtn.classList.add('is-recording');
+          voiceMicLabel.textContent = 'Слушаю...';
+
+          recognition.addEventListener('result', (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (voiceAnswerInput) voiceAnswerInput.value = transcript;
+          });
+          recognition.addEventListener('end', () => {
+            voiceMicBtn.classList.remove('is-recording');
+            voiceMicLabel.textContent = 'Записать ответ';
+          });
+          recognition.addEventListener('error', () => {
+            voiceMicBtn.classList.remove('is-recording');
+            voiceMicLabel.textContent = 'Записать ответ';
+          });
+
+          recognition.start();
+        });
+      }
+    }
+
+    if (voiceCheckBtn) {
+      voiceCheckBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const answer = voiceAnswerInput ? voiceAnswerInput.value : '';
+        voiceAnswerResult = checkVoiceAnswer(answer, card.back);
+        renderCardSession();
+      });
+    }
 
     const gradeWrongBtn = document.getElementById('gradeWrongBtn');
     const gradeRightBtn = document.getElementById('gradeRightBtn');
 
     function grade(correct) {
       LexPrepProgress.reviewCard(activeTopic.id, cardIndex, correct);
-      cardPos++;
-      cardFlipped = false;
-      renderCardSession();
+      flashcard.classList.add(correct ? 'flashcard--correct' : 'flashcard--wrong');
+      if (gradeWrongBtn) gradeWrongBtn.disabled = true;
+      if (gradeRightBtn) gradeRightBtn.disabled = true;
+      setTimeout(() => {
+        cardPos++;
+        cardFlipped = false;
+        voiceAnswerResult = null;
+        renderCardSession();
+      }, 260);
     }
 
     if (gradeWrongBtn) {

@@ -53,8 +53,107 @@ WRITE-ARTICLE.CSS — страница создания статьи
   color: var(--color-text-muted);
 }
 
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.editor-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.editor-toolbar__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.editor-toolbar__btn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.editor-toolbar__btn.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.editor-toolbar__btn--bold {
+  font-weight: 800;
+}
+
+.editor-toolbar__btn--italic {
+  font-style: italic;
+}
+
+.editor-toolbar__btn--underline {
+  text-decoration: underline;
+}
+
+.editor-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--color-border);
+}
+
 .write-form__body {
   min-height: 260px;
+  line-height: 1.7;
+  overflow-y: auto;
+}
+
+.write-form__body:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.write-form__body:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.write-form__body h3 {
+  margin: 14px 0 6px;
+  font-size: 18px;
+}
+
+.write-form__body ul,
+.write-form__body ol {
+  padding-left: 22px;
+  margin: 8px 0;
+}
+
+.write-form__body ul {
+  list-style: disc;
+}
+
+.write-form__body ol {
+  list-style: decimal;
+}
+
+.write-form__body blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-text-muted);
 }
 
 .write-form__counter {

@@ -24,6 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => switchTo(btn.dataset.switch));
   });
 
+  const regPasswordInput = document.getElementById('regPassword');
+  const passwordRules = document.getElementById('passwordRules');
+  if (regPasswordInput && passwordRules) {
+    regPasswordInput.addEventListener('input', () => {
+      const status = getPasswordRuleStatus(regPasswordInput.value);
+      passwordRules.querySelectorAll('[data-rule]').forEach(item => {
+        item.classList.toggle('is-met', !!status[item.dataset.rule]);
+      });
+    });
+  }
+
   panels.forEach(panel => {
     panel.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -36,8 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (isRegister) {
-        const password = document.getElementById('regPassword').value;
+        const passwordInput = document.getElementById('regPassword');
+        const password = passwordInput.value;
         const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+
+        if (!isPasswordValid(password)) {
+          markFieldInvalid(passwordInput, 'Пароль не соответствует требованиям ниже.');
+          passwordInput.focus();
+          return;
+        }
+        clearFieldInvalid(passwordInput);
+
         if (password !== passwordConfirm) {
           alert('Пароли не совпадают');
           return;
