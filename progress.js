@@ -191,6 +191,81 @@ const LexPrepProgress = (function () {
     };
   }
 
+  function getTopicProgress(topicId, topic) {
+    const data = load();
+    const parts = [];
+
+    const attempts = data.tests[topicId];
+    if (attempts && attempts.length) {
+      const bestPercent = Math.max(...attempts.map(a => a.total ? (a.score / a.total) * 100 : 0));
+      parts.push(bestPercent);
+    }
+
+    const cardsTotal = topic && topic.cards ? topic.cards.length : 0;
+    if (cardsTotal) {
+      let reviewed = 0;
+      for (let i = 0; i < cardsTotal; i++) {
+        if (data.cards[cardKey(topicId, i)]) reviewed++;
+      }
+      parts.push((reviewed / cardsTotal) * 100);
+    }
+
+    if (!parts.length) return 0;
+    return Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
+  }
+
+  function getDisciplineProgress(discipline) {
+    if (!discipline.topics.length) return 0;
+    const sum = discipline.topics.reduce((acc, t) => acc + getTopicProgress(t.id, t), 0);
+    return Math.round(sum / discipline.topics.length);
+  }
+
+  const XP_LEVELS = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000];
+  const LEVEL_TITLES = ['Новичок', 'Ученик', 'Практикант', 'Знаток', 'Уверенный юрист', 'Специалист', 'Эксперт', 'Мастер', 'Гуру права', 'Легенда курса', 'Профессор права'];
+
+  function getGamification(allData) {
+    const data = load();
+    let xp = 0;
+
+    Object.keys(data.tests).forEach(topicId => {
+      data.tests[topicId].forEach(a => { xp += a.score * 2; });
+    });
+    data.examAttempts.forEach(a => { xp += a.score * 3; });
+    Object.keys(data.cards).forEach(key => { xp += (data.cards[key].reviews || 0) * 2; });
+
+    let level = 1;
+    for (let i = 1; i < XP_LEVELS.length; i++) {
+      if (xp >= XP_LEVELS[i]) level = i + 1;
+      else break;
+    }
+    const levelIndex = level - 1;
+    const currentThreshold = XP_LEVELS[levelIndex] || 0;
+    const nextThreshold = XP_LEVELS[levelIndex + 1] !== undefined ? XP_LEVELS[levelIndex + 1] : currentThreshold + 1500;
+    const xpIntoLevel = xp - currentThreshold;
+    const xpForNextLevel = nextThreshold - currentThreshold;
+    const progressPercent = Math.min(100, Math.round((xpIntoLevel / xpForNextLevel) * 100));
+
+    const stats = getStats(allData);
+    const badges = [
+      { id: 'first-steps', title: 'Первые шаги', desc: 'Пройди первый тест', earned: stats.testsCount >= 1 },
+      { id: 'excellent', title: 'Отличник', desc: 'Средний результат от 85%', earned: stats.avgScorePercent !== null && stats.avgScorePercent >= 85 },
+      { id: 'streak-3', title: 'Марафонец', desc: '3 дня подряд', earned: stats.streakDays >= 3 },
+      { id: 'streak-7', title: 'На волне', desc: '7 дней подряд', earned: stats.streakDays >= 7 },
+      { id: 'librarian', title: 'Библиотекарь', desc: '20 карточек повторено', earned: stats.cardsReviewed >= 20 },
+      { id: 'polymath', title: 'Знаток права', desc: '10 тем затронуто', earned: stats.topicsTouched >= 10 }
+    ];
+
+    return {
+      xp,
+      level,
+      levelTitle: LEVEL_TITLES[levelIndex] || LEVEL_TITLES[LEVEL_TITLES.length - 1],
+      xpIntoLevel,
+      xpForNextLevel,
+      progressPercent,
+      badges
+    };
+  }
+
   function computeStreak(daySet) {
     let streak = 0;
     const cursor = new Date();
@@ -209,6 +284,9 @@ const LexPrepProgress = (function () {
     recordExamAttempt,
     getWeakQuestions,
     getStats,
-    findTopic
+    findTopic,
+    getTopicProgress,
+    getDisciplineProgress,
+    getGamification
   };
 })();

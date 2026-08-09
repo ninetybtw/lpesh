@@ -69,6 +69,48 @@ STYLE.CSS — компоненты и секции страницы
   align-items: center;
   gap: 12px;
 }
+
+.online-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.online-badge__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(31, 183, 116, 0.16);
+  animation: onlineDotPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes onlineDotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .online-badge__dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .online-badge {
+    display: none;
+  }
+}
+
 .burger {
   display: none;
   flex-direction: column;

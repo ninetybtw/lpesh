@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPayment();
   initSubscription();
   initStats();
+  initMyArticles();
   initThemeSwitch();
   initNotificationsSwitch();
   initPasswordForm();
@@ -290,6 +291,51 @@ function initNotificationsSwitch() {
   });
 
   syncSwitch();
+}
+
+/* ---------------- My articles ---------------- */
+function getUserArticles() {
+  return JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]');
+}
+
+function initMyArticles() {
+  const list = document.getElementById('myArticlesList');
+  if (!list) return;
+
+  function render() {
+    const articles = getUserArticles();
+
+    if (!articles.length) {
+      list.innerHTML = '<p class="topic-desc">Ты ещё не опубликовал(а) ни одной статьи.</p>';
+      return;
+    }
+
+    list.innerHTML = articles.map(article => `
+      <div class="my-article-item" data-article-id="${article.id}">
+        <div class="my-article-item__main">
+          <div class="my-article-item__top">
+            <span class="my-article-item__tag">${escapeAttr(article.tag || '')}</span>
+            <span class="my-article-item__date">${escapeAttr(article.date || '')}</span>
+          </div>
+          <span class="my-article-item__title">${escapeAttr(article.title || '')}</span>
+        </div>
+        <button class="btn btn--outline my-article-item__delete" type="button" data-delete-id="${article.id}">Удалить</button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.deleteId);
+        const confirmed = window.confirm('Удалить эту статью? Действие нельзя отменить.');
+        if (!confirmed) return;
+        const remaining = getUserArticles().filter(a => a.id !== id);
+        localStorage.setItem('lexprep_user_articles', JSON.stringify(remaining));
+        render();
+      });
+    });
+  }
+
+  render();
 }
 
 /* ---------------- Password change (demo: nothing is stored, only validated) ---------------- */

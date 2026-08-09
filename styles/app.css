@@ -946,3 +946,382 @@ body {
     grid-column: auto;
   }
 }
+
+/* ---------------- AI consultant chat widget (demo, no real AI wired yet) ---------------- */
+.ai-chat {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.ai-chat__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #5f7bff, #6f87ff 58%, #7e95ff);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 18px 36px rgba(111, 135, 255, 0.32);
+}
+
+.ai-chat__toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-chat__panel {
+  width: min(360px, calc(100vw - 48px));
+  max-height: min(480px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.ai-chat__panel[hidden] {
+  display: none;
+}
+
+.ai-chat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.ai-chat__head-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.ai-chat__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5f7bff, #7e95ff);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ai-chat__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.ai-chat__close:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.ai-chat__close svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ai-chat__body {
+  flex: 1;
+  min-height: 160px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-chat__msg {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.ai-chat__msg--bot {
+  align-self: flex-start;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  border-bottom-left-radius: 4px;
+}
+
+.ai-chat__msg--user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-chat__form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.ai-chat__input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-family: inherit;
+}
+
+.ai-chat__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.ai-chat__send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.ai-chat__send svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  .ai-chat {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .ai-chat__toggle span {
+    display: none;
+  }
+}
+
+/* ---------------- Gamification bar ---------------- */
+.gamify-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.gamify-bar__level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5f7bff, #6f87ff 58%, #7e95ff);
+  box-shadow: 0 10px 20px rgba(111, 135, 255, 0.28);
+}
+
+.gamify-bar__level-num {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.gamify-bar__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.gamify-bar__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.gamify-bar__title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.gamify-bar__xp {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.gamify-bar__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  overflow: hidden;
+}
+
+.gamify-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5f7bff, #7e95ff);
+  transition: width 0.4s ease;
+}
+
+.gamify-bar__badges-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.gamify-bar__badges-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.gamify-bar__badges-count {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.gamify-badges {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(360px, 92vw);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  box-shadow: var(--shadow-lg);
+}
+
+.gamify-badges[hidden] {
+  display: none;
+}
+
+.gamify-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  opacity: 0.45;
+}
+
+.gamify-badge.is-earned {
+  opacity: 1;
+  border-color: rgba(111, 135, 255, 0.4);
+  background: var(--color-primary-light);
+}
+
+.gamify-badge__title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.gamify-badge__desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ---------------- Progress bars for disciplines/topics ---------------- */
+.item-progress {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-progress__track {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.item-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5f7bff, #7e95ff);
+}
+
+.item-progress__label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9ca8cb;
+  flex-shrink: 0;
+  min-width: 30px;
+  text-align: right;
+}
+
+[data-theme="light"] .item-progress__track {
+  background: #eef0f6;
+}
+
+[data-theme="light"] .item-progress__label {
+  color: #687087;
+}
+
+@media (max-width: 640px) {
+  .gamify-bar {
+    flex-wrap: wrap;
+  }
+
+  .gamify-bar__badges-toggle {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+  }
+}

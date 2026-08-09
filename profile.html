@@ -42,6 +42,10 @@
         </nav>
 
         <div class="header__actions">
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
           <a href="index.html" class="btn btn--ghost">На главную</a>
 
           <div class="profile-menu" id="profileMenu">
@@ -99,6 +103,12 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
                 </span>
                 Статистика
+              </button>
+              <button class="profile-nav__item" type="button" data-section="articles">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h9M8 13h9M8 17h5"/></svg>
+                </span>
+                Мои статьи
               </button>
               <button class="profile-nav__item" type="button" data-section="settings">
                 <span class="profile-nav__icon">
@@ -253,6 +263,18 @@
                     <p class="topic-desc">Слабые места пока не отмечены.</p>
                   </div>
                   <a href="exam.html" class="btn btn--outline profile-weak-cta" id="reviewWeakLink" hidden>Повторить слабые места на экзамене</a>
+                </div>
+              </section>
+
+              <!-- МОИ СТАТЬИ -->
+              <section class="profile-section" id="section-articles" data-section-panel="articles">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Мои статьи</h2>
+                  <p class="profile-card__subtitle">Статьи, опубликованные тобой в каталоге. Здесь можно их удалить — изменение так же в разработке.</p>
+
+                  <div class="my-articles-list" id="myArticlesList"></div>
+
+                  <a href="write-article.html" class="btn btn--primary" id="myArticlesWriteBtn" style="margin-top: 16px;">Написать статью</a>
                 </div>
               </section>
 

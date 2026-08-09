@@ -12,7 +12,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initFeedbackForm();
   initRevealOnScroll();
   initAuthState();
+  initOnlineCounter();
 });
+
+/* ---------------- Online users counter (demo, no real backend/websocket yet) ---------------- */
+function initOnlineCounter() {
+  const countEl = document.getElementById('onlineCount');
+  if (!countEl) return;
+
+  function computeBase() {
+    const hour = new Date().getHours();
+    const activity = hour >= 8 && hour <= 23 ? 1 : 0.4;
+    return Math.round((60 + Math.random() * 60) * activity);
+  }
+
+  let current = Number(sessionStorage.getItem('lexprep_online_count')) || computeBase();
+  countEl.textContent = current;
+
+  setInterval(() => {
+    const drift = Math.round((Math.random() - 0.5) * 6);
+    current = Math.max(12, current + drift);
+    sessionStorage.setItem('lexprep_online_count', String(current));
+    countEl.textContent = current;
+  }, 4000 + Math.random() * 3000);
+}
 
 /* ---------------- Header shadow on scroll ---------------- */
 function initHeaderScroll() {

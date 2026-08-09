@@ -1,6 +1,54 @@
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
+  initAiChat();
 });
+
+/* ---------------- AI consultant chat widget (demo UI, no real AI wired up yet) ---------------- */
+function initAiChat() {
+  const toggle = document.getElementById('aiChatToggle');
+  const panel = document.getElementById('aiChatPanel');
+  const closeBtn = document.getElementById('aiChatClose');
+  const form = document.getElementById('aiChatForm');
+  const input = document.getElementById('aiChatInput');
+  const body = document.getElementById('aiChatBody');
+  if (!toggle || !panel || !form || !input || !body) return;
+
+  function open() {
+    panel.hidden = false;
+    input.focus();
+  }
+
+  function close() {
+    panel.hidden = true;
+  }
+
+  toggle.addEventListener('click', () => {
+    if (panel.hidden) open(); else close();
+  });
+  closeBtn.addEventListener('click', close);
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-chat__msg ai-chat__msg--user';
+    userMsg.textContent = text;
+    body.appendChild(userMsg);
+    input.value = '';
+
+    setTimeout(() => {
+      const botMsg = document.createElement('div');
+      botMsg.className = 'ai-chat__msg ai-chat__msg--bot';
+      botMsg.textContent = 'Спасибо за вопрос! Живой ИИ-консультант ещё не подключён — это демо интерфейса, реальные ответы появятся, когда мы включим его на бэкенде.';
+      body.appendChild(botMsg);
+      body.scrollTop = body.scrollHeight;
+    }, 450);
+
+    body.scrollTop = body.scrollHeight;
+  });
+}
 
 function escapeHtml(str) {
   return String(str)
@@ -104,11 +152,18 @@ function initApp() {
       return;
     }
 
-    disciplineList.innerHTML = DATA.map(d => `
+    disciplineList.innerHTML = DATA.map(d => {
+      const progress = LexPrepProgress.getDisciplineProgress(d);
+      return `
       <button class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
         ${escapeHtml(d.title)}
+        <span class="item-progress">
+          <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
+          <span class="item-progress__label">${progress}%</span>
+        </span>
       </button>
-    `).join('');
+    `;
+    }).join('');
 
     disciplineList.querySelectorAll('[data-discipline]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -124,11 +179,18 @@ function initApp() {
   }
 
   function renderTopics() {
-    topicList.innerHTML = activeDiscipline.topics.map(t => `
+    topicList.innerHTML = activeDiscipline.topics.map(t => {
+      const progress = LexPrepProgress.getTopicProgress(t.id, t);
+      return `
       <button class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
         ${escapeHtml(t.title)}
+        <span class="item-progress">
+          <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
+          <span class="item-progress__label">${progress}%</span>
+        </span>
       </button>
-    `).join('');
+    `;
+    }).join('');
 
     topicList.querySelectorAll('[data-topic]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -290,6 +352,9 @@ function initApp() {
         const percent = Math.round((score / total) * 100);
 
         LexPrepProgress.recordTestAttempt(activeTopic.id, score, total, wrongIndexes);
+        renderTopics();
+        renderDisciplines();
+        renderGamifyBar();
 
         summaryBox.classList.add('is-visible');
         summaryBox.innerHTML = `
@@ -473,6 +538,7 @@ function initApp() {
 
     function grade(correct) {
       LexPrepProgress.reviewCard(activeTopic.id, cardIndex, correct);
+      renderGamifyBar();
       flashcard.classList.add(correct ? 'flashcard--correct' : 'flashcard--wrong');
       if (gradeWrongBtn) gradeWrongBtn.disabled = true;
       if (gradeRightBtn) gradeRightBtn.disabled = true;
@@ -481,6 +547,8 @@ function initApp() {
         cardFlipped = false;
         voiceAnswerResult = null;
         renderCardSession();
+        renderTopics();
+        renderDisciplines();
       }, 260);
     }
 
@@ -546,9 +614,45 @@ function initApp() {
     });
   }
 
+  function renderGamifyBar() {
+    const bar = document.getElementById('gamifyBar');
+    if (!bar || typeof LexPrepProgress.getGamification !== 'function') return;
+
+    const g = LexPrepProgress.getGamification(DATA);
+    document.getElementById('gamifyLevel').querySelector('.gamify-bar__level-num').textContent = g.level;
+    document.getElementById('gamifyTitle').textContent = g.levelTitle;
+    document.getElementById('gamifyXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP`;
+    document.getElementById('gamifyFill').style.width = `${g.progressPercent}%`;
+
+    const earnedCount = g.badges.filter(b => b.earned).length;
+    document.getElementById('gamifyBadgesCount').textContent = `${earnedCount}/${g.badges.length}`;
+
+    document.getElementById('gamifyBadges').innerHTML = g.badges.map(b => `
+      <div class="gamify-badge ${b.earned ? 'is-earned' : ''}">
+        <span class="gamify-badge__title">${escapeHtml(b.title)}</span>
+        <span class="gamify-badge__desc">${escapeHtml(b.desc)}</span>
+      </div>
+    `).join('');
+  }
+
+  const gamifyBadgesToggle = document.getElementById('gamifyBadgesToggle');
+  const gamifyBadges = document.getElementById('gamifyBadges');
+  if (gamifyBadgesToggle && gamifyBadges) {
+    gamifyBadgesToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      gamifyBadges.hidden = !gamifyBadges.hidden;
+    });
+    document.addEventListener('click', (e) => {
+      if (!gamifyBadges.hidden && !gamifyBadges.contains(e.target) && e.target !== gamifyBadgesToggle) {
+        gamifyBadges.hidden = true;
+      }
+    });
+  }
+
   buildCardQueue(false);
   renderDisciplines();
   renderTopics();
   renderContent();
+  renderGamifyBar();
 }
 
