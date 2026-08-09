@@ -230,6 +230,20 @@
                   <h2 class="profile-card__title">Статистика</h2>
                   <p class="profile-card__subtitle">Реальный прогресс из тренажёра и пробных экзаменов — хранится в этом браузере, пока нет бэкенда.</p>
 
+                  <div class="rank-showcase" id="rankShowcase">
+                    <img class="rank-showcase__icon" id="rankIcon" src="assets/badges/themis-standard.svg" alt="Значок ранга" />
+                    <div class="rank-showcase__info">
+                      <div class="rank-showcase__top">
+                        <span class="rank-showcase__level">Уровень <span id="rankLevelNum">1</span></span>
+                        <span class="rank-showcase__name" id="rankName">Новичок</span>
+                      </div>
+                      <div class="rank-showcase__track">
+                        <div class="rank-showcase__fill" id="rankFill" style="width: 0%"></div>
+                      </div>
+                      <span class="rank-showcase__xp" id="rankXp">0 / 100 XP до следующего уровня</span>
+                    </div>
+                  </div>
+
                   <div class="stats-grid" id="statsGrid">
                     <div class="stat-tile">
                       <span class="stat-tile__num" id="statTopics">0</span>
@@ -252,6 +266,10 @@
                       <span class="stat-tile__label">карточек повторено</span>
                     </div>
                   </div>
+
+                  <h3 class="profile-subheading">Достижения</h3>
+                  <p class="topic-desc achv-intro">Витрина значков Фемиды по категориям — открывай новые условия, чтобы получить редкие версии.</p>
+                  <div class="achv-grid" id="achvGrid"></div>
 
                   <h3 class="profile-subheading">Последние тесты</h3>
                   <div class="results-list" id="recentResultsList">

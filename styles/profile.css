@@ -375,6 +375,198 @@ body {
   font-size: 13.5px;
 }
 
+/* ---------------- Rank showcase (level + Femida badge) ---------------- */
+.rank-showcase {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.rank-showcase__icon {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+}
+
+.rank-showcase__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-showcase__top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.rank-showcase__level {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.rank-showcase__name {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.rank-showcase__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.rank-showcase__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5f7bff, #7e95ff);
+  transition: width 0.4s ease;
+}
+
+.rank-showcase__xp {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 520px) {
+  .rank-showcase {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ---------------- Achievements ---------------- */
+.achv-intro {
+  margin-top: -4px;
+  margin-bottom: 14px;
+}
+
+.achv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.achv-category {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.achv-category__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 14px;
+  text-align: left;
+  background: var(--color-white);
+}
+
+.achv-category__head.is-open {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.achv-category__title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.achv-category__desc {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.achv-category__count {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.achv-category__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--color-bg-alt);
+}
+
+.achv-category__list[hidden] {
+  display: none;
+}
+
+.achv-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  opacity: 0.55;
+}
+
+.achv-item.is-earned {
+  opacity: 1;
+}
+
+.achv-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+}
+
+.achv-item.is-earned .achv-item__icon {
+  color: var(--color-success);
+}
+
+.achv-item__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.achv-item__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.achv-item__desc {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+@media (max-width: 700px) {
+  .achv-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------------- Stats ---------------- */
 .stats-grid {
   display: grid;

@@ -68,6 +68,8 @@ function initApp() {
 
   if (!disciplineList || !topicList || !contentView) return;
 
+  localStorage.setItem('lexprep_visited_app', '1');
+
   let activeDiscipline = DATA[0];
   let activeTopic = DATA[0].topics[0];
   let activeView = 'notes';
@@ -618,21 +620,23 @@ function initApp() {
     const bar = document.getElementById('gamifyBar');
     if (!bar || typeof LexPrepProgress.getGamification !== 'function') return;
 
-    const g = LexPrepProgress.getGamification(DATA);
+    const g = LexPrepProgress.getGamification();
     document.getElementById('gamifyLevel').querySelector('.gamify-bar__level-num').textContent = g.level;
-    document.getElementById('gamifyTitle').textContent = g.levelTitle;
+    document.getElementById('gamifyTitle').textContent = g.rankName;
     document.getElementById('gamifyXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP`;
     document.getElementById('gamifyFill').style.width = `${g.progressPercent}%`;
+    const rankIconEl = document.getElementById('gamifyRankIcon');
+    if (rankIconEl) rankIconEl.src = `assets/badges/${g.rankIcon}`;
 
-    const earnedCount = g.badges.filter(b => b.earned).length;
-    document.getElementById('gamifyBadgesCount').textContent = `${earnedCount}/${g.badges.length}`;
+    const achievements = LexPrepProgress.getAchievements(DATA);
+    document.getElementById('gamifyBadgesCount').textContent = `${achievements.totalEarned}/${achievements.totalCount}`;
 
-    document.getElementById('gamifyBadges').innerHTML = g.badges.map(b => `
-      <div class="gamify-badge ${b.earned ? 'is-earned' : ''}">
-        <span class="gamify-badge__title">${escapeHtml(b.title)}</span>
-        <span class="gamify-badge__desc">${escapeHtml(b.desc)}</span>
+    document.getElementById('gamifyBadges').innerHTML = achievements.categories.map(cat => `
+      <div class="gamify-badge ${cat.earnedCount > 0 ? 'is-earned' : ''}">
+        <span class="gamify-badge__title">${escapeHtml(cat.title)}</span>
+        <span class="gamify-badge__desc">${cat.earnedCount} / ${cat.total}</span>
       </div>
-    `).join('');
+    `).join('') + '<a href="profile.html#stats" class="gamify-badges__link">Все достижения в профиле →</a>';
   }
 
   const gamifyBadgesToggle = document.getElementById('gamifyBadgesToggle');

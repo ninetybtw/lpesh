@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 132" width="120" height="132" role="img" aria-label="Значок Фемиды — Рубиновая">
+  <defs>
+    
+    <linearGradient id="ring-ruby" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff6b7a"/>
+      <stop offset="100%" stop-color="#6b0d1e"/>
+    </linearGradient>
+    <radialGradient id="inner-ruby" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0%" stop-color="#a11530"/>
+      <stop offset="100%" stop-color="#480815"/>
+    </radialGradient>
+    <linearGradient id="metal-ruby" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffe0e4"/>
+      <stop offset="45%" stop-color="#f0aab3"/>
+      <stop offset="100%" stop-color="#b6717d"/>
+    </linearGradient>
+    <radialGradient id="glow-ruby" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ff4d63" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ff4d63" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gem-ruby" cx="0.3" cy="0.3" r="0.8">
+      <stop offset="0%" stop-color="#ff8b96"/>
+      <stop offset="100%" stop-color="#7a0f22"/>
+    </radialGradient>
+    
+  </defs>
+  <circle cx="60" cy="60" r="52" fill="url(#glow-ruby)" opacity="0.55"/>
+  <circle cx="60" cy="66" r="54" fill="url(#ring-ruby)" stroke="#3d0512" stroke-width="3"/>
+  <circle cx="60" cy="66" r="46" fill="none" stroke="#3d0512" stroke-width="1.4" opacity="0.55"/>
+  <circle cx="60" cy="66" r="46" fill="url(#inner-ruby)"/>
+  
+    <g fill="url(#metal-ruby)" stroke="#0b1220" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      <!-- finial -->
+      <circle cx="60" cy="26" r="5" />
+      <!-- vertical pole -->
+      <rect x="57" y="30" width="6" height="46" rx="2" />
+      <!-- crossbeam -->
+      <rect x="26" y="38" width="68" height="5" rx="2.5" />
+      <!-- beam pivot -->
+      <circle cx="60" cy="40.5" r="4.5" fill="#ffffff" stroke="#0b1220" stroke-width="1.5"/>
+      <!-- left chain -->
+      <path d="M30 41 L22 62" stroke="#0b1220" stroke-width="2" fill="none"/>
+      <path d="M38 41 L30 62" stroke="#0b1220" stroke-width="2" fill="none"/>
+      <!-- right chain -->
+      <path d="M90 41 L98 62" stroke="#0b1220" stroke-width="2" fill="none"/>
+      <path d="M82 41 L90 62" stroke="#0b1220" stroke-width="2" fill="none"/>
+      <!-- left pan -->
+      <path d="M16 62 Q26 74 36 62" fill="none" stroke="#0b1220" stroke-width="3"/>
+      <path d="M16 62 Q26 72 36 62 L34 63 Q26 70 18 63 Z" fill="url(#metal-ruby)" stroke="none"/>
+      <!-- right pan -->
+      <path d="M84 62 Q94 74 104 62" fill="none" stroke="#0b1220" stroke-width="3"/>
+      <path d="M84 62 Q94 72 104 62 L102 63 Q94 70 86 63 Z" fill="url(#metal-ruby)" stroke="none"/>
+      <!-- base plinth -->
+      <path d="M42 76 H78 L84 88 H36 Z" />
+      <rect x="30" y="88" width="60" height="7" rx="2.5" />
+    </g>
+    
+  
+        <circle cx="60" cy="16" r="6.5" fill="url(#gem-ruby)" stroke="#3d0512" stroke-width="1.5"/>
+        <path d="M56.2 14.4 L60 10.5 L63.8 14.4 L60 21.5 Z" fill="#ffffff" opacity="0.55"/>
+        
+  <text x="60" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#3d0512" letter-spacing="0.5">РУБИНОВАЯ</text>
+</svg>

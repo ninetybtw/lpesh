@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPayment();
   initSubscription();
   initStats();
+  initGamification();
   initMyArticles();
   initThemeSwitch();
   initNotificationsSwitch();
@@ -245,6 +246,59 @@ function initStats() {
     `).join('');
     reviewLink.hidden = false;
   }
+}
+
+/* ---------------- Level, rank and achievements ---------------- */
+function initGamification() {
+  if (typeof LexPrepProgress === 'undefined' || typeof LEXPREP_DATA === 'undefined') return;
+  if (typeof LexPrepProgress.getGamification !== 'function') return;
+
+  const g = LexPrepProgress.getGamification();
+  document.getElementById('rankIcon').src = `assets/badges/${g.rankIcon}`;
+  document.getElementById('rankLevelNum').textContent = g.level;
+  document.getElementById('rankName').textContent = g.rankName;
+  document.getElementById('rankFill').style.width = `${g.progressPercent}%`;
+  document.getElementById('rankXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP до следующего уровня`;
+
+  const grid = document.getElementById('achvGrid');
+  if (!grid) return;
+
+  const achievements = LexPrepProgress.getAchievements(LEXPREP_DATA);
+
+  grid.innerHTML = achievements.categories.map(cat => `
+    <div class="achv-category">
+      <button class="achv-category__head" type="button" data-category-toggle="${cat.id}">
+        <div class="achv-category__info">
+          <div class="achv-category__title">${escapeAttr(cat.title)}</div>
+          <div class="achv-category__desc">${escapeAttr(cat.desc)}</div>
+        </div>
+        <span class="achv-category__count">${cat.earnedCount}/${cat.total}</span>
+      </button>
+      <div class="achv-category__list" id="achvList-${cat.id}" hidden>
+        ${cat.items.map(item => `
+          <div class="achv-item ${item.earned ? 'is-earned' : ''}">
+            <span class="achv-item__icon">
+              ${item.earned
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'}
+            </span>
+            <div>
+              <div class="achv-item__title">${escapeAttr(item.title)}</div>
+              ${item.desc ? `<div class="achv-item__desc">${escapeAttr(item.desc)}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('[data-category-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const list = document.getElementById(`achvList-${btn.dataset.categoryToggle}`);
+      if (list) list.hidden = !list.hidden;
+      btn.classList.toggle('is-open', list && !list.hidden);
+    });
+  });
 }
 
 function escapeAttr(str) {

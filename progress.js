@@ -220,50 +220,213 @@ const LexPrepProgress = (function () {
     return Math.round(sum / discipline.topics.length);
   }
 
-  const XP_LEVELS = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000];
-  const LEVEL_TITLES = ['Новичок', 'Ученик', 'Практикант', 'Знаток', 'Уверенный юрист', 'Специалист', 'Эксперт', 'Мастер', 'Гуру права', 'Легенда курса', 'Профессор права'];
+  /* ---------------- Levels, ranks (Femida tiers), XP ---------------- */
 
-  function getGamification(allData) {
-    const data = load();
+  const RANKS = [
+    { key: 'plain', name: 'Новичок', minLevel: 1, maxLevel: 4, icon: 'themis-standard.svg' },
+    { key: 'bronze', name: 'Студент', minLevel: 5, maxLevel: 9, icon: 'themis-bronze.svg' },
+    { key: 'gold', name: 'Уверенный', minLevel: 10, maxLevel: 14, icon: 'themis-gold.svg' },
+    { key: 'platinum', name: 'Практик', minLevel: 15, maxLevel: 19, icon: 'themis-platinum.svg' },
+    { key: 'diamond', name: 'Знаток', minLevel: 20, maxLevel: 24, icon: 'themis-diamond.svg' },
+    { key: 'ruby', name: 'Эксперт', minLevel: 25, maxLevel: 29, icon: 'themis-ruby.svg' },
+    { key: 'sapphire', name: 'Мастер LexPrep', minLevel: 30, maxLevel: Infinity, icon: 'themis-sapphire.svg' }
+  ];
+
+  function xpThreshold(level) {
+    return Math.round(100 * (level - 1) * level / 2);
+  }
+
+  function levelFromXp(xp) {
+    let level = 1;
+    while (xpThreshold(level + 1) <= xp) level++;
+    return level;
+  }
+
+  function getRank(level) {
+    return RANKS.find(r => level >= r.minLevel && level <= r.maxLevel) || RANKS[RANKS.length - 1];
+  }
+
+  function computeXp(data) {
     let xp = 0;
-
     Object.keys(data.tests).forEach(topicId => {
       data.tests[topicId].forEach(a => { xp += a.score * 2; });
     });
     data.examAttempts.forEach(a => { xp += a.score * 3; });
     Object.keys(data.cards).forEach(key => { xp += (data.cards[key].reviews || 0) * 2; });
+    return xp;
+  }
 
-    let level = 1;
-    for (let i = 1; i < XP_LEVELS.length; i++) {
-      if (xp >= XP_LEVELS[i]) level = i + 1;
-      else break;
-    }
-    const levelIndex = level - 1;
-    const currentThreshold = XP_LEVELS[levelIndex] || 0;
-    const nextThreshold = XP_LEVELS[levelIndex + 1] !== undefined ? XP_LEVELS[levelIndex + 1] : currentThreshold + 1500;
+  function getGamification() {
+    const data = load();
+    const xp = computeXp(data);
+    const level = levelFromXp(xp);
+    const rank = getRank(level);
+    const currentThreshold = xpThreshold(level);
+    const nextThreshold = xpThreshold(level + 1);
     const xpIntoLevel = xp - currentThreshold;
     const xpForNextLevel = nextThreshold - currentThreshold;
-    const progressPercent = Math.min(100, Math.round((xpIntoLevel / xpForNextLevel) * 100));
-
-    const stats = getStats(allData);
-    const badges = [
-      { id: 'first-steps', title: 'Первые шаги', desc: 'Пройди первый тест', earned: stats.testsCount >= 1 },
-      { id: 'excellent', title: 'Отличник', desc: 'Средний результат от 85%', earned: stats.avgScorePercent !== null && stats.avgScorePercent >= 85 },
-      { id: 'streak-3', title: 'Марафонец', desc: '3 дня подряд', earned: stats.streakDays >= 3 },
-      { id: 'streak-7', title: 'На волне', desc: '7 дней подряд', earned: stats.streakDays >= 7 },
-      { id: 'librarian', title: 'Библиотекарь', desc: '20 карточек повторено', earned: stats.cardsReviewed >= 20 },
-      { id: 'polymath', title: 'Знаток права', desc: '10 тем затронуто', earned: stats.topicsTouched >= 10 }
-    ];
+    const progressPercent = xpForNextLevel ? Math.min(100, Math.round((xpIntoLevel / xpForNextLevel) * 100)) : 100;
 
     return {
       xp,
       level,
-      levelTitle: LEVEL_TITLES[levelIndex] || LEVEL_TITLES[LEVEL_TITLES.length - 1],
+      rank: rank.key,
+      rankName: rank.name,
+      rankIcon: rank.icon,
       xpIntoLevel,
       xpForNextLevel,
-      progressPercent,
-      badges
+      progressPercent
     };
+  }
+
+  /* ---------------- Achievements (8 categories x 5 tiers) ---------------- */
+
+  function findDisciplineIdForTopic(allData, topicId) {
+    for (const d of allData) {
+      if (d.topics.some(t => t.id === topicId)) return d.id;
+    }
+    return null;
+  }
+
+  function getAchievements(allData) {
+    const data = load();
+    const baseStats = getStats(allData);
+
+    const touchedTopicIds = new Set();
+    Object.keys(data.tests).forEach(topicId => { if (data.tests[topicId].length) touchedTopicIds.add(topicId); });
+    data.examAttempts.forEach(a => a.topics.forEach(id => touchedTopicIds.add(id)));
+    Object.keys(data.cards).forEach(key => touchedTopicIds.add(key.split('::')[0]));
+
+    const disciplinesTouched = new Set();
+    touchedTopicIds.forEach(topicId => {
+      const discId = findDisciplineIdForTopic(allData, topicId);
+      if (discId) disciplinesTouched.add(discId);
+    });
+
+    let testsCount = 0, testScoreSum = 0, testScoreTotal = 0;
+    Object.keys(data.tests).forEach(topicId => {
+      data.tests[topicId].forEach(a => { testsCount++; testScoreSum += a.score; testScoreTotal += a.total; });
+    });
+    const testAvgPercent = testScoreTotal ? Math.round((testScoreSum / testScoreTotal) * 100) : 0;
+
+    let examScoreSum = 0, examScoreTotal = 0;
+    data.examAttempts.forEach(a => { examScoreSum += a.score; examScoreTotal += a.total; });
+    const examAvgPercent = examScoreTotal ? Math.round((examScoreSum / examScoreTotal) * 100) : 0;
+
+    const appVisited = localStorage.getItem('lexprep_visited_app') === '1';
+    const articlesPublished = JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]').length;
+    const notesData = JSON.parse(localStorage.getItem('lexprep_notes') || '{}');
+    const notesCount = Object.keys(notesData).filter(k => notesData[k] && notesData[k].trim().length > 0).length;
+
+    const totalTopics = allData.reduce((sum, d) => sum + d.topics.length, 0);
+    const totalDisciplines = allData.length;
+
+    const s = {
+      appVisited,
+      topicsTouched: baseStats.topicsTouched,
+      disciplinesTouched: disciplinesTouched.size,
+      testsCount,
+      testAvgPercent,
+      examAttemptsCount: data.examAttempts.length,
+      examAvgPercent,
+      cardsReviewed: baseStats.cardsReviewed,
+      streakDays: baseStats.streakDays,
+      articlesPublished,
+      notesCount
+    };
+
+    const CATEGORIES = [
+      {
+        id: 'start', title: 'Старт', desc: 'Первые шаги в приложении',
+        items: [
+          { title: 'Первое открытие', desc: 'Зайди в тренажёр', earned: s.appVisited },
+          { title: 'Первая тема', desc: 'Открой любую тему', earned: s.topicsTouched >= 1 },
+          { title: 'Первый тест', desc: 'Пройди первый тест', earned: s.testsCount >= 1 },
+          { title: 'Первая карточка', desc: 'Повтори хотя бы одну карточку', earned: s.cardsReviewed >= 1 },
+          { title: 'Первая заметка', desc: 'Запиши заметку по теме', earned: s.notesCount >= 1 }
+        ]
+      },
+      {
+        id: 'study', title: 'Учёба', desc: 'Изучение тем курса',
+        items: [
+          { title: '3 темы изучено', desc: 'Затронь 3 темы', earned: s.topicsTouched >= 3 },
+          { title: '8 тем изучено', desc: 'Затронь 8 тем', earned: s.topicsTouched >= 8 },
+          { title: '15 тем изучено', desc: 'Затронь 15 тем', earned: s.topicsTouched >= 15 },
+          { title: '25 тем изучено', desc: 'Затронь 25 тем', earned: s.topicsTouched >= 25 },
+          { title: 'Все темы изучены', desc: `Затронь все ${totalTopics} тем курса`, earned: s.topicsTouched >= totalTopics }
+        ]
+      },
+      {
+        id: 'tests', title: 'Тесты', desc: 'Прохождение и результаты тестов',
+        items: [
+          { title: 'Первый тест пройден', desc: 'Пройди 1 тест', earned: s.testsCount >= 1 },
+          { title: '5 тестов пройдено', desc: 'Пройди 5 тестов', earned: s.testsCount >= 5 },
+          { title: '15 тестов пройдено', desc: 'Пройди 15 тестов', earned: s.testsCount >= 15 },
+          { title: 'Средний балл 80%+', desc: 'Держи средний результат тестов от 80%', earned: s.testAvgPercent >= 80 },
+          { title: 'Средний балл 90%+', desc: 'Держи средний результат тестов от 90%', earned: s.testAvgPercent >= 90 }
+        ]
+      },
+      {
+        id: 'cards', title: 'Карточки', desc: 'Повторение карточек памяти',
+        items: [
+          { title: '10 карточек повторено', desc: '', earned: s.cardsReviewed >= 10 },
+          { title: '30 карточек повторено', desc: '', earned: s.cardsReviewed >= 30 },
+          { title: '75 карточек повторено', desc: '', earned: s.cardsReviewed >= 75 },
+          { title: '150 карточек повторено', desc: '', earned: s.cardsReviewed >= 150 },
+          { title: '300 карточек повторено', desc: '', earned: s.cardsReviewed >= 300 }
+        ]
+      },
+      {
+        id: 'streak', title: 'Серия', desc: 'Ежедневная активность',
+        items: [
+          { title: '3 дня подряд', desc: '', earned: s.streakDays >= 3 },
+          { title: '7 дней подряд', desc: '', earned: s.streakDays >= 7 },
+          { title: '14 дней подряд', desc: '', earned: s.streakDays >= 14 },
+          { title: '30 дней подряд', desc: '', earned: s.streakDays >= 30 },
+          { title: '60 дней подряд', desc: '', earned: s.streakDays >= 60 }
+        ]
+      },
+      {
+        id: 'explorer', title: 'Исследователь', desc: 'Изучение новых дисциплин',
+        items: [
+          { title: '1 дисциплина открыта', desc: '', earned: s.disciplinesTouched >= 1 },
+          { title: '2 дисциплины открыты', desc: '', earned: s.disciplinesTouched >= 2 },
+          { title: '3 дисциплины открыты', desc: '', earned: s.disciplinesTouched >= 3 },
+          { title: 'Все дисциплины открыты', desc: `Затронь все ${totalDisciplines} дисциплин`, earned: s.disciplinesTouched >= totalDisciplines },
+          { title: 'Полиглот права', desc: '15+ тем в разных дисциплинах', earned: s.topicsTouched >= 15 && s.disciplinesTouched >= 3 }
+        ]
+      },
+      {
+        id: 'community', title: 'Сообщество', desc: 'Публикации и вклад в базу знаний',
+        items: [
+          { title: 'Первая статья', desc: 'Опубликуй статью', earned: s.articlesPublished >= 1 },
+          { title: '3 статьи опубликовано', desc: '', earned: s.articlesPublished >= 3 },
+          { title: '5 статей опубликовано', desc: '', earned: s.articlesPublished >= 5 },
+          { title: 'Конспектолог', desc: 'Заметки на 5 темах', earned: s.notesCount >= 5 },
+          { title: '10 статей опубликовано', desc: '', earned: s.articlesPublished >= 10 }
+        ]
+      },
+      {
+        id: 'examiner', title: 'Экзаменатор', desc: 'Готовность к экзамену',
+        items: [
+          { title: '1 билет собран', desc: '', earned: s.examAttemptsCount >= 1 },
+          { title: '3 билета собрано', desc: '', earned: s.examAttemptsCount >= 3 },
+          { title: '5 билетов собрано', desc: '', earned: s.examAttemptsCount >= 5 },
+          { title: 'Результат экзамена 80%+', desc: '', earned: s.examAvgPercent >= 80 },
+          { title: 'Результат экзамена 95%+', desc: '', earned: s.examAvgPercent >= 95 }
+        ]
+      }
+    ];
+
+    let totalEarned = 0, totalCount = 0;
+    CATEGORIES.forEach(cat => {
+      cat.earnedCount = cat.items.filter(i => i.earned).length;
+      cat.total = cat.items.length;
+      totalEarned += cat.earnedCount;
+      totalCount += cat.total;
+    });
+
+    return { categories: CATEGORIES, totalEarned, totalCount };
   }
 
   function computeStreak(daySet) {
@@ -287,6 +450,8 @@ const LexPrepProgress = (function () {
     findTopic,
     getTopicProgress,
     getDisciplineProgress,
-    getGamification
+    getGamification,
+    getAchievements,
+    RANKS
   };
 })();
