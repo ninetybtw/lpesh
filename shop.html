@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Магазин</title>
+    <meta
+      name="description"
+      content="Магазин LexPrep: трать монеты, заработанные в тренажёре, на рамки для аватара и другие косметические награды."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/shop.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner">
+        <a href="index.html" class="logo">
+          <span class="logo__icon"></span>
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+            <li><a href="profile.html#stats" class="nav__link">Достижения</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="index.html" class="btn btn--ghost">На главную</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="profile.html" class="profile-dropdown__item">Мой профиль</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="shop-page">
+      <section class="shop-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Магазин</div>
+          <h1 class="page-title">Магазин наград</h1>
+          <p class="topic-desc">
+            Монеты начисляются за прогресс в тренажёре: тесты, повторение карточек и пробные экзамены. Трать их на рамки для аватара —
+            они видны везде, где показывается твой профиль.
+          </p>
+
+          <div class="shop-balance">
+            <div class="shop-balance__preview">
+              <span class="profile-avatar-editor__preview shop-balance__avatar" id="shopAvatarPreview">U</span>
+            </div>
+            <div class="shop-balance__info">
+              <div class="shop-balance__label">Твой баланс</div>
+              <div class="shop-balance__amount">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+                <span id="shopBalance">0</span> монет
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-grid" id="shopGrid"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="progress.js"></script>
+    <script src="script.js"></script>
+    <script src="shop.js"></script>
+  </body>
+</html>

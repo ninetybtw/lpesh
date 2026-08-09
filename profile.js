@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStats();
   initGamification();
   initMyArticles();
+  initReferral();
   initThemeSwitch();
   initNotificationsSwitch();
   initPasswordForm();
@@ -59,6 +60,8 @@ function initSections() {
 }
 
 /* ---------------- Hero + avatar helpers ---------------- */
+const AVATAR_FRAME_CLASSES = ['avatar-frame--bronze', 'avatar-frame--gold', 'avatar-frame--platinum', 'avatar-frame--ruby', 'avatar-frame--neon-blue', 'avatar-frame--neon-purple'];
+
 function renderAvatar(el, user) {
   if (!el) return;
   if (user.avatar) {
@@ -67,6 +70,12 @@ function renderAvatar(el, user) {
   } else {
     el.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
     el.style.backgroundImage = '';
+  }
+
+  el.classList.remove(...AVATAR_FRAME_CLASSES);
+  const equipped = localStorage.getItem('lexprep_shop_equipped');
+  if (equipped && equipped !== 'none') {
+    el.classList.add(`avatar-frame--${equipped}`);
   }
 }
 
@@ -390,6 +399,46 @@ function initMyArticles() {
   }
 
   render();
+}
+
+/* ---------------- Referral program (demo: link + promo code only, rewards TBD with backend) ---------------- */
+function getReferralCode() {
+  let code = localStorage.getItem('lexprep_referral_code');
+  if (!code) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let suffix = '';
+    for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    code = `LEX-${suffix}`;
+    localStorage.setItem('lexprep_referral_code', code);
+  }
+  return code;
+}
+
+function initReferral() {
+  const linkEl = document.getElementById('referralLink');
+  const codeEl = document.getElementById('referralCode');
+  const status = document.getElementById('referralCopyStatus');
+  if (!linkEl || !codeEl) return;
+
+  const code = getReferralCode();
+  const basePath = window.location.pathname.replace(/profile\.html$/, '');
+  const link = `${window.location.origin}${basePath}auth.html?ref=${code}`;
+
+  linkEl.textContent = link;
+  codeEl.textContent = code;
+
+  document.querySelectorAll('[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.copyTarget);
+      if (!target) return;
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        status.textContent = 'Скопировано в буфер обмена.';
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      }).catch(() => {
+        status.textContent = 'Не удалось скопировать — выдели и скопируй вручную.';
+      });
+    });
+  });
 }
 
 /* ---------------- Password change (demo: nothing is stored, only validated) ---------------- */

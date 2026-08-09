@@ -1,0 +1,117 @@
+/* ==========================================================================
+SHOP.CSS — страница магазина наград
+========================================================================== */
+
+.shop-page {
+  min-height: 100vh;
+  background: var(--color-bg-alt);
+}
+
+.shop-shell {
+  padding: 40px 0 72px;
+}
+
+.shop-balance {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  margin: 24px 0 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.shop-balance__avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 20px;
+}
+
+.shop-balance__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.shop-balance__amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.shop-balance__amount svg {
+  width: 22px;
+  height: 22px;
+  color: #d4af37;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 24px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.shop-item__preview {
+  margin-bottom: 8px;
+}
+
+.shop-item__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.shop-item__title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.shop-item__desc {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  min-height: 32px;
+}
+
+.shop-item__price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.shop-item__btn {
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .shop-balance {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}

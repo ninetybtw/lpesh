@@ -246,6 +246,22 @@ const LexPrepProgress = (function () {
     return RANKS.find(r => level >= r.minLevel && level <= r.maxLevel) || RANKS[RANKS.length - 1];
   }
 
+  const COINS_SPENT_KEY = 'lexprep_coins_spent';
+
+  function getCoins() {
+    const g = getGamification();
+    const earned = Math.floor(g.xp / 4);
+    const spent = Number(localStorage.getItem(COINS_SPENT_KEY) || 0);
+    return Math.max(0, earned - spent);
+  }
+
+  function spendCoins(amount) {
+    if (amount <= 0 || amount > getCoins()) return false;
+    const spent = Number(localStorage.getItem(COINS_SPENT_KEY) || 0);
+    localStorage.setItem(COINS_SPENT_KEY, String(spent + amount));
+    return true;
+  }
+
   function computeXp(data) {
     let xp = 0;
     Object.keys(data.tests).forEach(topicId => {
@@ -452,6 +468,8 @@ const LexPrepProgress = (function () {
     getDisciplineProgress,
     getGamification,
     getAchievements,
+    getCoins,
+    spendCoins,
     RANKS
   };
 })();

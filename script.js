@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initOnlineCounter();
 });
 
+/* ---------------- Coin balance badge (shop shortcut) ---------------- */
+function initCoinBadge() {
+  const countEl = document.getElementById('coinCount');
+  if (!countEl || typeof LexPrepProgress === 'undefined' || typeof LexPrepProgress.getCoins !== 'function') return;
+  countEl.textContent = LexPrepProgress.getCoins();
+}
+
 /* ---------------- Online users counter (demo, no real backend/websocket yet) ---------------- */
 function initOnlineCounter() {
   const countEl = document.getElementById('onlineCount');
@@ -320,8 +327,16 @@ function initAuthState() {
         avatarEl.style.backgroundImage = '';
         avatarEl.classList.remove('has-image');
       }
+
+      avatarEl.classList.remove('avatar-frame--bronze', 'avatar-frame--gold', 'avatar-frame--platinum', 'avatar-frame--ruby', 'avatar-frame--neon-blue', 'avatar-frame--neon-purple');
+      const equippedFrame = localStorage.getItem('lexprep_shop_equipped');
+      if (equippedFrame && equippedFrame !== 'none') {
+        avatarEl.classList.add(`avatar-frame--${equippedFrame}`);
+      }
     }
   }
+
+  initCoinBadge();
 
   const profileBtn = document.getElementById('profileBtn');
   const dropdown = document.getElementById('profileDropdown');

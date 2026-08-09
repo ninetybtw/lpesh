@@ -42,6 +42,10 @@
         </nav>
 
         <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
           <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
             <span class="online-badge__dot"></span>
             <span id="onlineCount">–</span> онлайн
@@ -109,6 +113,12 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h9M8 13h9M8 17h5"/></svg>
                 </span>
                 Мои статьи
+              </button>
+              <button class="profile-nav__item" type="button" data-section="referral">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 11l2 2 4-4"/></svg>
+                </span>
+                Реферальная программа
               </button>
               <button class="profile-nav__item" type="button" data-section="settings">
                 <span class="profile-nav__icon">
@@ -293,6 +303,37 @@
                   <div class="my-articles-list" id="myArticlesList"></div>
 
                   <a href="write-article.html" class="btn btn--primary" id="myArticlesWriteBtn" style="margin-top: 16px;">Написать статью</a>
+                </div>
+              </section>
+
+              <!-- РЕФЕРАЛЬНАЯ ПРОГРАММА -->
+              <section class="profile-section" id="section-referral" data-section-panel="referral">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Реферальная программа</h2>
+                  <p class="profile-card__subtitle">
+                    Приглашай друзей по личной ссылке или промокоду. Что именно они и ты получите за приглашение, решим отдельно —
+                    сейчас подключена только сама механика ссылки и кода, начисление наград появится вместе с бэкендом.
+                  </p>
+
+                  <div class="referral-block">
+                    <div class="referral-row">
+                      <div class="referral-row__info">
+                        <div class="referral-row__label">Реферальная ссылка</div>
+                        <div class="referral-row__value" id="referralLink">—</div>
+                      </div>
+                      <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralLink">Скопировать</button>
+                    </div>
+
+                    <div class="referral-row">
+                      <div class="referral-row__info">
+                        <div class="referral-row__label">Личный промокод</div>
+                        <div class="referral-row__value" id="referralCode">—</div>
+                      </div>
+                      <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralCode">Скопировать</button>
+                    </div>
+                  </div>
+
+                  <p class="referral-note" id="referralCopyStatus"></p>
                 </div>
               </section>
 

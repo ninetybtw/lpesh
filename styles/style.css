@@ -1226,6 +1226,58 @@ select.form-input option {
 .profile-btn__avatar.has-image {
   background-color: transparent;
 }
+
+/* ---------------- Shop: avatar frames ---------------- */
+.avatar-frame--bronze { box-shadow: 0 0 0 3px #cd8b4f, 0 0 0 5px #8a5a2b; }
+.avatar-frame--gold { box-shadow: 0 0 0 3px #f0cf6a, 0 0 0 5px #c99a2e; }
+.avatar-frame--platinum { box-shadow: 0 0 0 3px #e2e9ec, 0 0 0 5px #8fa3ad; }
+.avatar-frame--ruby { box-shadow: 0 0 0 3px #e94560, 0 0 0 5px #8f1330; }
+.avatar-frame--neon-blue { box-shadow: 0 0 0 3px #4fc3e0, 0 0 10px 3px rgba(79, 195, 224, 0.6); }
+.avatar-frame--neon-purple { box-shadow: 0 0 0 3px #a78bfa, 0 0 10px 3px rgba(167, 139, 250, 0.6); }
+
+/* ---------------- Shop button (round, with coin-count badge) ---------------- */
+.shop-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.shop-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.shop-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shop-btn__count {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 2px solid var(--color-white);
+  background: #d4af37;
+  color: #1a1300;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .profile-btn__name {
   font-size: 14px;
   font-weight: 600;
