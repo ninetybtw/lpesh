@@ -448,6 +448,10 @@ body {
   background: var(--color-bg-alt);
 }
 
+.rank-showcase__cta {
+  flex-shrink: 0;
+}
+
 .rank-showcase__icon {
   width: 76px;
   height: 76px;

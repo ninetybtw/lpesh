@@ -246,6 +246,12 @@ const LexPrepProgress = (function () {
     return RANKS.find(r => level >= r.minLevel && level <= r.maxLevel) || RANKS[RANKS.length - 1];
   }
 
+  function getLevelInfo(xp) {
+    const level = levelFromXp(xp);
+    const rank = getRank(level);
+    return { level, rank: rank.key, rankName: rank.name, rankIcon: rank.icon };
+  }
+
   const COINS_SPENT_KEY = 'lexprep_coins_spent';
 
   function getCoins() {
@@ -468,6 +474,7 @@ const LexPrepProgress = (function () {
     getDisciplineProgress,
     getGamification,
     getAchievements,
+    getLevelInfo,
     getCoins,
     spendCoins,
     RANKS
