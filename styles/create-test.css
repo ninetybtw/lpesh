@@ -1,0 +1,68 @@
+/* ==========================================================================
+CREATE-TEST.CSS — конструктор пользовательского теста
+========================================================================== */
+
+.qb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.qb-question {
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.qb-question__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.qb-question__num {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.qb-question__remove {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e5484d;
+}
+
+.qb-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.qb-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qb-option input[type="radio"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+
+.qb-option .form-input {
+  flex: 1;
+}
+
+@media (max-width: 620px) {
+  .qb-options {
+    grid-template-columns: 1fr;
+  }
+}

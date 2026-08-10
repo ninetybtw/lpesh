@@ -70,9 +70,11 @@ function initApp() {
 
   localStorage.setItem('lexprep_visited_app', '1');
 
-  let activeDiscipline = DATA[0];
-  let activeTopic = DATA[0].topics[0];
-  let activeView = 'notes';
+  const urlParams = new URLSearchParams(window.location.search);
+  let activeDiscipline = DATA.find(d => d.id === urlParams.get('discipline')) || DATA[0];
+  let activeTopic = activeDiscipline.topics.find(t => t.id === urlParams.get('topic')) || activeDiscipline.topics[0];
+  let activeView = urlParams.get('view') === 'test' ? 'test' : 'notes';
+  const highlightTestId = urlParams.get('highlight');
   let cardQueue = [];
   let cardPos = 0;
   let cardFlipped = false;
@@ -98,6 +100,10 @@ function initApp() {
     const spokenLower = String(spokenText || '').toLowerCase();
     const matched = keywords.filter(k => spokenLower.includes(k));
     return { ratio: matched.length / keywords.length, matched, total: keywords.length };
+  }
+
+  function getUserTests() {
+    return JSON.parse(localStorage.getItem('lexprep_user_tests') || '[]');
   }
 
   function buildCardQueue(forceAll) {
@@ -222,7 +228,7 @@ function initApp() {
       <div class="topic-tabs">
         <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
         <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
-        <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тест</button>
+        <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
         <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">Практика ВС РФ</button>
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
       </div>
@@ -258,33 +264,35 @@ function initApp() {
       </div>
 
       <div class="test-box" data-view-panel="test" ${activeView === 'test' ? '' : 'hidden'}>
-        <h2 class="test-box__title">Тест по теме</h2>
-        <div id="questionsWrap">
-          ${activeTopic.test.map((q, qIndex) => `
-            <div class="question" data-question="${qIndex}">
-              <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
-              <div class="answers">
-                ${q.options.map((option, i) => `
-                  <label class="answer">
-                    <input type="radio" name="q-${qIndex}" value="${i}">
-                    <span>${escapeHtml(option)}</span>
-                  </label>
-                `).join('')}
-              </div>
-              <div class="question-result" id="result-${qIndex}"></div>
-            </div>
-          `).join('')}
+        <div class="tests-toolbar">
+          <h2 class="test-box__title">Тесты по теме</h2>
+          <button class="btn btn--primary" type="button" id="createTestBtn">Создать тест</button>
         </div>
 
-        <div class="test-actions">
-          <button class="btn btn--primary" id="checkTestBtn">Проверить ответы</button>
+        <div class="test-card" id="mainTestCard">
+          <button class="test-card__head" type="button" data-test-toggle="main">
+            <span class="test-card__head-info">
+              <span class="test-card__title">Основной тест LexPrep</span>
+              <span class="test-card__meta">${activeTopic.test.length} вопросов</span>
+            </span>
+            <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="test-card__body" id="testBody-main" hidden></div>
         </div>
 
-        <div class="summary" id="summaryBox"></div>
+        <h3 class="profile-subheading">Пользовательские тесты</h3>
+        <div class="user-tests-list" id="userTestsList"></div>
       </div>
     `;
 
-    const checkBtn = document.getElementById('checkTestBtn');
+    renderUserTestsList();
+
+    const createTestBtn = document.getElementById('createTestBtn');
+    if (createTestBtn) {
+      createTestBtn.addEventListener('click', () => {
+        window.location.href = `create-test.html?discipline=${encodeURIComponent(activeDiscipline.id)}&topic=${encodeURIComponent(activeTopic.id)}`;
+      });
+    }
 
     contentView.querySelectorAll('[data-view]').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -314,61 +322,161 @@ function initApp() {
         renderCardSession();
       });
     });
+  }
 
-    if (checkBtn) {
-      checkBtn.addEventListener('click', () => {
-        let score = 0;
-        const wrongIndexes = [];
+  function renderTestQuestions(container, questions, progressKey) {
+    container.innerHTML = `
+      <div class="questions-wrap">
+        ${questions.map((q, qIndex) => `
+          <div class="question" data-question="${qIndex}">
+            <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
+            <div class="answers">
+              ${q.options.map((option, i) => `
+                <label class="answer">
+                  <input type="radio" name="q-${qIndex}" value="${i}">
+                  <span>${escapeHtml(option)}</span>
+                </label>
+              `).join('')}
+            </div>
+            <div class="question-result" data-result="${qIndex}"></div>
+          </div>
+        `).join('')}
+      </div>
 
-        activeTopic.test.forEach((q, qIndex) => {
-          const chosen = document.querySelector(`input[name="q-${qIndex}"]:checked`);
-          const resultBox = document.getElementById(`result-${qIndex}`);
+      <div class="test-actions">
+        <button class="btn btn--primary" type="button" data-check-test>Проверить ответы</button>
+      </div>
 
-          if (!chosen) {
-            resultBox.className = 'question-result is-wrong';
-            resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${escapeHtml(q.options[q.correct])}</strong>.<br>${escapeHtml(q.explanation)}`;
-            wrongIndexes.push(qIndex);
-            return;
-          }
+      <div class="summary" data-summary-box></div>
+    `;
 
-          const chosenIndex = Number(chosen.value);
+    const checkBtn = container.querySelector('[data-check-test]');
+    checkBtn.addEventListener('click', () => {
+      let score = 0;
+      const wrongIndexes = [];
 
-          if (chosenIndex === q.correct) {
-            score++;
-            resultBox.className = 'question-result is-correct';
-            resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation)}`;
-          } else {
-            resultBox.className = 'question-result is-wrong';
-            resultBox.innerHTML = `
-              Неверно.<br>
-              <strong>Твой ответ:</strong> ${escapeHtml(q.options[chosenIndex])}<br>
-              <strong>Правильный ответ:</strong> ${escapeHtml(q.options[q.correct])}<br>
-              <strong>Почему не так:</strong> ${escapeHtml(q.explanation)}
-            `;
-            wrongIndexes.push(qIndex);
-          }
-        });
+      questions.forEach((q, qIndex) => {
+        const chosen = container.querySelector(`input[name="q-${qIndex}"]:checked`);
+        const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
 
-        const summaryBox = document.getElementById('summaryBox');
-        const total = activeTopic.test.length;
-        const percent = Math.round((score / total) * 100);
+        if (!chosen) {
+          resultBox.className = 'question-result is-wrong';
+          resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${escapeHtml(q.options[q.correct])}</strong>.<br>${escapeHtml(q.explanation || '')}`;
+          wrongIndexes.push(qIndex);
+          return;
+        }
 
-        LexPrepProgress.recordTestAttempt(activeTopic.id, score, total, wrongIndexes);
-        renderTopics();
-        renderDisciplines();
-        renderGamifyBar();
+        const chosenIndex = Number(chosen.value);
 
-        summaryBox.classList.add('is-visible');
-        summaryBox.innerHTML = `
-          <h3>Итог теста</h3>
-          <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
-          <p>Результат: <strong>${percent}%</strong>.</p>
-          <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест.</p>
-        `;
-
-        summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (chosenIndex === q.correct) {
+          score++;
+          resultBox.className = 'question-result is-correct';
+          resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}`;
+        } else {
+          resultBox.className = 'question-result is-wrong';
+          resultBox.innerHTML = `
+            Неверно.<br>
+            <strong>Твой ответ:</strong> ${escapeHtml(q.options[chosenIndex])}<br>
+            <strong>Правильный ответ:</strong> ${escapeHtml(q.options[q.correct])}<br>
+            <strong>Почему не так:</strong> ${escapeHtml(q.explanation || '')}
+          `;
+          wrongIndexes.push(qIndex);
+        }
       });
+
+      const summaryBox = container.querySelector('[data-summary-box]');
+      const total = questions.length;
+      const percent = Math.round((score / total) * 100);
+
+      LexPrepProgress.recordTestAttempt(progressKey, score, total, wrongIndexes);
+      renderTopics();
+      renderDisciplines();
+      renderGamifyBar();
+
+      summaryBox.classList.add('is-visible');
+      summaryBox.innerHTML = `
+        <h3>Итог теста</h3>
+        <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
+        <p>Результат: <strong>${percent}%</strong>.</p>
+        <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест.</p>
+      `;
+
+      summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function renderUserTestsList() {
+    const listEl = document.getElementById('userTestsList');
+    if (!listEl) return;
+
+    const tests = getUserTests()
+      .filter(t => t.topicId === activeTopic.id)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    if (!tests.length) {
+      listEl.innerHTML = '<p class="topic-desc">Пока нет пользовательских тестов по этой теме — стань первым, кто его создаст.</p>';
+      initTestAccordion();
+      return;
     }
+
+    listEl.innerHTML = tests.map(test => `
+      <div class="test-card">
+        <button class="test-card__head" type="button" data-test-toggle="${test.id}">
+          <span class="test-card__author">
+            <span class="test-card__avatar">${escapeHtml((test.author || 'U').trim().charAt(0).toUpperCase())}</span>
+            <span class="test-card__author-info">
+              <span class="test-card__author-line">${escapeHtml(test.author || 'Аноним')} <span class="test-card__level">Ур. ${test.authorLevel || 1}</span></span>
+              <span class="test-card__title">${escapeHtml(test.title)}</span>
+            </span>
+          </span>
+          <span class="test-card__head-info">
+            <span class="test-card__meta">${test.questions.length} вопросов</span>
+            <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </button>
+        <div class="test-card__body" id="testBody-${test.id}" hidden></div>
+      </div>
+    `).join('');
+
+    initTestAccordion();
+
+    if (highlightTestId && tests.some(t => String(t.id) === highlightTestId)) {
+      const targetToggle = listEl.querySelector(`[data-test-toggle="${highlightTestId}"]`);
+      if (targetToggle) {
+        targetToggle.click();
+        targetToggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
+  function initTestAccordion() {
+    contentView.querySelectorAll('[data-test-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.testToggle;
+        const body = document.getElementById(`testBody-${id}`);
+        if (!body) return;
+
+        const isOpen = !body.hidden;
+
+        contentView.querySelectorAll('.test-card__body').forEach(b => {
+          b.hidden = true;
+          b.innerHTML = '';
+        });
+        contentView.querySelectorAll('.test-card__head').forEach(h => h.classList.remove('is-open'));
+
+        if (isOpen) return;
+
+        body.hidden = false;
+        btn.classList.add('is-open');
+
+        if (id === 'main') {
+          renderTestQuestions(body, activeTopic.test, activeTopic.id);
+        } else {
+          const test = getUserTests().find(t => String(t.id) === id);
+          if (test) renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);
+        }
+      });
+    });
   }
 
   function getNotes() {
