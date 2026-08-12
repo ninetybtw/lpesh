@@ -13,7 +13,7 @@
     <title>LexPrep — Магазин</title>
     <meta
       name="description"
-      content="Магазин LexPrep: трать монеты, заработанные в тренажёре, на рамки для аватара и другие косметические награды."
+      content="Магазин LexPrep: обменивай монеты, заработанные в тренажёре, на временный апгрейд тарифа."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -64,10 +64,14 @@
       <section class="shop-shell">
         <div class="container container--narrow">
           <div class="eyebrow">LexPrep / Магазин</div>
-          <h1 class="page-title">Магазин наград</h1>
+          <h1 class="page-title">Магазин</h1>
           <p class="topic-desc">
-            Монеты начисляются за прогресс в тренажёре: тесты, повторение карточек и пробные экзамены. Трать их на рамки для аватара —
-            они видны везде, где показывается твой профиль.
+            Монеты начисляются за прогресс в тренажёре: тесты, повторение карточек и пробные экзамены. Обменивай их на временный
+            апгрейд тарифа — переход открывается только с предыдущей ступени.
+          </p>
+          <p class="shop-demo-note">
+            Демо-режим: апгрейд тарифа за монеты — это локальная симуляция для этого браузера, без реальной оплаты и без
+            технической защиты лимитов. Настоящая система тарифов появится вместе с бэкендом.
           </p>
 
           <div class="shop-balance">
@@ -80,6 +84,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
                 <span id="shopBalance">0</span> монет
               </div>
+              <div class="shop-balance__plan" id="shopCurrentPlan">Текущий тариф: Базовая</div>
             </div>
           </div>
 

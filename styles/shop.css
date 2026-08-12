@@ -11,6 +11,17 @@ SHOP.CSS — страница магазина наград
   padding: 40px 0 72px;
 }
 
+.shop-demo-note {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .shop-balance {
   display: flex;
   align-items: center;
@@ -20,6 +31,14 @@ SHOP.CSS — страница магазина наград
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: var(--color-white);
+  flex-wrap: wrap;
+}
+
+.shop-balance__plan {
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
 }
 
 .shop-balance__avatar {
@@ -72,16 +91,23 @@ SHOP.CSS — страница магазина наград
   margin-bottom: 8px;
 }
 
-.shop-item__avatar {
+.shop-item__preview--plan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-item__plan-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--color-primary);
+  min-width: 84px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5f7bff, #7e95ff);
   color: #fff;
-  font-size: 22px;
+  font-size: 14px;
   font-weight: 800;
 }
 
