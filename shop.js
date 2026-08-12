@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!LexPrepProgress.spendCoins(item.price)) return;
         activatePlan(item.grantsTier);
         renderGrid();
+        if (typeof initCoinBadge === 'function') initCoinBadge();
       });
     });
   }

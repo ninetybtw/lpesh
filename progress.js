@@ -253,12 +253,14 @@ const LexPrepProgress = (function () {
   }
 
   const COINS_SPENT_KEY = 'lexprep_coins_spent';
+  const COINS_BONUS_KEY = 'lexprep_coins_bonus';
 
   function getCoins() {
     const g = getGamification();
     const earned = Math.floor(g.xp / 4);
+    const bonus = Number(localStorage.getItem(COINS_BONUS_KEY) || 0);
     const spent = Number(localStorage.getItem(COINS_SPENT_KEY) || 0);
-    return Math.max(0, earned - spent);
+    return Math.max(0, earned + bonus - spent);
   }
 
   function spendCoins(amount) {
@@ -266,6 +268,42 @@ const LexPrepProgress = (function () {
     const spent = Number(localStorage.getItem(COINS_SPENT_KEY) || 0);
     localStorage.setItem(COINS_SPENT_KEY, String(spent + amount));
     return true;
+  }
+
+  function addCoins(amount) {
+    if (amount <= 0) return getCoins();
+    const bonus = Number(localStorage.getItem(COINS_BONUS_KEY) || 0);
+    localStorage.setItem(COINS_BONUS_KEY, String(bonus + amount));
+    return getCoins();
+  }
+
+  /* ---------------- Duel rating (дуэли и турниры против бота) ---------------- */
+
+  const DUEL_STATS_KEY = 'lexprep_duel_stats';
+
+  function getDuelStats() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(DUEL_STATS_KEY) || 'null');
+      return Object.assign({ wins: 0, losses: 0, draws: 0, rating: 1000 }, raw || {});
+    } catch (e) {
+      return { wins: 0, losses: 0, draws: 0, rating: 1000 };
+    }
+  }
+
+  function recordDuelResult(outcome) {
+    const stats = getDuelStats();
+    if (outcome === 'win') {
+      stats.wins++;
+      stats.rating += 18;
+    } else if (outcome === 'loss') {
+      stats.losses++;
+      stats.rating = Math.max(0, stats.rating - 12);
+    } else {
+      stats.draws++;
+      stats.rating += 2;
+    }
+    localStorage.setItem(DUEL_STATS_KEY, JSON.stringify(stats));
+    return stats;
   }
 
   function computeXp(data) {
@@ -461,6 +499,27 @@ const LexPrepProgress = (function () {
     return streak;
   }
 
+  /* ---------------- Tournament record (турниры на выбывание против ботов) --- */
+
+  const TOURNEY_STATS_KEY = 'lexprep_tourney_stats';
+
+  function getTournamentStats() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(TOURNEY_STATS_KEY) || 'null');
+      return Object.assign({ played: 0, champions: 0 }, raw || {});
+    } catch (e) {
+      return { played: 0, champions: 0 };
+    }
+  }
+
+  function recordTournamentResult(isChampion) {
+    const stats = getTournamentStats();
+    stats.played++;
+    if (isChampion) stats.champions++;
+    localStorage.setItem(TOURNEY_STATS_KEY, JSON.stringify(stats));
+    return stats;
+  }
+
   return {
     getCardState,
     reviewCard,
@@ -477,6 +536,11 @@ const LexPrepProgress = (function () {
     getLevelInfo,
     getCoins,
     spendCoins,
+    addCoins,
+    getDuelStats,
+    recordDuelResult,
+    getTournamentStats,
+    recordTournamentResult,
     RANKS
   };
 })();
