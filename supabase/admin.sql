@@ -82,7 +82,11 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if public.is_admin() then
+  -- auth.uid() пустой, когда запрос выполняется не через обычный API-вызов
+  -- от имени пользователя (например, прямо в SQL Editor от postgres) —
+  -- такой контекст по умолчанию доверенный, иначе даже сам себя не
+  -- назначить первым админом.
+  if auth.uid() is null or public.is_admin() then
     return new;
   end if;
 
