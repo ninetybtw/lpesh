@@ -40,7 +40,6 @@
         <nav class="nav" id="nav">
           <ul class="nav__list">
             <li><a href="#features" class="nav__link">Возможности</a></li>
-            <li><a href="#demo" class="nav__link">Демо</a></li>
             <li><a href="#how" class="nav__link">Как это работает</a></li>
             <li><a href="#articles" class="nav__link">Статьи</a></li>
             <li><a href="#pricing" class="nav__link">Тарифы</a></li>
@@ -53,7 +52,6 @@
             <span class="online-badge__dot"></span>
             <span id="onlineCount">–</span> онлайн
           </div>
-          <a href="#pricing" class="btn btn--ghost" data-auth="guest">Тарифы</a>
           <a href="auth.html#login" class="btn btn--outline" data-auth="guest"
             >Войти</a
           >
@@ -84,6 +82,12 @@
               </button>
             </div>
           </div>
+
+          <button class="burger" id="burger" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileNav">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
       </div>
     </header>
@@ -92,16 +96,19 @@
     <div class="mobile-nav" id="mobileNav">
       <ul class="mobile-nav__list">
         <li><a href="#features" class="mobile-nav__link">Возможности</a></li>
-        <li><a href="#demo" class="mobile-nav__link">Демо</a></li>
         <li><a href="#how" class="mobile-nav__link">Как это работает</a></li>
         <li><a href="#articles" class="mobile-nav__link">Статьи</a></li>
         <li><a href="#pricing" class="mobile-nav__link">Тарифы</a></li>
         <li><a href="#faq" class="mobile-nav__link">FAQ</a></li>
         <!--  -->
       </ul>
-      <a href="auth.html#register" class="btn btn--primary btn--block"
-        >Начать бесплатно</a
-      >
+      <div class="mobile-nav__actions">
+        <a href="auth.html#login" class="btn btn--outline btn--block" data-auth="guest">Войти</a>
+        <a href="auth.html#register" class="btn btn--primary btn--block" data-auth="guest"
+          >Начать бесплатно</a
+        >
+        <a href="profile.html" class="btn btn--outline btn--block" data-auth="user">Мой профиль</a>
+      </div>
     </div>
 
     <main>
@@ -151,16 +158,38 @@
                 ><span class="dot dot--green"></span>
               </div>
               <div class="mock-card__body">
-                <div class="mock-line mock-line--title"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line mock-line--short"></div>
+                <div class="mock-info mock-info--enter" id="mockInfo">
+                  <div class="mock-info__title">Конспект</div>
+                  <p class="mock-info__desc">
+                    Разбор темы простым языком с примерами и судебной практикой —
+                    быстро войти в тему перед семинаром.
+                  </p>
+                </div>
                 <div class="mock-chip-row">
-                  <span class="mock-chip mock-chip--active" data-progress="62"
+                  <span
+                    class="mock-chip mock-chip--active"
+                    data-progress="62"
+                    data-desc="Разбор темы простым языком с примерами и судебной практикой — быстро войти в тему перед семинаром."
                     >Конспект</span
                   >
-                  <span class="mock-chip" data-progress="35">Карточки</span>
-                  <span class="mock-chip" data-progress="90">Тест</span>
-                  <span class="mock-chip" data-progress="48">Практика</span>
+                  <span
+                    class="mock-chip"
+                    data-progress="35"
+                    data-desc="ИИ подбирает карточки под твой уровень и повторяет их по интервалам — сложное не забывается, а простое не отнимает время."
+                    >Карточки</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="90"
+                    data-desc="Проверка знаний с разбором каждого ответа — сразу видно, что подтянуть перед семинаром или экзаменом."
+                    >Тест</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="48"
+                    data-desc="Судебные кейсы и практические задачи по теме — учишься применять норму, а не только запоминать её."
+                    >Практика</span
+                  >
                 </div>
                 <div class="mock-progress">
                   <div class="mock-progress__bar"></div>
@@ -242,47 +271,6 @@
               <p>
                 Предлагай правки и идеи карточек — после проверки редакцией
                 получай бонусы к подписке.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- DEMO NAVIGATION -->
-      <section class="section section--alt" id="demo">
-        <div class="container">
-          <div class="section__head reveal">
-            <span class="eyebrow">Демо</span>
-            <h2 class="section__title">Попробуй навигацию прямо здесь</h2>
-            <p class="section__subtitle">
-              Выбери отрасль права слева, затем предмет — так же, как в
-              приложении.
-            </p>
-          </div>
-          <div class="demo reveal">
-            <aside class="demo__categories" id="demoCategories">
-              <button class="demo__category is-active" data-category="civil">
-                Гражданское право
-              </button>
-              <button class="demo__category" data-category="ip">
-                Интеллектуальная собственность
-              </button>
-              <button class="demo__category" data-category="constitutional">
-                Конституционное право
-              </button>
-              <button class="demo__category" data-category="criminal">
-                Уголовный процесс
-              </button>
-              <button class="demo__category" data-category="international">
-                Международное право
-              </button>
-            </aside>
-            <div class="demo__subjects" id="demoSubjects">
-              <!-- script.js -->
-            </div>
-            <div class="demo__topic" id="demoTopic">
-              <p class="demo__topic-placeholder">
-                Выберите предмет, чтобы увидеть темы и наполнение
               </p>
             </div>
           </div>
@@ -629,7 +617,6 @@
         <div class="footer__col">
           <h4>Навигация</h4>
           <a href="#features">Возможности</a>
-          <a href="#demo">Демо</a>
           <a href="#articles">Статьи</a>
           <a href="#pricing">Тарифы</a>
           <a href="#faq">Вопросы</a>

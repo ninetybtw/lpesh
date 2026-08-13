@@ -971,11 +971,22 @@ body {
   .profile-nav {
     position: static;
     flex-direction: row;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .profile-nav__item {
-    white-space: nowrap;
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 460px) {
+  .profile-nav__item {
+    flex-basis: calc(50% - 4px);
   }
 }
 

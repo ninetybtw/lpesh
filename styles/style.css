@@ -165,13 +165,37 @@ STYLE.CSS — компоненты и секции страницы
   font-weight: 600;
   font-size: 16px;
 }
-@media (max-width: 900px) {
-  .nav,
-  .header__actions .btn {
+.mobile-nav__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+@media (max-width: 1180px) {
+  .nav {
     display: none;
   }
   .burger {
     display: flex;
+  }
+}
+@media (max-width: 900px) {
+  /* Гостевые CTA (Войти/Начать бесплатно) прячем — они дублируются в
+     мобильном меню. Обычные кнопки навигации (На главную, ← В тренажёр
+     и т.д.) оставляем видимыми: на внутренних страницах бургера нет, и
+     без этой кнопки пользователю не вернуться на сайт. */
+  .header__actions .btn[data-auth="guest"] {
+    display: none !important;
+  }
+}
+@media (max-width: 480px) {
+  /* На внутренних страницах логотип уже ведёт на главную, так что на
+     совсем узких экранах дублирующую текстовую кнопку прячем — иначе
+     она наезжает на профиль. */
+  .header__actions > .btn:not([data-auth]) {
+    display: none;
+  }
+  .profile-btn__name {
+    display: none;
   }
 }
 
@@ -326,42 +350,37 @@ STYLE.CSS — компоненты и секции страницы
 .mock-card__body {
   padding: 28px 24px 32px;
 }
-.mock-line {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--color-border);
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
+.mock-info {
+  min-height: 82px;
+  margin-bottom: 8px;
 }
-.mock-line::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.7),
-    transparent
-  );
-  transform: translateX(-100%);
-  animation: mockShimmer 2.6s ease-in-out infinite;
+.mock-info__title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 6px;
 }
-.mock-line--title {
-  height: 18px;
-  width: 70%;
-  background: var(--color-primary-light);
+.mock-info__desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
 }
-.mock-line--short {
-  width: 45%;
+.mock-info--enter {
+  animation: mockInfoEnter 0.4s ease;
 }
-@keyframes mockShimmer {
-  0% {
-    transform: translateX(-100%);
+@keyframes mockInfoEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  60%,
-  100% {
-    transform: translateX(100%);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mock-info--enter {
+    animation: none;
   }
 }
 .mock-chip-row {
@@ -1330,39 +1349,6 @@ select.form-input option {
 }
 
 /* guest / user состояние */
-[data-auth="guest"],
-[data-auth="user"] {
-  display: none;
-}
-body.is-guest [data-auth="guest"] {
-  display: inline-flex;
-}
-body.is-authed [data-auth="user"] {
-  display: inline-flex;
-}
-
-[data-auth="guest"],
-[data-auth="user"] {
-  display: none !important;
-}
-
-body.is-guest [data-auth="guest"] {
-  display: inline-flex !important;
-}
-
-body.is-authed [data-auth="user"] {
-  display: inline-flex !important;
-}
-
-body.is-guest .profile-menu[data-auth="user"],
-body.is-authed .profile-menu[data-auth="guest"] {
-  display: none !important;
-}
-
-body.is-authed .profile-menu[data-auth="user"] {
-  display: block !important;
-}
-
 [data-auth="guest"],
 [data-auth="user"] {
   display: none !important;

@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNav();
   initSmoothAnchors();
   initAccordion();
-  initDemoNavigation();
   initHeroMock();
   initFeedbackForm();
   initRevealOnScroll();
@@ -65,13 +64,15 @@ function initMobileNav() {
   const mobileNav = document.getElementById('mobileNav');
   if (!burger || !mobileNav) return;
   burger.addEventListener('click', () => {
-    burger.classList.toggle('is-active');
-    mobileNav.classList.toggle('is-open');
+    const isOpen = burger.classList.toggle('is-active');
+    mobileNav.classList.toggle('is-open', isOpen);
+    burger.setAttribute('aria-expanded', String(isOpen));
   });
   mobileNav.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       burger.classList.remove('is-active');
       mobileNav.classList.remove('is-open');
+      burger.setAttribute('aria-expanded', 'false');
     });
   });
 }
@@ -121,14 +122,26 @@ function initHeroMock() {
   const card = document.querySelector('.mock-card');
   const chips = document.querySelectorAll('.mock-chip');
   const progressBar = document.querySelector('.mock-progress__bar');
+  const infoBox = document.getElementById('mockInfo');
+  const infoTitle = infoBox ? infoBox.querySelector('.mock-info__title') : null;
+  const infoDesc = infoBox ? infoBox.querySelector('.mock-info__desc') : null;
 
   if (chips.length && progressBar) {
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
+        if (chip.classList.contains('mock-chip--active')) return;
         chips.forEach(c => c.classList.remove('mock-chip--active'));
         chip.classList.add('mock-chip--active');
         const value = chip.dataset.progress || '62';
         progressBar.style.width = value + '%';
+
+        if (infoBox && infoTitle && infoDesc) {
+          infoBox.classList.remove('mock-info--enter');
+          void infoBox.offsetWidth; // перезапуск CSS-анимации
+          infoTitle.textContent = chip.textContent.trim();
+          infoDesc.textContent = chip.dataset.desc || '';
+          infoBox.classList.add('mock-info--enter');
+        }
       });
     });
   }
@@ -176,121 +189,6 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-/* ---------------- Demo navigation (Avito-style) ---------------- */
-const DEMO_DATA = {
-  civil: {
-    subjects: [
-      { id: 'obligations', name: 'Обязательственное право' },
-      { id: 'property', name: 'Вещное право' },
-      { id: 'contracts', name: 'Договорное право' },
-    ],
-    topics: {
-      obligations: { title: 'Понятие и виды обязательств', tags: ['Конспект', 'Карточки', 'Тест', 'Практика ВС РФ'] },
-      property: { title: 'Право собственности и его формы', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-      contracts: { title: 'Существенные условия договора', tags: ['Конспект', 'Тест', 'Судебная практика'] },
-    },
-  },
-  ip: {
-    subjects: [
-      { id: 'copyright', name: 'Авторское право' },
-      { id: 'patent', name: 'Патентное право' },
-      { id: 'trademark', name: 'Товарные знаки' },
-    ],
-    topics: {
-      copyright: { title: 'Объекты авторских прав', tags: ['Конспект', 'Карточки', 'Тест'] },
-      patent: { title: 'Условия патентоспособности', tags: ['Конспект', 'Практика Роспатента'] },
-      trademark: { title: 'Регистрация товарного знака', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-    },
-  },
-  constitutional: {
-    subjects: [
-      { id: 'rights', name: 'Права и свободы человека' },
-      { id: 'system', name: 'Система органов власти' },
-      { id: 'amendments', name: 'Порядок изменения Конституции' },
-    ],
-    topics: {
-      rights: { title: 'Классификация конституционных прав', tags: ['Конспект', 'Карточки', 'Практика КС РФ'] },
-      system: { title: 'Разделение властей в РФ', tags: ['Конспект', 'Тест', 'Билеты к экзамену'] },
-      amendments: { title: 'Процедура внесения поправок', tags: ['Конспект', 'Карточки'] },
-    },
-  },
-  criminal: {
-    subjects: [
-      { id: 'proceedings', name: 'Стадии уголовного процесса' },
-      { id: 'evidence', name: 'Доказательства' },
-      { id: 'appeal', name: 'Апелляция и кассация' },
-    ],
-    topics: {
-      proceedings: { title: 'Возбуждение уголовного дела', tags: ['Конспект', 'Карточки', 'Тест'] },
-      evidence: { title: 'Виды и допустимость доказательств', tags: ['Конспект', 'Практика судов', 'Билеты к экзамену'] },
-      appeal: { title: 'Основания для отмены приговора', tags: ['Конспект', 'Карточки'] },
-    },
-  },
-  international: {
-    subjects: [
-      { id: 'treaties', name: 'Международные договоры' },
-      { id: 'jurisdiction', name: 'Юрисдикция государств' },
-      { id: 'humanrights', name: 'Международное право прав человека' },
-    ],
-    topics: {
-      treaties: { title: 'Порядок заключения договоров', tags: ['Конспект', 'Тест'] },
-      jurisdiction: { title: 'Принципы экстерриториальности', tags: ['Конспект', 'Карточки', 'Практика ЕСПЧ'] },
-      humanrights: { title: 'Механизмы защиты прав человека', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-    },
-  },
-};
-
-function initDemoNavigation() {
-  const categoryButtons = document.querySelectorAll('.demo__category');
-  const subjectsContainer = document.getElementById('demoSubjects');
-  const topicContainer = document.getElementById('demoTopic');
-  if (!categoryButtons.length || !subjectsContainer || !topicContainer) return;
-
-  function renderSubjects(categoryKey) {
-    const category = DEMO_DATA[categoryKey];
-    subjectsContainer.innerHTML = '';
-    category.subjects.forEach((subject, index) => {
-      const btn = document.createElement('button');
-      btn.className = 'demo__subject' + (index === 0 ? ' is-active' : '');
-      btn.textContent = subject.name;
-      btn.dataset.subject = subject.id;
-      btn.addEventListener('click', () => {
-        subjectsContainer.querySelectorAll('.demo__subject').forEach(b => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        renderTopic(categoryKey, subject.id);
-      });
-      subjectsContainer.appendChild(btn);
-    });
-    if (category.subjects.length) {
-      renderTopic(categoryKey, category.subjects[0].id);
-    }
-  }
-
-  function renderTopic(categoryKey, subjectId) {
-    const topic = DEMO_DATA[categoryKey].topics[subjectId];
-    if (!topic) {
-      topicContainer.innerHTML = '<p class="demo__topic-placeholder">Тема не найдена</p>';
-      return;
-    }
-    topicContainer.innerHTML = `
-      <div class="demo__topic-title">${escapeHtml(topic.title)}</div>
-      <div class="demo__topic-tags">
-        ${topic.tags.map(tag => `<span class="demo__topic-tag">${escapeHtml(tag)}</span>`).join('')}
-      </div>
-    `;
-  }
-
-  categoryButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      categoryButtons.forEach(b => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      renderSubjects(btn.dataset.category);
-    });
-  });
-
-  renderSubjects(categoryButtons[0].dataset.category);
 }
 
 /* ---------------- Reveal on scroll ---------------- */
