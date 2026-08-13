@@ -277,6 +277,26 @@ const LexPrepProgress = (function () {
     return getCoins();
   }
 
+  /* ---------------- Инвентарь разовых покупок магазина ---------------- */
+
+  const INVENTORY_KEY = 'lexprep_inventory';
+
+  function getInventory() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(INVENTORY_KEY) || 'null');
+      return Object.assign({ testAttempts: 0, aiRequests: 0, tourneyTickets: 0 }, raw || {});
+    } catch (e) {
+      return { testAttempts: 0, aiRequests: 0, tourneyTickets: 0 };
+    }
+  }
+
+  function addInventory(key, amount) {
+    const inv = getInventory();
+    inv[key] = (inv[key] || 0) + amount;
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inv));
+    return inv;
+  }
+
   /* ---------------- Duel rating (дуэли и турниры против бота) ---------------- */
 
   const DUEL_STATS_KEY = 'lexprep_duel_stats';
@@ -541,6 +561,8 @@ const LexPrepProgress = (function () {
     recordDuelResult,
     getTournamentStats,
     recordTournamentResult,
+    getInventory,
+    addInventory,
     RANKS
   };
 })();

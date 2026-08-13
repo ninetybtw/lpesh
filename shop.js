@@ -35,6 +35,39 @@ const SHOP_ITEMS = [
   }
 ];
 
+const CONSUMABLE_ITEMS = [
+  {
+    id: 'test-attempts-2',
+    title: '2 попытки теста',
+    desc: 'Дополнительные попытки прохождения теста сверх дневного лимита.',
+    price: 100,
+    amount: 2,
+    unit: 'попыт.',
+    inventoryKey: 'testAttempts',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+  },
+  {
+    id: 'ai-requests-3',
+    title: '3 запроса ИИ-консультанту',
+    desc: 'Дополнительные запросы к ИИ-консультанту сверх дневного лимита.',
+    price: 120,
+    amount: 3,
+    unit: 'запр.',
+    inventoryKey: 'aiRequests',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+  },
+  {
+    id: 'tourney-ticket-1',
+    title: 'Билет участия в турнире',
+    desc: 'Один билет на турнир — не тратит обычный взнос монетами.',
+    price: 70,
+    amount: 1,
+    unit: 'билет',
+    inventoryKey: 'tourneyTickets',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>'
+  }
+];
+
 function getActivePlanTier() {
   const tier = localStorage.getItem(PLAN_TIER_KEY) || 'basic';
   if (tier === 'basic') return 'basic';
@@ -68,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceEl = document.getElementById('shopBalance');
   const planEl = document.getElementById('shopCurrentPlan');
   const grid = document.getElementById('shopGrid');
+  const consumableGrid = document.getElementById('shopConsumableGrid');
 
   function renderAvatar() {
     if (user.avatar) {
@@ -131,6 +165,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!LexPrepProgress.spendCoins(item.price)) return;
         activatePlan(item.grantsTier);
         renderGrid();
+        renderConsumables();
+        if (typeof initCoinBadge === 'function') initCoinBadge();
+      });
+    });
+  }
+
+  function renderConsumables() {
+    if (!consumableGrid) return;
+    const balance = LexPrepProgress.getCoins();
+    const inventory = LexPrepProgress.getInventory();
+
+    consumableGrid.innerHTML = CONSUMABLE_ITEMS.map(item => {
+      const canAfford = balance >= item.price;
+      const owned = inventory[item.inventoryKey] || 0;
+      const actionHtml = canAfford
+        ? `<button class="btn btn--primary shop-item__btn" type="button" data-buy-consumable="${item.id}">Купить за ${item.price}</button>`
+        : `<button class="btn btn--outline shop-item__btn" type="button" disabled>Не хватает монет</button>`;
+
+      return `
+        <div class="shop-item">
+          <div class="shop-item__preview shop-item__preview--icon">
+            <span class="shop-item__icon-badge">${item.icon}</span>
+          </div>
+          <div class="shop-item__title">${escapeHtml(item.title)}</div>
+          <div class="shop-item__desc">${escapeHtml(item.desc)}</div>
+          <div class="shop-item__owned">У тебя: ${owned} ${escapeHtml(item.unit)}</div>
+          <div class="shop-item__price">${item.price} монет</div>
+          ${actionHtml}
+        </div>
+      `;
+    }).join('');
+
+    consumableGrid.querySelectorAll('[data-buy-consumable]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.buyConsumable;
+        const item = CONSUMABLE_ITEMS.find(i => i.id === id);
+        if (!item) return;
+        if (!LexPrepProgress.spendCoins(item.price)) return;
+        LexPrepProgress.addInventory(item.inventoryKey, item.amount);
+        renderGrid();
+        renderConsumables();
         if (typeof initCoinBadge === 'function') initCoinBadge();
       });
     });
@@ -144,4 +219,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderAvatar();
   renderGrid();
+  renderConsumables();
 });

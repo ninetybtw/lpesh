@@ -69,10 +69,19 @@ SHOP.CSS — страница магазина наград
   color: #d4af37;
 }
 
+.shop-section-title {
+  font-size: 17px;
+  margin: 32px 0 14px;
+}
+
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
+}
+
+.shop-grid + .shop-section-title {
+  margin-top: 8px;
 }
 
 .shop-item {
@@ -85,6 +94,7 @@ SHOP.CSS — страница магазина наград
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: var(--color-white);
+  height: 100%;
 }
 
 .shop-item__preview {
@@ -111,6 +121,32 @@ SHOP.CSS — страница магазина наград
   font-weight: 800;
 }
 
+.shop-item__preview--icon {
+  height: 40px;
+}
+
+.shop-item__icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5f7bff, #7e95ff);
+  color: #fff;
+}
+
+.shop-item__icon-badge svg {
+  width: 19px;
+  height: 19px;
+}
+
+.shop-item__owned {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
 .shop-item__title {
   font-size: 14.5px;
   font-weight: 800;
@@ -120,7 +156,7 @@ SHOP.CSS — страница магазина наград
 .shop-item__desc {
   font-size: 12.5px;
   color: var(--color-text-muted);
-  min-height: 32px;
+  flex: 1;
 }
 
 .shop-item__price {

@@ -25,6 +25,26 @@ STYLE.CSS — компоненты и секции страницы
   height: 76px;
 }
 
+/* На главной странице ссылок в nav заметно больше, чем в шапках
+   внутренних страниц — центрируем их между лого и правым блоком,
+   а не оставляем прижатыми к правому краю. */
+.header__inner--centered {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+}
+
+.header__inner--centered .nav {
+  justify-self: center;
+}
+
+@media (max-width: 1180px) {
+  .header__inner--centered {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+}
+
 .header__actions {
   display: flex;
   align-items: center;

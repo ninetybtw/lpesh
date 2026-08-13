@@ -276,14 +276,14 @@ function initGamification() {
 
   grid.innerHTML = achievements.categories.map(cat => `
     <div class="achv-category">
-      <div class="achv-category__head">
+      <button class="achv-category__head" type="button" data-category-toggle="${cat.id}" aria-expanded="false">
         <div class="achv-category__info">
           <div class="achv-category__title">${escapeAttr(cat.title)}</div>
           <div class="achv-category__desc">${escapeAttr(cat.desc)}</div>
         </div>
         <span class="achv-category__count">${cat.earnedCount}/${cat.total}</span>
-      </div>
-      <div class="achv-category__list">
+      </button>
+      <div class="achv-category__list" id="achvList-${cat.id}">
         ${cat.items.map(item => `
           <div class="achv-item ${item.earned ? 'is-earned' : ''}">
             <span class="achv-item__icon">
@@ -300,6 +300,23 @@ function initGamification() {
       </div>
     </div>
   `).join('');
+
+  grid.querySelectorAll('[data-category-toggle]').forEach(btn => {
+    const list = document.getElementById(`achvList-${btn.dataset.categoryToggle}`);
+    if (!list) return;
+    btn.addEventListener('click', () => {
+      const isOpen = btn.classList.contains('is-open');
+      if (isOpen) {
+        btn.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+        list.style.maxHeight = null;
+      } else {
+        btn.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+        list.style.maxHeight = list.scrollHeight + 'px';
+      }
+    });
+  });
 }
 
 function escapeAttr(str) {
