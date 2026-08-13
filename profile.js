@@ -584,25 +584,26 @@ function initPrivacyModal() {
 }
 
 /* ---------------- Danger zone ---------------- */
+// Настоящее удаление учётной записи в Supabase требует service_role
+// (Edge Function) — с одним anon-ключом на фронтенде пользователь не
+// может удалить сам себя из auth.users. Это отдельный следующий шаг;
+// пока кнопка честно только выходит из аккаунта и чистит локальные
+// данные, не обещая того, чего ещё не умеет.
 function initDangerZone() {
   const deleteBtn = document.getElementById('deleteAccountBtn');
   deleteBtn.addEventListener('click', async () => {
-    const confirmed = window.confirm('Удалить аккаунт без возможности восстановления? Данные для входа и профиль на сервере будут удалены безвозвратно.');
+    const confirmed = window.confirm('Выйти из аккаунта и стереть локальный прогресс в этом браузере? Сама учётная запись (email и пароль) пока останется — удаление аккаунта на сервере появится отдельным шагом.');
     if (!confirmed) return;
 
     deleteBtn.disabled = true;
     try {
       if (typeof LexPrepApi !== 'undefined') {
-        await LexPrepApi.deleteAccount();
+        await LexPrepApi.logout();
       }
     } catch (err) {
-      alert('Не удалось удалить аккаунт: ' + err.message);
-      deleteBtn.disabled = false;
-      return;
+      console.error('Не удалось завершить сессию на сервере:', err.message);
     }
 
-    // Прогресс, монеты, тарифы и остальная демо-часть пока живут только
-    // в этом браузере — их тоже стираем, раз аккаунт удалён целиком.
     Object.keys(localStorage)
       .filter(key => key.startsWith('lexprep_'))
       .forEach(key => localStorage.removeItem(key));

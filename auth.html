@@ -137,7 +137,7 @@
           <p class="auth-error" id="authError" hidden></p>
 
           <div class="auth-success" id="authSuccess">
-            <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-success__icon"><path d="M4 12l5 5L20 6"/></svg>Готово, входим…</p>
+            <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-success__icon"><path d="M4 12l5 5L20 6"/></svg><span id="authSuccessText">Готово, входим…</span></p>
           </div>
         </div>
       </div>
@@ -152,7 +152,8 @@
 </footer>
 
 <script src="validation.js"></script>
-<script src="api.js"></script>
+<script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js"></script>
 <script src="script.js"></script>
 <script src="auth.js"></script>
 </body>

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('.auth-tab');
   const panels = document.querySelectorAll('.auth-panel');
   const success = document.getElementById('authSuccess');
+  const successText = document.getElementById('authSuccessText');
 
   if (!tabs.length || !panels.length) return;
 
@@ -80,10 +81,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('regName').value;
         submitBtn.disabled = true;
         try {
-          const user = await LexPrepApi.register({ name, email, password });
-          localStorage.setItem('lexprep_user', JSON.stringify(user));
-          if (success) success.classList.add('is-visible');
-          setTimeout(() => { window.location.href = 'index.html'; }, 900);
+          const result = await LexPrepApi.register({ name, email, password });
+          if (result.pendingConfirmation) {
+            if (successText) successText.textContent = `Осталось подтвердить email — мы отправили ссылку на ${result.email}.`;
+            if (success) success.classList.add('is-visible');
+            panel.reset();
+          } else {
+            localStorage.setItem('lexprep_user', JSON.stringify(result.user));
+            if (successText) successText.textContent = 'Готово, входим…';
+            if (success) success.classList.add('is-visible');
+            setTimeout(() => { window.location.href = 'index.html'; }, 900);
+          }
         } catch (err) {
           showAuthError(err.message);
         } finally {
@@ -95,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const user = await LexPrepApi.login({ email, password });
           localStorage.setItem('lexprep_user', JSON.stringify(user));
+          if (successText) successText.textContent = 'Готово, входим…';
           if (success) success.classList.add('is-visible');
           setTimeout(() => { window.location.href = 'index.html'; }, 900);
         } catch (err) {
