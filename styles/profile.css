@@ -541,9 +541,6 @@ body {
   padding: 13px 14px;
   text-align: left;
   background: var(--color-white);
-}
-
-.achv-category__head.is-open {
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -575,10 +572,6 @@ body {
   gap: 2px;
   padding: 6px;
   background: var(--color-bg-alt);
-}
-
-.achv-category__list[hidden] {
-  display: none;
 }
 
 .achv-item {

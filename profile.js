@@ -276,14 +276,14 @@ function initGamification() {
 
   grid.innerHTML = achievements.categories.map(cat => `
     <div class="achv-category">
-      <button class="achv-category__head" type="button" data-category-toggle="${cat.id}">
+      <div class="achv-category__head">
         <div class="achv-category__info">
           <div class="achv-category__title">${escapeAttr(cat.title)}</div>
           <div class="achv-category__desc">${escapeAttr(cat.desc)}</div>
         </div>
         <span class="achv-category__count">${cat.earnedCount}/${cat.total}</span>
-      </button>
-      <div class="achv-category__list" id="achvList-${cat.id}" hidden>
+      </div>
+      <div class="achv-category__list">
         ${cat.items.map(item => `
           <div class="achv-item ${item.earned ? 'is-earned' : ''}">
             <span class="achv-item__icon">
@@ -300,14 +300,6 @@ function initGamification() {
       </div>
     </div>
   `).join('');
-
-  grid.querySelectorAll('[data-category-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const list = document.getElementById(`achvList-${btn.dataset.categoryToggle}`);
-      if (list) list.hidden = !list.hidden;
-      btn.classList.toggle('is-open', list && !list.hidden);
-    });
-  });
 }
 
 function escapeAttr(str) {
