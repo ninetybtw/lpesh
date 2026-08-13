@@ -68,20 +68,43 @@ const CONSUMABLE_ITEMS = [
   }
 ];
 
+const TIER_RANK = { basic: 0, pro: 1, max: 2 };
+
+// Тариф может быть куплен за монеты локально (localStorage) или выдан
+// админом через профиль на сервере (profiles.plan_tier/plan_expires_at,
+// синхронизируется в кэш lexprep_user) — действует более высокий из
+// двух источников, с большим сроком при равном уровне.
+function getEffectivePlan() {
+  const localTier = localStorage.getItem(PLAN_TIER_KEY) || 'basic';
+  const localExpires = Number(localStorage.getItem(PLAN_EXPIRES_KEY) || 0);
+  const localValid = localTier !== 'basic' && Date.now() <= localExpires;
+
+  let serverTier = 'basic';
+  let serverExpires = 0;
+  try {
+    const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    if (user && user.planTier && user.planExpiresAt) {
+      serverTier = user.planTier;
+      serverExpires = new Date(user.planExpiresAt).getTime();
+    }
+  } catch (e) { /* ignore */ }
+  const serverValid = serverTier !== 'basic' && Date.now() <= serverExpires;
+
+  if (!localValid && !serverValid) return { tier: 'basic', expires: 0 };
+  if (localValid && !serverValid) return { tier: localTier, expires: localExpires };
+  if (!localValid && serverValid) return { tier: serverTier, expires: serverExpires };
+
+  return TIER_RANK[serverTier] >= TIER_RANK[localTier]
+    ? { tier: serverTier, expires: serverExpires }
+    : { tier: localTier, expires: localExpires };
+}
+
 function getActivePlanTier() {
-  const tier = localStorage.getItem(PLAN_TIER_KEY) || 'basic';
-  if (tier === 'basic') return 'basic';
-  const expires = Number(localStorage.getItem(PLAN_EXPIRES_KEY) || 0);
-  if (Date.now() > expires) {
-    localStorage.removeItem(PLAN_TIER_KEY);
-    localStorage.removeItem(PLAN_EXPIRES_KEY);
-    return 'basic';
-  }
-  return tier;
+  return getEffectivePlan().tier;
 }
 
 function getPlanDaysLeft() {
-  const expires = Number(localStorage.getItem(PLAN_EXPIRES_KEY) || 0);
+  const expires = getEffectivePlan().expires;
   return Math.max(0, Math.ceil((expires - Date.now()) / (24 * 60 * 60 * 1000)));
 }
 

@@ -255,12 +255,22 @@ const LexPrepProgress = (function () {
   const COINS_SPENT_KEY = 'lexprep_coins_spent';
   const COINS_BONUS_KEY = 'lexprep_coins_bonus';
 
+  function getServerBonusCoins() {
+    try {
+      const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+      return (user && user.bonusCoins) || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   function getCoins() {
     const g = getGamification();
     const earned = Math.floor(g.xp / 4);
     const bonus = Number(localStorage.getItem(COINS_BONUS_KEY) || 0);
+    const serverBonus = getServerBonusCoins();
     const spent = Number(localStorage.getItem(COINS_SPENT_KEY) || 0);
-    return Math.max(0, earned + bonus - spent);
+    return Math.max(0, earned + bonus + serverBonus - spent);
   }
 
   function spendCoins(amount) {

@@ -1399,3 +1399,11 @@ body.is-guest .cta-section[data-auth="guest"] {
 body.is-authed .cta-section[data-auth="guest"] {
   display: none !important;
 }
+
+/* видно только администраторам (profiles.is_admin = true) */
+[data-admin] {
+  display: none !important;
+}
+body.is-admin [data-admin] {
+  display: flex !important;
+}

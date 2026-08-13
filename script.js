@@ -209,6 +209,7 @@ function initRevealOnScroll() {
 function applyAuthUi(user) {
   document.body.classList.toggle('is-authed', !!user);
   document.body.classList.toggle('is-guest', !user);
+  document.body.classList.toggle('is-admin', !!(user && user.isAdmin));
 
   if (user) {
     const nameEl = document.getElementById('profileName');
@@ -274,6 +275,13 @@ function initAuthState() {
   if (typeof LexPrepApi !== 'undefined') {
     LexPrepApi.me()
       .then(user => {
+        if (user.isBanned) {
+          LexPrepApi.logout().catch(() => {});
+          localStorage.removeItem('lexprep_user');
+          alert('Аккаунт заблокирован' + (user.banReason ? `: ${user.banReason}` : '.'));
+          window.location.href = 'auth.html';
+          return;
+        }
         // Мержим, а не заменяем целиком — на фронтенде у user есть поля
         // (university, course и т.д.), которых бэкенд пока не знает.
         const merged = { ...cachedUser, ...user };

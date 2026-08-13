@@ -1,0 +1,197 @@
+/* ==========================================================================
+ADMIN.CSS — панель администратора
+========================================================================== */
+
+.admin-page {
+  min-height: 100vh;
+  background: var(--color-bg-alt);
+}
+
+.admin-shell {
+  padding: 40px 0 72px;
+}
+
+.admin-scope-note {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-denied {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(225, 77, 77, 0.1);
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  color: #e5484d;
+  font-weight: 700;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+  flex-wrap: wrap;
+}
+
+.admin-search {
+  max-width: 320px;
+}
+
+.admin-toolbar__count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.admin-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-alt);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 28px !important;
+}
+
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #5f7bff, #7e95ff);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.admin-user-cell__name {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.admin-user-cell__email {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-badge--admin {
+  background: rgba(111, 135, 255, 0.15);
+  color: #5f7bff;
+}
+
+.admin-badge--ok {
+  background: rgba(31, 183, 116, 0.12);
+  color: #1fb774;
+}
+
+.admin-badge--banned {
+  background: rgba(225, 77, 77, 0.12);
+  color: #e5484d;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-action-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-action-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.admin-action-btn--warn:hover {
+  border-color: #d99a1f;
+  color: #d99a1f;
+}
+
+.admin-action-btn--danger:hover {
+  border-color: #e5484d;
+  color: #e5484d;
+}
+
+.admin-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-action-btn:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+@media (max-width: 700px) {
+  .admin-toolbar__count {
+    margin-left: 0;
+  }
+}

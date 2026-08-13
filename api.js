@@ -40,7 +40,13 @@ const LexPrepApi = (function () {
       email: authUser.email,
       name: (profile && profile.name) || authUser.email.split('@')[0],
       avatar: (profile && profile.avatar_url) || null,
-      referralCode: profile && profile.referral_code
+      referralCode: profile && profile.referral_code,
+      isAdmin: !!(profile && profile.is_admin),
+      isBanned: !!(profile && profile.is_banned),
+      banReason: profile && profile.ban_reason,
+      bonusCoins: (profile && profile.bonus_coins) || 0,
+      planTier: (profile && profile.plan_tier) || 'basic',
+      planExpiresAt: profile && profile.plan_expires_at
     };
   }
 
@@ -117,5 +123,103 @@ const LexPrepApi = (function () {
     return toFrontendUser(session.user, data);
   }
 
-  return { register, login, logout, me, updateProfile, toFrontendUser };
+  /* ---------------- Админка ----------------
+     Список/редактирование/бан идут напрямую в таблицу profiles — доступ
+     ограничен RLS-политикой "Admins can update/view any profile"
+     (см. supabase/admin.sql), обычному пользователю Supabase сам вернёт
+     пустой результат или ошибку доступа. Реальное удаление аккаунта
+     (auth.users) требует service_role и живёт в Edge Function
+     admin-delete-user — её admin-статус вызывающего проверяет отдельно,
+     ещё раз, на сервере. */
+
+  async function requireSession() {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) {
+      const err = new Error('not_authenticated');
+      err.status = 401;
+      throw err;
+    }
+    return session;
+  }
+
+  async function adminListUsers() {
+    await requireSession();
+    const { data, error } = await client
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(p => ({
+      id: p.id,
+      email: p.email,
+      name: p.name,
+      avatar: p.avatar_url,
+      isAdmin: !!p.is_admin,
+      isBanned: !!p.is_banned,
+      banReason: p.ban_reason,
+      bonusCoins: p.bonus_coins || 0,
+      planTier: p.plan_tier || 'basic',
+      planExpiresAt: p.plan_expires_at,
+      createdAt: p.created_at
+    }));
+  }
+
+  async function adminUpdateUser(userId, patch) {
+    await requireSession();
+    const row = {};
+    if (patch.name !== undefined) row.name = patch.name;
+    if (patch.avatar !== undefined) row.avatar_url = patch.avatar || null;
+    if (patch.isBanned !== undefined) row.is_banned = patch.isBanned;
+    if (patch.banReason !== undefined) row.ban_reason = patch.banReason || null;
+    if (patch.bonusCoins !== undefined) row.bonus_coins = patch.bonusCoins;
+    if (patch.planTier !== undefined) row.plan_tier = patch.planTier;
+    if (patch.planExpiresAt !== undefined) row.plan_expires_at = patch.planExpiresAt;
+
+    const { data, error } = await client
+      .from('profiles')
+      .update(row)
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return data;
+  }
+
+  async function adminGrantCoins(userId, amount, currentBonus) {
+    return adminUpdateUser(userId, { bonusCoins: (currentBonus || 0) + amount });
+  }
+
+  async function adminGrantSubscription(userId, tier, days) {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    return adminUpdateUser(userId, { planTier: tier, planExpiresAt: expires });
+  }
+
+  async function adminSetBanned(userId, isBanned, reason) {
+    return adminUpdateUser(userId, { isBanned, banReason: isBanned ? (reason || 'Без указания причины') : null });
+  }
+
+  async function adminDeleteUser(userId) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-delete-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ userId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось удалить аккаунт.');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  return {
+    register, login, logout, me, updateProfile, toFrontendUser,
+    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser
+  };
 })();

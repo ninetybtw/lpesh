@@ -10,11 +10,8 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LexPrep — Магазин</title>
-    <meta
-      name="description"
-      content="Магазин LexPrep: обменивай монеты, заработанные в тренажёре, на временный апгрейд тарифа."
-    />
+    <title>LexPrep — Админка</title>
+    <meta name="description" content="Панель администратора LexPrep: управление аккаунтами пользователей." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
@@ -23,7 +20,7 @@
     <link rel="stylesheet" href="./styles/global.css" />
     <link rel="stylesheet" href="./styles/style.css" />
     <link rel="stylesheet" href="./styles/profile.css" />
-    <link rel="stylesheet" href="./styles/shop.css" />
+    <link rel="stylesheet" href="./styles/admin.css" />
   </head>
   <body>
     <header class="header" id="header">
@@ -36,13 +33,12 @@
         <nav class="nav" id="nav">
           <ul class="nav__list">
             <li><a href="app.html" class="nav__link">Тренажёр</a></li>
-            <li><a href="article.html" class="nav__link">Статьи</a></li>
-            <li><a href="profile.html#stats" class="nav__link">Достижения</a></li>
+            <li><a href="profile.html" class="nav__link">Профиль</a></li>
           </ul>
         </nav>
 
         <div class="header__actions">
-          <a href="index.html" class="btn btn--ghost">На главную</a>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
 
           <div class="profile-menu" id="profileMenu">
             <button class="profile-btn" id="profileBtn" type="button">
@@ -64,39 +60,47 @@
       </div>
     </header>
 
-    <main class="shop-page">
-      <section class="shop-shell">
-        <div class="container container--narrow">
-          <div class="eyebrow">LexPrep / Магазин</div>
-          <h1 class="page-title">Магазин</h1>
+    <main class="admin-page">
+      <section class="admin-shell">
+        <div class="container">
+          <div class="eyebrow">LexPrep / Админка</div>
+          <h1 class="page-title">Панель администратора</h1>
           <p class="topic-desc">
-            Монеты начисляются за прогресс в тренажёре: тесты, повторение карточек и пробные экзамены. Обменивай их на временный
-            апгрейд тарифа или на разовые покупки сверх дневных лимитов.
+            Аккаунты пользователей — данные из Supabase, изменения реальные и сразу видны всем.
           </p>
-          <p class="shop-demo-note">
-            Демо-режим: весь магазин — локальная симуляция для этого браузера, без реальной оплаты и без технической защиты
-            лимитов. Настоящая система тарифов и лимитов появится вместе с бэкендом.
+          <p class="admin-scope-note">
+            Пока здесь только управление аккаунтами (блокировка/удаление, имя и аватар, выдача монет и подписки).
+            Статьи и учебные материалы ещё живут в браузере каждого пользователя по отдельности — админка для них
+            появится отдельным шагом, когда они переедут на бэкенд.
           </p>
 
-          <div class="shop-balance">
-            <div class="shop-balance__preview">
-              <span class="profile-avatar-editor__preview shop-balance__avatar" id="shopAvatarPreview">U</span>
-            </div>
-            <div class="shop-balance__info">
-              <div class="shop-balance__label">Твой баланс</div>
-              <div class="shop-balance__amount">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
-                <span id="shopBalance">0</span> монет
-              </div>
-              <div class="shop-balance__plan" id="shopCurrentPlan">Текущий тариф: Базовая</div>
-            </div>
+          <div id="adminGuard" hidden>
+            <p class="admin-denied">Эта страница только для администраторов.</p>
           </div>
 
-          <h2 class="shop-section-title">Подписка</h2>
-          <div class="shop-grid" id="shopGrid"></div>
+          <div id="adminContent" hidden>
+            <div class="admin-toolbar">
+              <input type="search" id="adminSearch" class="form-input admin-search" placeholder="Поиск по имени или email..." />
+              <button class="btn btn--outline" type="button" id="adminRefreshBtn">Обновить</button>
+              <span class="admin-toolbar__count" id="adminCount"></span>
+            </div>
 
-          <h2 class="shop-section-title">Разовые покупки</h2>
-          <div class="shop-grid" id="shopConsumableGrid"></div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Пользователь</th>
+                    <th>Тариф</th>
+                    <th>Монеты (бонус)</th>
+                    <th>Статус</th>
+                    <th>Регистрация</th>
+                    <th>Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -106,6 +110,6 @@
     <script src="vendor/supabase-js.min.js"></script>
     <script src="api.js"></script>
     <script src="script.js"></script>
-    <script src="shop.js"></script>
+    <script src="admin.js"></script>
   </body>
 </html>
