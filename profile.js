@@ -34,6 +34,18 @@ function getUser() {
 function saveUser(patch) {
   const user = { ...getUser(), ...patch };
   localStorage.setItem('lexprep_user', JSON.stringify(user));
+
+  // Бэкенд пока хранит только имя и аватар — остальные поля формы
+  // (university, course, email) остаются локальными до отдельного шага.
+  const backendPatch = {};
+  if ('name' in patch) backendPatch.name = patch.name;
+  if ('avatar' in patch) backendPatch.avatar = patch.avatar || null;
+  if (Object.keys(backendPatch).length && typeof LexPrepApi !== 'undefined') {
+    LexPrepApi.updateProfile(backendPatch).catch(err => {
+      console.error('Не удалось сохранить изменения профиля на сервере:', err.message);
+    });
+  }
+
   return user;
 }
 
@@ -574,12 +586,26 @@ function initPrivacyModal() {
 /* ---------------- Danger zone ---------------- */
 function initDangerZone() {
   const deleteBtn = document.getElementById('deleteAccountBtn');
-  deleteBtn.addEventListener('click', () => {
-    const confirmed = window.confirm('Удалить аккаунт и все локальные данные демо-профиля? Это действие необратимо.');
+  deleteBtn.addEventListener('click', async () => {
+    const confirmed = window.confirm('Удалить аккаунт без возможности восстановления? Данные для входа и профиль на сервере будут удалены безвозвратно.');
     if (!confirmed) return;
-    ['lexprep_user', 'lexprep_payment', 'lexprep_sub_cancelled', 'lexprep_notifications'].forEach(key => {
-      localStorage.removeItem(key);
-    });
+
+    deleteBtn.disabled = true;
+    try {
+      if (typeof LexPrepApi !== 'undefined') {
+        await LexPrepApi.deleteAccount();
+      }
+    } catch (err) {
+      alert('Не удалось удалить аккаунт: ' + err.message);
+      deleteBtn.disabled = false;
+      return;
+    }
+
+    // Прогресс, монеты, тарифы и остальная демо-часть пока живут только
+    // в этом браузере — их тоже стираем, раз аккаунт удалён целиком.
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('lexprep_'))
+      .forEach(key => localStorage.removeItem(key));
     window.location.href = 'index.html';
   });
 }

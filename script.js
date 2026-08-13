@@ -206,8 +206,7 @@ function initRevealOnScroll() {
   items.forEach(item => observer.observe(item));
 }
 
-function initAuthState() {
-  const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+function applyAuthUi(user) {
   document.body.classList.toggle('is-authed', !!user);
   document.body.classList.toggle('is-guest', !user);
 
@@ -235,6 +234,13 @@ function initAuthState() {
   }
 
   initCoinBadge();
+}
+
+function initAuthState() {
+  // Синхронный рендер из локального кэша — чтобы не мигать гостевым
+  // состоянием, пока идёт запрос к /api/auth/me.
+  const cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+  applyAuthUi(cachedUser);
 
   const profileBtn = document.getElementById('profileBtn');
   const dropdown = document.getElementById('profileDropdown');
@@ -249,8 +255,36 @@ function initAuthState() {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('lexprep_user');
-      window.location.reload();
+      const finish = () => {
+        localStorage.removeItem('lexprep_user');
+        window.location.reload();
+      };
+      if (typeof LexPrepApi !== 'undefined') {
+        LexPrepApi.logout().then(finish).catch(finish);
+      } else {
+        finish();
+      }
     });
+  }
+
+  // Досверяем сессию у сервера в фоне — если она реально протухла или
+  // была завершена в другой вкладке, локальный кэш это не знает. Если
+  // бэкенд просто недоступен (сеть/офлайн), кэш не трогаем — это не
+  // повод разлогинивать человека.
+  if (typeof LexPrepApi !== 'undefined') {
+    LexPrepApi.me()
+      .then(user => {
+        // Мержим, а не заменяем целиком — на фронтенде у user есть поля
+        // (university, course и т.д.), которых бэкенд пока не знает.
+        const merged = { ...cachedUser, ...user };
+        localStorage.setItem('lexprep_user', JSON.stringify(merged));
+        applyAuthUi(merged);
+      })
+      .catch(err => {
+        if (err.status === 401 && cachedUser) {
+          localStorage.removeItem('lexprep_user');
+          applyAuthUi(null);
+        }
+      });
   }
 }

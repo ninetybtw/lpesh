@@ -35,9 +35,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const authError = document.getElementById('authError');
+  function showAuthError(message) {
+    if (!authError) { alert(message); return; }
+    authError.textContent = message;
+    authError.hidden = false;
+  }
+  function hideAuthError() {
+    if (authError) authError.hidden = true;
+  }
+
   panels.forEach(panel => {
-    panel.addEventListener('submit', (e) => {
+    panel.addEventListener('submit', async (e) => {
       e.preventDefault();
+      hideAuthError();
       const isRegister = panel.dataset.panel === 'register';
       const emailInput = document.getElementById(isRegister ? 'regEmail' : 'loginEmail');
 
@@ -45,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         emailInput.focus();
         return;
       }
+
+      const email = emailInput.value.trim();
+      const submitBtn = panel.querySelector('button[type="submit"]');
 
       if (isRegister) {
         const passwordInput = document.getElementById('regPassword');
@@ -59,18 +73,36 @@ document.addEventListener('DOMContentLoaded', () => {
         clearFieldInvalid(passwordInput);
 
         if (password !== passwordConfirm) {
-          alert('Пароли не совпадают');
+          showAuthError('Пароли не совпадают.');
           return;
         }
-      }
 
-      const email = emailInput.value.trim();
-      const name = isRegister
-        ? document.getElementById('regName').value
-        : email.split('@')[0];
-      localStorage.setItem('lexprep_user', JSON.stringify({ name, email }));
-      if (success) success.classList.add('is-visible');
-      setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        const name = document.getElementById('regName').value;
+        submitBtn.disabled = true;
+        try {
+          const user = await LexPrepApi.register({ name, email, password });
+          localStorage.setItem('lexprep_user', JSON.stringify(user));
+          if (success) success.classList.add('is-visible');
+          setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        } catch (err) {
+          showAuthError(err.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      } else {
+        const password = document.getElementById('loginPassword').value;
+        submitBtn.disabled = true;
+        try {
+          const user = await LexPrepApi.login({ email, password });
+          localStorage.setItem('lexprep_user', JSON.stringify(user));
+          if (success) success.classList.add('is-visible');
+          setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        } catch (err) {
+          showAuthError(err.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
     });
   });
 

@@ -241,6 +241,17 @@ AUTH.CSS — страница входа/регистрации (положит�
   flex-shrink: 0;
 }
 
+.auth-error {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(225, 77, 77, 0.1);
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  color: #e5484d;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
 .password-rules {
   display: grid;
   grid-template-columns: 1fr 1fr;
