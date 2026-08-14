@@ -270,6 +270,13 @@ body {
   flex-shrink: 0;
 }
 
+.referral-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .referral-note {
   min-height: 18px;
   margin-top: 10px;
@@ -286,6 +293,14 @@ body {
 
   .referral-row__copy {
     width: 100%;
+  }
+
+  .referral-row__actions {
+    width: 100%;
+  }
+
+  .referral-row__actions .btn {
+    flex: 1 1 auto;
   }
 }
 

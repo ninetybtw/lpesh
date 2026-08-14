@@ -19,7 +19,16 @@ const LexPrepApi = (function () {
       'User already registered': 'Аккаунт с таким email уже существует.',
       'Email not confirmed': 'Email ещё не подтверждён — проверь почту и перейди по ссылке из письма.'
     };
-    const err = new Error(known[error.message] || error.message);
+    let message = known[error.message] || error.message;
+    // Postgres-ошибки из profiles (уникальность промокода, кастомные
+    // exception из триггеров) — код 23505 и текст raise exception
+    // приходят как есть, переводим их в понятные формулировки.
+    if (error.code === '23505' && /referral_code/.test(error.details || error.message || '')) {
+      message = 'Такой промокод уже занят — попробуй другой.';
+    } else if (error.message === 'invalid_referral_code') {
+      message = error.details || 'Промокод: 3-20 символов, латинские буквы, цифры и дефис.';
+    }
+    const err = new Error(message);
     err.code = error.code || error.name;
     err.status = error.status;
     return err;
@@ -111,6 +120,7 @@ const LexPrepApi = (function () {
     const row = {};
     if (patch.name !== undefined) row.name = patch.name;
     if (patch.avatar !== undefined) row.avatar_url = patch.avatar || null;
+    if (patch.referralCode !== undefined) row.referral_code = patch.referralCode;
 
     const { data, error } = await client
       .from('profiles')

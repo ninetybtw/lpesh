@@ -422,31 +422,26 @@ function initMyArticles() {
   render();
 }
 
-/* ---------------- Referral program (demo: link + promo code only, rewards TBD with backend) ---------------- */
-function getReferralCode() {
-  let code = localStorage.getItem('lexprep_referral_code');
-  if (!code) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let suffix = '';
-    for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
-    code = `LEX-${suffix}`;
-    localStorage.setItem('lexprep_referral_code', code);
-  }
-  return code;
+/* ---------------- Referral program (код реальный, из profiles.referral_code;
+   начисление наград за приглашение всё ещё не реализовано) ---------------- */
+function buildReferralLink(code) {
+  const basePath = window.location.pathname.replace(/profile\.html$/, '');
+  return `${window.location.origin}${basePath}auth.html?ref=${code}`;
 }
 
 function initReferral() {
   const linkEl = document.getElementById('referralLink');
   const codeEl = document.getElementById('referralCode');
+  const editBtn = document.getElementById('referralEditBtn');
   const status = document.getElementById('referralCopyStatus');
   if (!linkEl || !codeEl) return;
 
-  const code = getReferralCode();
-  const basePath = window.location.pathname.replace(/profile\.html$/, '');
-  const link = `${window.location.origin}${basePath}auth.html?ref=${code}`;
-
-  linkEl.textContent = link;
-  codeEl.textContent = code;
+  function render() {
+    const code = getUser().referralCode || '—';
+    linkEl.textContent = buildReferralLink(code);
+    codeEl.textContent = code;
+  }
+  render();
 
   document.querySelectorAll('[data-copy-target]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -460,6 +455,34 @@ function initReferral() {
       });
     });
   });
+
+  if (editBtn) {
+    editBtn.addEventListener('click', async () => {
+      const current = getUser().referralCode || '';
+      const next = prompt('Свой промокод (3–20 символов: латинские буквы, цифры, дефис):', current);
+      if (next === null) return;
+      const normalized = next.trim().toUpperCase();
+      if (!normalized || normalized === current) return;
+
+      if (typeof LexPrepApi === 'undefined') {
+        status.textContent = 'Нет соединения с сервером — попробуй позже.';
+        return;
+      }
+
+      editBtn.disabled = true;
+      try {
+        const updated = await LexPrepApi.updateProfile({ referralCode: normalized });
+        saveUser({ referralCode: updated.referralCode });
+        render();
+        status.textContent = 'Промокод обновлён.';
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      } catch (err) {
+        status.textContent = err.message;
+      } finally {
+        editBtn.disabled = false;
+      }
+    });
+  }
 }
 
 /* ---------------- Password change (demo: nothing is stored, only validated) ---------------- */

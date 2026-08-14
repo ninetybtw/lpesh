@@ -312,8 +312,8 @@
                 <div class="profile-card">
                   <h2 class="profile-card__title">Реферальная программа</h2>
                   <p class="profile-card__subtitle">
-                    Приглашай друзей по личной ссылке или промокоду. Что именно они и ты получите за приглашение, решим отдельно —
-                    сейчас подключена только сама механика ссылки и кода, начисление наград появится вместе с бэкендом.
+                    Приглашай друзей по личной ссылке или промокоду. Свой код можно поменять на удобный.
+                    Что именно они и ты получите за приглашение, решим отдельно — начисление наград появится позже.
                   </p>
 
                   <div class="referral-block">
@@ -330,7 +330,10 @@
                         <div class="referral-row__label">Личный промокод</div>
                         <div class="referral-row__value" id="referralCode">—</div>
                       </div>
-                      <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralCode">Скопировать</button>
+                      <div class="referral-row__actions">
+                        <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralCode">Скопировать</button>
+                        <button class="btn btn--outline" type="button" id="referralEditBtn">Изменить</button>
+                      </div>
                     </div>
                   </div>
 
