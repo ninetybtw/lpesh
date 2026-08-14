@@ -40,7 +40,7 @@ window.LexPrepContentReady = (async function loadDbContent() {
         id: t.id,
         title: t.title,
         description: t.section || '',
-        theory: marked.parse(t.body_markdown || ''),
+        theory: `<div class="theory">${marked.parse(t.body_markdown || '')}</div>`,
         test: [],
         cards: []
       }));

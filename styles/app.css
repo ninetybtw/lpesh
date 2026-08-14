@@ -341,6 +341,7 @@ body {
   color: #9ca8cb;
 }
 
+.theory h2,
 .theory h3 {
   color: #f5f7ff;
   font-size: 18px;
@@ -351,11 +352,25 @@ body {
 .theory li {
   color: #9ca8cb;
   font-size: 15px;
+  line-height: 1.65;
 }
 
-.theory ul {
+.theory p {
+  margin: 0 0 14px;
+}
+
+.theory ul,
+.theory ol {
   padding-left: 18px;
-  margin-top: 8px;
+  margin: 8px 0 14px;
+}
+
+.theory li {
+  margin-bottom: 6px;
+}
+
+.theory li:last-child {
+  margin-bottom: 0;
 }
 
 .test-box__title {
@@ -869,6 +884,7 @@ body {
 [data-theme="light"] .topic-title,
 [data-theme="light"] .question h4,
 [data-theme="light"] .note-box h3,
+[data-theme="light"] .theory h2,
 [data-theme="light"] .theory h3,
 [data-theme="light"] .summary h3 {
   color: #14161f;
