@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await (window.LexPrepContentReady || Promise.resolve());
   initApp();
   initAiChat();
 });

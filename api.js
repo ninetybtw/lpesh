@@ -519,6 +519,7 @@ const LexPrepApi = (function () {
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
-    askAiConsultant
+    askAiConsultant,
+    getClient: () => client
   };
 })();

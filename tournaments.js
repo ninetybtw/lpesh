@@ -4,12 +4,13 @@ TOURNAMENTS.JS — турнир на выбывание: три раунда п�
 всегда боты (демо), реальные турниры с участниками появятся с бэкендом.
 ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
     return;
   }
+  await (window.LexPrepContentReady || Promise.resolve());
 
   const DATA = LEXPREP_DATA;
   const views = document.querySelectorAll('[data-tourney-view]');

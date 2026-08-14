@@ -12,12 +12,13 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
     return;
   }
+  await (window.LexPrepContentReady || Promise.resolve());
 
   const authorName = document.getElementById('authorName');
   const authorAvatar = document.getElementById('authorAvatar');

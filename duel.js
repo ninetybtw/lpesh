@@ -4,12 +4,13 @@ DUEL.JS — дуэль 1 на 1 против бота: выбор тем/кол�
 дуэльного рейтинга по итогу. Соперник — бот (демо), не реальный игрок.
 ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
     return;
   }
+  await (window.LexPrepContentReady || Promise.resolve());
 
   const DATA = LEXPREP_DATA;
   const views = document.querySelectorAll('[data-duel-view]');

@@ -3,7 +3,8 @@ EXAM.JS — режим «Пробный экзамен»: случайный б�
 таймер, разбор ответов и повтор слабых мест.
 ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await (window.LexPrepContentReady || Promise.resolve());
   initExam();
 });
 

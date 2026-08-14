@@ -6,9 +6,10 @@ DUEL-PVP.JS — дуэль 1 на 1 против реального игрока
 победителя и дуэльный рейтинг (см. supabase/duels.sql).
 ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user || typeof LexPrepApi === 'undefined') return;
+  await (window.LexPrepContentReady || Promise.resolve());
 
   const DATA = LEXPREP_DATA;
 
