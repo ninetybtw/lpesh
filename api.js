@@ -27,6 +27,8 @@ const LexPrepApi = (function () {
       message = 'Такой промокод уже занят — попробуй другой.';
     } else if (error.message === 'invalid_referral_code') {
       message = error.details || 'Промокод: 3-20 символов, латинские буквы, цифры и дефис.';
+    } else if (error.code === '23505' && /suggestion_votes/.test(error.details || error.message || '')) {
+      message = 'Ты уже голосовал за это предложение.';
     }
     const err = new Error(message);
     err.code = error.code || error.name;
@@ -228,8 +230,159 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  /* ---------------- Поддержка ----------------
+     Тикеты живут в public.support_tickets (см.
+     supabase/support-suggestions.sql). Пользователь видит и создаёт
+     только свои, ответ пишет админ через adminReplyTicket. */
+
+  function toFrontendTicket(t) {
+    return {
+      id: t.id,
+      subject: t.subject,
+      message: t.message,
+      status: t.status,
+      adminReply: t.admin_reply,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at,
+      userId: t.user_id
+    };
+  }
+
+  async function createSupportTicket({ subject, message }) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('support_tickets')
+      .insert({ user_id: session.user.id, subject, message })
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendTicket(data);
+  }
+
+  async function listMySupportTickets() {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('support_tickets')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendTicket);
+  }
+
+  async function adminListSupportTickets() {
+    await requireSession();
+    const { data, error } = await client
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendTicket);
+  }
+
+  async function adminReplyTicket(ticketId, reply) {
+    await requireSession();
+    const { data, error } = await client
+      .from('support_tickets')
+      .update({ admin_reply: reply, status: 'answered' })
+      .eq('id', ticketId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendTicket(data);
+  }
+
+  async function adminSetTicketStatus(ticketId, status) {
+    await requireSession();
+    const { data, error } = await client
+      .from('support_tickets')
+      .update({ status })
+      .eq('id', ticketId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendTicket(data);
+  }
+
+  /* ---------------- Предложения от пользователей ----------------
+     public.suggestions + public.suggestion_votes, читаем через вьюху
+     suggestions_with_votes (готовое число голосов). Любой залогиненный
+     видит все и может проголосовать один раз; статус меняет админ. */
+
+  function toFrontendSuggestion(s, myVotedIds) {
+    return {
+      id: s.id,
+      title: s.title,
+      message: s.message,
+      status: s.status,
+      adminComment: s.admin_comment,
+      votes: s.votes_count || 0,
+      createdAt: s.created_at,
+      userId: s.user_id,
+      votedByMe: myVotedIds ? myVotedIds.has(s.id) : false
+    };
+  }
+
+  async function listSuggestions() {
+    const session = await requireSession();
+    const [{ data, error }, { data: myVotes, error: voteError }] = await Promise.all([
+      client.from('suggestions_with_votes').select('*').order('created_at', { ascending: false }),
+      client.from('suggestion_votes').select('suggestion_id').eq('user_id', session.user.id)
+    ]);
+    if (error) throw friendlyError(error);
+    if (voteError) throw friendlyError(voteError);
+    const myVotedIds = new Set((myVotes || []).map(v => v.suggestion_id));
+    return data.map(s => toFrontendSuggestion(s, myVotedIds));
+  }
+
+  async function createSuggestion({ title, message }) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('suggestions')
+      .insert({ user_id: session.user.id, title, message })
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendSuggestion(data, new Set());
+  }
+
+  async function voteSuggestion(suggestionId) {
+    const session = await requireSession();
+    const { error } = await client
+      .from('suggestion_votes')
+      .insert({ suggestion_id: suggestionId, user_id: session.user.id });
+    if (error) throw friendlyError(error);
+  }
+
+  async function unvoteSuggestion(suggestionId) {
+    const session = await requireSession();
+    const { error } = await client
+      .from('suggestion_votes')
+      .delete()
+      .eq('suggestion_id', suggestionId)
+      .eq('user_id', session.user.id);
+    if (error) throw friendlyError(error);
+  }
+
+  async function adminUpdateSuggestion(suggestionId, patch) {
+    await requireSession();
+    const row = {};
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.adminComment !== undefined) row.admin_comment = patch.adminComment || null;
+    const { data, error } = await client
+      .from('suggestions')
+      .update(row)
+      .eq('id', suggestionId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendSuggestion(data, new Set());
+  }
+
   return {
     register, login, logout, me, updateProfile, toFrontendUser,
-    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser
+    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser,
+    createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
+    listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion
   };
 })();

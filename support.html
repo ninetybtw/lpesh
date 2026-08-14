@@ -10,10 +10,10 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LexPrep — Турниры</title>
+    <title>LexPrep — Поддержка</title>
     <meta
       name="description"
-      content="Турниры LexPrep: пройди сетку из трёх раундов на выбывание против ботов-соперников и стань чемпионом."
+      content="Поддержка LexPrep: напиши в свободной форме, если что-то не работает или остались вопросы."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -22,10 +22,8 @@
     />
     <link rel="stylesheet" href="./styles/global.css" />
     <link rel="stylesheet" href="./styles/style.css" />
-    <link rel="stylesheet" href="./styles/app.css" />
-    <link rel="stylesheet" href="./styles/exam.css" />
-    <link rel="stylesheet" href="./styles/duel.css" />
-    <link rel="stylesheet" href="./styles/tournaments.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/community.css" />
   </head>
   <body>
     <header class="header" id="header">
@@ -38,6 +36,7 @@
         <nav class="nav" id="nav">
           <ul class="nav__list">
             <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
             <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
             <li><a href="duel.html" class="nav__link">Дуэли</a></li>
             <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
@@ -77,73 +76,44 @@
       </div>
     </header>
 
-    <main class="exam-page">
-      <div class="container exam-container">
-        <!-- LIST -->
-        <section class="exam-card" data-tourney-view="list">
-          <div class="eyebrow">LexPrep / Турниры</div>
-          <h1 class="exam-title">Турниры на выбывание</h1>
+    <main class="community-page">
+      <section class="community-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Поддержка</div>
+          <h1 class="page-title">Поддержка</h1>
           <p class="topic-desc">
-            Сетка из трёх раундов против ботов-соперников с растущей сложностью. Проиграл раунд — выбыл из турнира.
-            Дошёл до финала и победил — чемпион.
-          </p>
-          <p class="duel-demo-note">
-            Демо-режим: соперники в турнире — боты, а не реальные участники. Турниры с реальными игроками появятся
-            вместе с бэкендом (нужны подбор участников и расписание сетки).
+            Напиши, если что-то не работает, не грузится или есть вопрос по аккаунту, подписке, монетам — ответим здесь же,
+            в этой странице появится ответ рядом с обращением.
           </p>
 
-          <div class="duel-stats" id="tourneyStats"></div>
+          <div class="community-guest" data-auth="guest">
+            <p>Чтобы написать в поддержку, сначала войди в аккаунт.</p>
+            <a href="auth.html#login" class="btn btn--primary">Войти</a>
+          </div>
 
-          <div class="tourney-list" id="tourneyList"></div>
-        </section>
+          <div data-auth="user">
+            <form class="community-form" id="ticketForm">
+              <label class="community-form__field">
+                <span>Тема</span>
+                <input type="text" id="ticketSubject" maxlength="120" placeholder="Коротко, о чём вопрос" required />
+              </label>
+              <label class="community-form__field">
+                <span>Сообщение</span>
+                <textarea id="ticketMessage" rows="5" maxlength="4000" placeholder="Опиши подробнее, что случилось" required></textarea>
+              </label>
+              <div class="community-form__row">
+                <button type="submit" class="btn btn--primary" id="ticketSubmit">Отправить</button>
+                <span class="community-form__status" id="ticketFormStatus"></span>
+              </div>
+            </form>
 
-        <!-- BRACKET / BATTLE -->
-        <section class="exam-card" data-tourney-view="battle" hidden>
-          <div class="tourney-bracket" id="tourneyBracket"></div>
-
-          <div class="duel-vs">
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar" id="tourneyPlayerAvatar">U</span>
-              <span class="duel-vs__name" id="tourneyPlayerName">Ты</span>
-              <span class="duel-vs__score" id="tourneyPlayerScore">0</span>
+            <h2 class="community-subtitle">Мои обращения</h2>
+            <div class="community-list" id="ticketList">
+              <p class="community-empty">Загрузка…</p>
             </div>
-            <div class="duel-vs__mid">
-              <span class="duel-vs__vs">VS</span>
-              <span class="exam-running__progress" id="tourneyProgress"></span>
-            </div>
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar duel-vs__avatar--bot">🤖</span>
-              <span class="duel-vs__name" id="tourneyBotName">Бот</span>
-              <span class="duel-vs__score" id="tourneyBotScore">0</span>
-            </div>
           </div>
-
-          <div class="exam-running__topic" id="tourneyTopicLabel"></div>
-
-          <div class="question" id="tourneyQuestionBox"></div>
-          <div class="duel-round-result" id="tourneyRoundResult" hidden></div>
-
-          <div class="exam-running__actions duel-running__actions">
-            <button class="btn btn--primary" type="button" id="tourneyAnswerBtn">Ответить</button>
-          </div>
-        </section>
-
-        <!-- RESULTS -->
-        <section class="exam-card" data-tourney-view="results" hidden>
-          <div class="exam-results__summary">
-            <div class="eyebrow">Итог турнира</div>
-            <h1 class="exam-title" id="tourneyResultTitle"></h1>
-            <p class="topic-desc" id="tourneyResultMsg"></p>
-          </div>
-
-          <div class="tourney-bracket" id="tourneyResultBracket"></div>
-
-          <div class="exam-results__actions">
-            <button class="btn btn--primary" type="button" id="tourneyBackBtn">К списку турниров</button>
-            <a href="app.html" class="btn btn--outline">Вернуться в тренажёр</a>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
 
     <script src="data.js"></script>
@@ -151,7 +121,6 @@
     <script src="vendor/supabase-js.min.js"></script>
     <script src="api.js"></script>
     <script src="script.js"></script>
-    <script src="duel-engine.js"></script>
-    <script src="tournaments.js"></script>
+    <script src="support.js"></script>
   </body>
 </html>

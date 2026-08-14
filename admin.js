@@ -7,6 +7,8 @@ ADMIN.JS — панель администратора: список аккау�
 ========================================================================== */
 
 const PLAN_TITLES = { basic: 'Базовая', pro: 'Про', max: 'Максимум' };
+const ADMIN_TICKET_STATUS_LABEL = { open: 'Открыт', answered: 'Отвечено', closed: 'Закрыт' };
+const ADMIN_SUGGESTION_STATUS_LABEL = { new: 'Новое', reviewing: 'На рассмотрении', accepted: 'Принято', rejected: 'Отклонено' };
 
 document.addEventListener('DOMContentLoaded', async () => {
   const guardEl = document.getElementById('adminGuard');
@@ -181,4 +183,156 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadUsers();
+
+  /* ---------------- Табы ---------------- */
+
+  document.querySelectorAll('[data-admin-tab]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.adminTab;
+      document.querySelectorAll('[data-admin-tab]').forEach(t => t.classList.toggle('is-active', t === tab));
+      document.querySelectorAll('[data-admin-panel]').forEach(p => { p.hidden = p.dataset.adminPanel !== target; });
+      if (target === 'support' && !ticketsLoaded) loadTickets();
+      if (target === 'suggestions' && !suggestionsLoaded) loadSuggestions();
+    });
+  });
+
+  /* ---------------- Поддержка ---------------- */
+
+  const ticketsList = document.getElementById('adminTicketsList');
+  const ticketsRefreshBtn = document.getElementById('adminTicketsRefreshBtn');
+  const ticketsOpenCountEl = document.getElementById('adminTicketsOpenCount');
+  let ticketsLoaded = false;
+
+  function formatDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderTickets(tickets) {
+    const openCount = tickets.filter(t => t.status === 'open').length;
+    ticketsOpenCountEl.textContent = openCount ? `(${openCount})` : '';
+
+    if (!tickets.length) {
+      ticketsList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
+      return;
+    }
+    ticketsList.innerHTML = tickets.map(t => `
+      <div class="community-item" data-ticket-id="${t.id}">
+        <div class="community-item__head">
+          <h3>${escapeHtml(t.subject)}</h3>
+          <span class="community-badge community-badge--${t.status}">${ADMIN_TICKET_STATUS_LABEL[t.status] || t.status}</span>
+        </div>
+        <p class="community-item__message">${escapeHtml(t.message)}</p>
+        <div class="community-item__meta"><span>${formatDateTime(t.createdAt)}</span></div>
+        ${t.adminReply ? `
+          <div class="community-item__reply">
+            <div class="community-item__reply-label">Ответ поддержки</div>
+            <p>${escapeHtml(t.adminReply)}</p>
+          </div>` : ''}
+        <div class="admin-item-actions">
+          <button type="button" class="admin-action-btn" data-ticket-action="reply">${t.adminReply ? 'Изменить ответ' : 'Ответить'}</button>
+          ${t.status !== 'closed' ? '<button type="button" class="admin-action-btn" data-ticket-action="close">Закрыть</button>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadTickets() {
+    ticketsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
+    try {
+      const tickets = await LexPrepApi.adminListSupportTickets();
+      ticketsLoaded = true;
+      renderTickets(tickets);
+    } catch (err) {
+      ticketsList.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  ticketsRefreshBtn.addEventListener('click', loadTickets);
+
+  ticketsList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-ticket-action]');
+    if (!btn) return;
+    const item = btn.closest('[data-ticket-id]');
+    const id = item.dataset.ticketId;
+    try {
+      if (btn.dataset.ticketAction === 'reply') {
+        const reply = prompt('Ответ пользователю:', '');
+        if (reply === null || !reply.trim()) return;
+        await LexPrepApi.adminReplyTicket(id, reply.trim());
+      } else if (btn.dataset.ticketAction === 'close') {
+        await LexPrepApi.adminSetTicketStatus(id, 'closed');
+      }
+      await loadTickets();
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    }
+  });
+
+  /* ---------------- Предложения ---------------- */
+
+  const suggestionsList = document.getElementById('adminSuggestionsList');
+  const suggestionsRefreshBtn = document.getElementById('adminSuggestionsRefreshBtn');
+  let suggestionsLoaded = false;
+
+  function renderSuggestions(suggestions) {
+    if (!suggestions.length) {
+      suggestionsList.innerHTML = '<p class="community-empty">Предложений пока нет.</p>';
+      return;
+    }
+    suggestionsList.innerHTML = suggestions.map(s => `
+      <div class="community-item" data-suggestion-id="${s.id}">
+        <div class="community-item__head">
+          <h3>${escapeHtml(s.title)}</h3>
+          <span class="community-badge community-badge--${s.status}">${ADMIN_SUGGESTION_STATUS_LABEL[s.status] || s.status}</span>
+        </div>
+        <p class="community-item__message">${escapeHtml(s.message)}</p>
+        <div class="community-item__meta"><span>${formatDateTime(s.createdAt)} · ${s.votes} голосов</span></div>
+        ${s.adminComment ? `
+          <div class="community-item__reply">
+            <div class="community-item__reply-label">Комментарий команды</div>
+            <p>${escapeHtml(s.adminComment)}</p>
+          </div>` : ''}
+        <div class="admin-item-actions">
+          <button type="button" class="admin-action-btn" data-suggestion-action="reviewing">На рассмотрение</button>
+          <button type="button" class="admin-action-btn" data-suggestion-action="accepted">Принять</button>
+          <button type="button" class="admin-action-btn admin-action-btn--warn" data-suggestion-action="rejected">Отклонить</button>
+          <button type="button" class="admin-action-btn" data-suggestion-action="comment">Комментарий</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadSuggestions() {
+    suggestionsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
+    try {
+      const suggestions = await LexPrepApi.listSuggestions();
+      suggestionsLoaded = true;
+      renderSuggestions(suggestions);
+    } catch (err) {
+      suggestionsList.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  suggestionsRefreshBtn.addEventListener('click', loadSuggestions);
+
+  suggestionsList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-suggestion-action]');
+    if (!btn) return;
+    const item = btn.closest('[data-suggestion-id]');
+    const id = item.dataset.suggestionId;
+    const action = btn.dataset.suggestionAction;
+    try {
+      if (action === 'comment') {
+        const comment = prompt('Комментарий команды:', '');
+        if (comment === null) return;
+        await LexPrepApi.adminUpdateSuggestion(id, { adminComment: comment.trim() });
+      } else {
+        await LexPrepApi.adminUpdateSuggestion(id, { status: action });
+      }
+      await loadSuggestions();
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    }
+  });
 });

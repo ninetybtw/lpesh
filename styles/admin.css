@@ -195,3 +195,40 @@ ADMIN.CSS — панель администратора
     margin-left: 0;
   }
 }
+
+/* ---------------- Табы (пользователи / поддержка / предложения) ---------------- */
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.admin-tab {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.admin-tab.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.admin-tab-panel[hidden] {
+  display: none;
+}
+
+.admin-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}

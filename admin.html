@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="./styles/style.css" />
     <link rel="stylesheet" href="./styles/profile.css" />
     <link rel="stylesheet" href="./styles/admin.css" />
+    <link rel="stylesheet" href="./styles/community.css" />
   </head>
   <body>
     <header class="header" id="header">
@@ -52,6 +53,8 @@
               <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
               <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
               <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
               <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
               <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
@@ -79,26 +82,48 @@
           </div>
 
           <div id="adminContent" hidden>
-            <div class="admin-toolbar">
-              <input type="search" id="adminSearch" class="form-input admin-search" placeholder="Поиск по имени или email..." />
-              <button class="btn btn--outline" type="button" id="adminRefreshBtn">Обновить</button>
-              <span class="admin-toolbar__count" id="adminCount"></span>
+            <div class="admin-tabs">
+              <button type="button" class="admin-tab is-active" data-admin-tab="users">Пользователи</button>
+              <button type="button" class="admin-tab" data-admin-tab="support">Поддержка <span id="adminTicketsOpenCount"></span></button>
+              <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
             </div>
 
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Пользователь</th>
-                    <th>Тариф</th>
-                    <th>Монеты (бонус)</th>
-                    <th>Статус</th>
-                    <th>Регистрация</th>
-                    <th>Действия</th>
-                  </tr>
-                </thead>
-                <tbody id="adminUsersBody"></tbody>
-              </table>
+            <div class="admin-tab-panel is-active" data-admin-panel="users">
+              <div class="admin-toolbar">
+                <input type="search" id="adminSearch" class="form-input admin-search" placeholder="Поиск по имени или email..." />
+                <button class="btn btn--outline" type="button" id="adminRefreshBtn">Обновить</button>
+                <span class="admin-toolbar__count" id="adminCount"></span>
+              </div>
+
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Пользователь</th>
+                      <th>Тариф</th>
+                      <th>Монеты (бонус)</th>
+                      <th>Статус</th>
+                      <th>Регистрация</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="admin-tab-panel" data-admin-panel="support" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminTicketsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="adminTicketsList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-admin-panel="suggestions" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminSuggestionsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="adminSuggestionsList"></div>
             </div>
           </div>
         </div>
