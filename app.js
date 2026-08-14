@@ -3,7 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initAiChat();
 });
 
-/* ---------------- AI consultant chat widget (demo UI, no real AI wired up yet) ---------------- */
+/* ---------------- AI consultant chat widget ----------------
+   Реальные ответы идут через Edge Function ai-consultant (NVIDIA API,
+   ключ только на сервере) — доступ только на тарифах pro/max, лимит в
+   день сервер проверяет сам. Здесь только UI + история для контекста. */
 function initAiChat() {
   const toggle = document.getElementById('aiChatToggle');
   const panel = document.getElementById('aiChatPanel');
@@ -12,6 +15,9 @@ function initAiChat() {
   const input = document.getElementById('aiChatInput');
   const body = document.getElementById('aiChatBody');
   if (!toggle || !panel || !form || !input || !body) return;
+
+  const history = [];
+  let sending = false;
 
   function open() {
     panel.hidden = false;
@@ -27,26 +33,68 @@ function initAiChat() {
   });
   closeBtn.addEventListener('click', close);
 
-  form.addEventListener('submit', (e) => {
+  function addMessage(text, who) {
+    const msg = document.createElement('div');
+    msg.className = `ai-chat__msg ai-chat__msg--${who}`;
+    msg.textContent = text;
+    body.appendChild(msg);
+    body.scrollTop = body.scrollHeight;
+    return msg;
+  }
+
+  function currentUser() {
+    try {
+      return JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hasPaidPlan(user) {
+    if (!user) return false;
+    if (user.isAdmin) return true;
+    return user.planTier && user.planTier !== 'basic' && user.planExpiresAt && new Date(user.planExpiresAt).getTime() > Date.now();
+  }
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (sending) return;
     const text = input.value.trim();
     if (!text) return;
 
-    const userMsg = document.createElement('div');
-    userMsg.className = 'ai-chat__msg ai-chat__msg--user';
-    userMsg.textContent = text;
-    body.appendChild(userMsg);
+    if (typeof LexPrepApi === 'undefined') {
+      addMessage('Нет соединения с сервером — попробуй обновить страницу.', 'bot');
+      return;
+    }
+
+    const user = currentUser();
+    if (!user) {
+      addMessage('Сначала войди в аккаунт, чтобы пользоваться ИИ-консультантом.', 'bot');
+      return;
+    }
+    if (!hasPaidPlan(user)) {
+      addMessage('ИИ-консультант доступен на тарифах «Про» и «Максимум» — оформи подписку в магазине.', 'bot');
+      return;
+    }
+
+    addMessage(text, 'user');
     input.value = '';
+    sending = true;
+    const pending = addMessage('Печатает…', 'bot');
 
-    setTimeout(() => {
-      const botMsg = document.createElement('div');
-      botMsg.className = 'ai-chat__msg ai-chat__msg--bot';
-      botMsg.textContent = 'Спасибо за вопрос! Живой ИИ-консультант ещё не подключён — это демо интерфейса, реальные ответы появятся, когда мы включим его на бэкенде.';
-      body.appendChild(botMsg);
+    try {
+      const result = await LexPrepApi.askAiConsultant(text, history);
+      pending.textContent = result.reply;
+      history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
+      if (typeof result.remaining === 'number' && result.remaining <= 2) {
+        addMessage(`Осталось запросов сегодня: ${result.remaining} из ${result.limit}.`, 'bot');
+      }
+    } catch (err) {
+      pending.textContent = err.message;
+    } finally {
+      sending = false;
       body.scrollTop = body.scrollHeight;
-    }, 450);
-
-    body.scrollTop = body.scrollHeight;
+    }
   });
 }
 

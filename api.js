@@ -487,11 +487,38 @@ const LexPrepApi = (function () {
     return toFrontendDuel(data);
   }
 
+  /* ---------------- ИИ-консультант ----------------
+     Сам вызов NVIDIA API живёт в Edge Function ai-consultant — ключ
+     там, во фронтенде его нет и быть не должно. Функция сама же
+     проверяет тариф (только pro/max) и дневной лимit по
+     ai_consultant_usage (см. supabase/ai-consultant.sql). */
+
+  async function askAiConsultant(message, history) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-consultant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ message, history: history || [] })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось получить ответ от ИИ-консультанта.');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
   return {
     register, login, logout, me, updateProfile, toFrontendUser,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
-    createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge
+    createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
+    askAiConsultant
   };
 })();
