@@ -10,6 +10,16 @@ supabase/profiles.sql — этот скрипт нужно один раз вы�
 const SUPABASE_URL = 'https://yupoqkkxedkmhkpqivwa.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_nAk1Res337ENtZ8FRSTELQ__uUDY31o';
 
+const DUEL_ERROR_MESSAGES = {
+  challenge_not_found: 'Этот вызов уже недоступен — возможно, его отменили.',
+  challenge_not_open: 'Этот вызов уже кто-то принял.',
+  cannot_accept_own_challenge: 'Нельзя принять собственный вызов.',
+  challenge_not_active: 'Эта дуэль ещё не началась или уже завершена.',
+  already_submitted: 'Счёт по этой дуэли уже отправлен.',
+  not_a_participant: 'Ты не участник этой дуэли.',
+  invalid_score: 'Некорректный счёт.'
+};
+
 const LexPrepApi = (function () {
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -29,6 +39,8 @@ const LexPrepApi = (function () {
       message = error.details || 'Промокод: 3-20 символов, латинские буквы, цифры и дефис.';
     } else if (error.code === '23505' && /suggestion_votes/.test(error.details || error.message || '')) {
       message = 'Ты уже голосовал за это предложение.';
+    } else if (DUEL_ERROR_MESSAGES[error.message]) {
+      message = DUEL_ERROR_MESSAGES[error.message];
     }
     const err = new Error(message);
     err.code = error.code || error.name;
@@ -57,7 +69,8 @@ const LexPrepApi = (function () {
       banReason: profile && profile.ban_reason,
       bonusCoins: (profile && profile.bonus_coins) || 0,
       planTier: (profile && profile.plan_tier) || 'basic',
-      planExpiresAt: profile && profile.plan_expires_at
+      planExpiresAt: profile && profile.plan_expires_at,
+      duelRating: (profile && profile.duel_rating) || 1000
     };
   }
 
@@ -379,10 +392,106 @@ const LexPrepApi = (function () {
     return toFrontendSuggestion(data, new Set());
   }
 
+  /* ---------------- Дуэли против реальных игроков (PvP) ----------------
+     public.pvp_duels (см. supabase/duels.sql) — открытое лобби: вызов
+     создаётся без конкретного соперника, любой другой пользователь может
+     его принять. Приём/счёт/пересчёт рейтинга идут через security
+     definer RPC (duel_accept_challenge/duel_submit_score) — прямой
+     UPDATE по таблице клиенту не даёт ничего изменить, кроме отмены
+     своего же ещё не принятого вызова. */
+
+  function toFrontendDuel(d) {
+    return {
+      id: d.id,
+      challengerId: d.challenger_id,
+      opponentId: d.opponent_id,
+      discipline: d.discipline,
+      topic: d.topic,
+      questionIds: d.question_ids,
+      questionCount: d.question_count,
+      status: d.status,
+      challengerScore: d.challenger_score,
+      opponentScore: d.opponent_score,
+      challengerPlayedAt: d.challenger_played_at,
+      opponentPlayedAt: d.opponent_played_at,
+      winnerId: d.winner_id,
+      challengerRatingDelta: d.challenger_rating_delta,
+      opponentRatingDelta: d.opponent_rating_delta,
+      createdAt: d.created_at,
+      completedAt: d.completed_at
+    };
+  }
+
+  async function createDuelChallenge({ discipline, topic, questionIds, questionCount }) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('pvp_duels')
+      .insert({
+        challenger_id: session.user.id,
+        discipline, topic,
+        question_ids: questionIds,
+        question_count: questionCount
+      })
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function listOpenDuels() {
+    await requireSession();
+    const { data, error } = await client
+      .from('pvp_duels')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendDuel);
+  }
+
+  async function listMyDuels() {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('pvp_duels')
+      .select('*')
+      .or(`challenger_id.eq.${session.user.id},opponent_id.eq.${session.user.id}`)
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendDuel);
+  }
+
+  async function acceptDuelChallenge(challengeId) {
+    await requireSession();
+    const { data, error } = await client.rpc('duel_accept_challenge', { p_challenge_id: challengeId });
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function submitDuelScore(challengeId, score) {
+    await requireSession();
+    const { data, error } = await client.rpc('duel_submit_score', { p_challenge_id: challengeId, p_score: score });
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function cancelDuelChallenge(challengeId) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('pvp_duels')
+      .update({ status: 'cancelled' })
+      .eq('id', challengeId)
+      .eq('challenger_id', session.user.id)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
   return {
     register, login, logout, me, updateProfile, toFrontendUser,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
-    listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion
+    listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
+    createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge
   };
 })();

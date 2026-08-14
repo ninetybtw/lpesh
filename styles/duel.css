@@ -3,6 +3,37 @@ DUEL.CSS — дуэль 1 на 1 против бота: экран настро�
 Строится поверх exam.css (тот же тёмный exam-card, .question/.answers).
 ========================================================================== */
 
+/* ---------------- Режим: бот / реальный игрок ---------------- */
+.duel-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.duel-mode-tab {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d3d8ee;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.duel-mode-tab.is-active {
+  background: var(--color-primary, #6f87ff);
+  border-color: var(--color-primary, #6f87ff);
+  color: #fff;
+}
+
+[data-theme="light"] .duel-mode-tab {
+  background: var(--color-bg-alt);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
 .duel-demo-note {
   margin: 14px 0 0;
   padding: 12px 14px;

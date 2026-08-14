@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="./styles/app.css" />
     <link rel="stylesheet" href="./styles/exam.css" />
     <link rel="stylesheet" href="./styles/duel.css" />
+    <link rel="stylesheet" href="./styles/community.css" />
   </head>
   <body>
     <header class="header" id="header">
@@ -78,6 +79,12 @@
 
     <main class="exam-page">
       <div class="container exam-container">
+        <div class="duel-mode-tabs">
+          <button type="button" class="duel-mode-tab is-active" data-duel-mode-tab="bot">Против бота</button>
+          <button type="button" class="duel-mode-tab" data-duel-mode-tab="pvp">Против игрока</button>
+        </div>
+
+        <div data-duel-mode-panel="bot">
         <!-- SETUP -->
         <section class="exam-card" data-duel-view="setup">
           <div class="eyebrow">LexPrep / Дуэли</div>
@@ -87,8 +94,8 @@
             за ставку — баланс монет.
           </p>
           <p class="duel-demo-note">
-            Демо-режим: соперник — бот, а не реальный игрок. Дуэли с реальными пользователями появятся вместе с
-            бэкендом (нужен подбор реального оппонента онлайн).
+            Здесь соперник — бот, для быстрой тренировки и ставок монетами. Чтобы сыграть против реального человека,
+            переключись на вкладку «Против игрока» выше.
           </p>
 
           <div class="duel-stats" id="duelStats"></div>
@@ -179,6 +186,74 @@
             <a href="app.html" class="btn btn--outline">Вернуться в тренажёр</a>
           </div>
         </section>
+        </div>
+
+        <div data-duel-mode-panel="pvp" hidden>
+          <!-- PVP: LOBBY -->
+          <section class="exam-card" data-pvp-view="lobby">
+            <div class="eyebrow">LexPrep / Дуэли с игроками</div>
+            <h1 class="exam-title">Дуэль против реального игрока</h1>
+            <p class="topic-desc">
+              Создай вызов — любой другой пользователь сможет его принять из открытого списка. Дальше вы оба решаете один и тот же
+              набор вопросов независимо, и по итогу пересчитывается дуэльный рейтинг (Эло). Ставок монетами здесь нет — только рейтинг.
+            </p>
+
+            <div class="duel-stats" id="pvpStats"></div>
+
+            <h2 class="profile-subheading">Создать вызов</h2>
+            <div class="exam-setup__grid duel-setup__grid">
+              <div class="form-group">
+                <label for="pvpDiscipline">Дисциплина</label>
+                <select class="form-input" id="pvpDiscipline"></select>
+              </div>
+              <div class="form-group">
+                <label for="pvpTopic">Тема</label>
+                <select class="form-input" id="pvpTopic"></select>
+              </div>
+              <div class="form-group">
+                <label for="pvpCount">Количество вопросов</label>
+                <select class="form-input" id="pvpCount">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                </select>
+              </div>
+            </div>
+            <p class="duel-setup__error" id="pvpSetupError" hidden></p>
+            <button class="btn btn--primary" id="pvpCreateBtn">Создать вызов</button>
+
+            <h2 class="profile-subheading">Открытые вызовы других игроков</h2>
+            <div class="community-list" id="pvpOpenList"><p class="community-empty">Загрузка…</p></div>
+
+            <h2 class="profile-subheading">Мои дуэли</h2>
+            <div class="community-list" id="pvpMyList"><p class="community-empty">Загрузка…</p></div>
+          </section>
+
+          <!-- PVP: BATTLE (соло-прохождение фиксированного набора вопросов) -->
+          <section class="exam-card" data-pvp-view="battle" hidden>
+            <div class="exam-running__topic" id="pvpTopicLabel"></div>
+            <span class="exam-running__progress" id="pvpProgress"></span>
+
+            <div class="question" id="pvpQuestionBox"></div>
+            <div class="duel-round-result" id="pvpRoundResult" hidden></div>
+
+            <div class="exam-running__actions duel-running__actions">
+              <button class="btn btn--primary" type="button" id="pvpAnswerBtn">Ответить</button>
+            </div>
+          </section>
+
+          <!-- PVP: RESULTS -->
+          <section class="exam-card" data-pvp-view="results" hidden>
+            <div class="exam-results__summary">
+              <div class="eyebrow">Итог дуэли</div>
+              <h1 class="exam-title" id="pvpResultTitle"></h1>
+              <p class="topic-desc" id="pvpResultMsg"></p>
+            </div>
+            <div class="exam-results__actions">
+              <button class="btn btn--primary" type="button" id="pvpBackToLobbyBtn">К списку дуэлей</button>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
 
@@ -189,5 +264,6 @@
     <script src="script.js"></script>
     <script src="duel-engine.js"></script>
     <script src="duel.js"></script>
+    <script src="duel-pvp.js"></script>
   </body>
 </html>
