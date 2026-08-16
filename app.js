@@ -329,6 +329,19 @@ function initApp() {
           <div class="test-card__body" id="testBody-main" hidden></div>
         </div>
 
+        ${activeTopic.testMulti && activeTopic.testMulti.length ? `
+          <div class="test-card" id="multiTestCard">
+            <button class="test-card__head" type="button" data-test-toggle="multi">
+              <span class="test-card__head-info">
+                <span class="test-card__title">Вопросы с несколькими правильными ответами</span>
+                <span class="test-card__meta">${activeTopic.testMulti.length} вопросов</span>
+              </span>
+              <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="test-card__body" id="testBody-multi" hidden></div>
+          </div>
+        ` : ''}
+
         <h3 class="profile-subheading">Пользовательские тесты</h3>
         <div class="user-tests-list" id="userTestsList"></div>
       </div>
@@ -454,6 +467,85 @@ function initApp() {
     });
   }
 
+  // Вопросы "выбери все подходящие варианты" — из импортированного набора
+  // тестов, отдельно от renderTestQuestions (там одиночный выбор, format
+  // question.correct — числовой индекс; здесь question.correctIndexes —
+  // массив индексов).
+  function renderMultiTestQuestions(container, questions, progressKey) {
+    container.innerHTML = `
+      <div class="questions-wrap">
+        ${questions.map((q, qIndex) => `
+          <div class="question question--multi" data-question="${qIndex}">
+            <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
+            <p class="question--multi__hint">Выбери все подходящие варианты</p>
+            <div class="answers">
+              ${q.options.map((option, i) => `
+                <label class="answer">
+                  <input type="checkbox" name="mq-${qIndex}" value="${i}">
+                  <span>${escapeHtml(option)}</span>
+                </label>
+              `).join('')}
+            </div>
+            <div class="question-result" data-result="${qIndex}"></div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="test-actions">
+        <button class="btn btn--primary" type="button" data-check-test>Проверить ответы</button>
+      </div>
+
+      <div class="summary" data-summary-box></div>
+    `;
+
+    const checkBtn = container.querySelector('[data-check-test]');
+    checkBtn.addEventListener('click', () => {
+      let score = 0;
+      const wrongIndexes = [];
+
+      questions.forEach((q, qIndex) => {
+        const chosen = Array.from(container.querySelectorAll(`input[name="mq-${qIndex}"]:checked`)).map(el => Number(el.value)).sort();
+        const correct = [...q.correctIndexes].sort();
+        const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
+        const isCorrect = chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
+        const correctText = correct.map(i => q.options[i]).join('; ');
+
+        if (isCorrect) {
+          score++;
+          resultBox.className = 'question-result is-correct';
+          resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}`;
+        } else {
+          resultBox.className = 'question-result is-wrong';
+          resultBox.innerHTML = `
+            Неверно.<br>
+            <strong>Правильные варианты:</strong> ${escapeHtml(correctText)}<br>
+            <strong>Почему:</strong> ${escapeHtml(q.explanation || '')}
+          `;
+          wrongIndexes.push(qIndex);
+        }
+      });
+
+      const summaryBox = container.querySelector('[data-summary-box]');
+      const total = questions.length;
+      const percent = Math.round((score / total) * 100);
+
+      LexPrepProgress.recordTestAttempt(progressKey, score, total, wrongIndexes);
+      renderTopics();
+      renderDisciplines();
+      renderGamifyBar();
+
+      summaryBox.classList.add('is-visible');
+      summaryBox.innerHTML = `
+        <h3>Итог теста</h3>
+        <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
+        <p>Результат: <strong>${percent}%</strong>.</p>
+        <p class="summary__note">Здесь засчитывается только полностью верный набор вариантов.</p>
+      `;
+
+      summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
   function renderUserTestsList() {
     const listEl = document.getElementById('userTestsList');
     if (!listEl) return;
@@ -520,6 +612,8 @@ function initApp() {
 
         if (id === 'main') {
           renderTestQuestions(body, activeTopic.test, activeTopic.id);
+        } else if (id === 'multi') {
+          renderMultiTestQuestions(body, activeTopic.testMulti, `${activeTopic.id}::multi`);
         } else {
           const test = getUserTests().find(t => String(t.id) === id);
           if (test) renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);

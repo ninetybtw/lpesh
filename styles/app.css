@@ -341,6 +341,124 @@ body {
   color: #9ca8cb;
 }
 
+/* ---------------- Практика ВС РФ ---------------- */
+.practice-act {
+  margin-bottom: 22px;
+}
+
+.practice-act__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #d3d8ee;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.practice-position {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid rgba(111, 135, 255, 0.5);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.practice-position__point {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6f87ff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.practice-position__text {
+  color: #d3d8ee;
+  font-size: 14.5px;
+  margin: 0 0 8px;
+}
+
+.practice-position__why {
+  color: #9ca8cb;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.practice-case {
+  background: rgba(111, 135, 255, 0.06);
+  border: 1px solid rgba(111, 135, 255, 0.16);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.practice-case__source {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6f87ff;
+  margin-bottom: 8px;
+}
+
+.practice-case p {
+  color: #9ca8cb;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.practice-case p:last-child {
+  margin-bottom: 0;
+}
+
+.practice-empty {
+  color: #9ca8cb;
+  font-size: 14px;
+}
+
+[data-theme="light"] .practice-act__name {
+  color: #14161f;
+}
+
+[data-theme="light"] .practice-position {
+  background: #f7f8fd;
+  border-color: #dde3f2;
+  border-left-color: var(--color-primary);
+}
+
+[data-theme="light"] .practice-position__point {
+  color: var(--color-primary);
+}
+
+[data-theme="light"] .practice-position__text {
+  color: #1a1f2e;
+}
+
+[data-theme="light"] .practice-position__why,
+[data-theme="light"] .practice-case p,
+[data-theme="light"] .practice-empty {
+  color: #6b7285;
+}
+
+[data-theme="light"] .practice-case {
+  background: var(--color-primary-light);
+  border-color: rgba(61, 90, 254, 0.2);
+}
+
+[data-theme="light"] .practice-case__source {
+  color: var(--color-primary);
+}
+
+/* ---------------- Тест с несколькими правильными ответами ---------------- */
+.question--multi .answers label {
+  display: flex;
+}
+
+.question--multi__hint {
+  font-size: 12px;
+  color: #6f87ff;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
 .theory h2,
 .theory h3 {
   color: #f5f7ff;
