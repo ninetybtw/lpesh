@@ -63,7 +63,8 @@ STYLE.CSS — компоненты и секции страницы
   width: 32px;
   height: 32px;
   border-radius: 12px;
-  background: #5b7cff; /* var(--color-primary) */
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .logo__text {
   font-weight: 700;
