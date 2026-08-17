@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let playerScore = 0;
   let botScore = 0;
   let answered = false;
-  let chosen = null;
+  let chosen = [];
   const roundLog = [];
 
   const playerAvatarEl = document.getElementById('duelPlayerAvatar');
@@ -159,12 +159,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderQuestion() {
     answered = false;
-    chosen = null;
+    chosen = [];
     roundResultEl.hidden = true;
     answerBtn.textContent = 'Ответить';
     answerBtn.disabled = true;
 
     const item = duelQuestions[currentIndex];
+    const isMulti = item.question.correct.length > 1;
     progressEl.textContent = `Вопрос ${currentIndex + 1} из ${duelQuestions.length}`;
     topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
     playerScoreEl.textContent = playerScore;
@@ -172,10 +173,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     questionBox.innerHTML = `
       <h4>${DuelEngine.escapeHtml(item.question.question)}</h4>
+      ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
       <div class="answers">
         ${item.question.options.map((option, i) => `
           <label class="answer">
-            <input type="radio" name="duel-answer" value="${i}">
+            <input type="${isMulti ? 'checkbox' : 'radio'}" name="duel-answer" value="${i}">
             <span>${DuelEngine.escapeHtml(option)}</span>
           </label>
         `).join('')}
@@ -184,8 +186,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     questionBox.querySelectorAll('input[name="duel-answer"]').forEach(input => {
       input.addEventListener('change', () => {
-        chosen = Number(input.value);
-        answerBtn.disabled = false;
+        chosen = Array.from(questionBox.querySelectorAll('input[name="duel-answer"]:checked')).map(el => Number(el.value));
+        answerBtn.disabled = chosen.length === 0;
       });
     });
   }
@@ -194,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!answered) {
       answered = true;
       const item = duelQuestions[currentIndex];
-      const playerCorrect = chosen === item.question.correct;
+      const playerCorrect = DuelEngine.sameAnswerSet(chosen, item.question.correct);
       const botCorrect = DuelEngine.botAnswerCorrect(duelDifficulty);
       if (playerCorrect) playerScore++;
       if (botCorrect) botScore++;

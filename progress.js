@@ -127,11 +127,17 @@ const LexPrepProgress = (function () {
       const topic = findTopic(allData, entry.topicId);
       const question = topic && topic.test[entry.qIndex];
       if (topic && question) {
-        resolved.push({ topicId: entry.topicId, topicTitle: topic.title, qIndex: entry.qIndex, question });
+        resolved.push({ topicId: entry.topicId, topicTitle: topic.title, qIndex: entry.qIndex, question: normalizeQuestion(question) });
       }
       if (limit && resolved.length >= limit) break;
     }
     return resolved;
+  }
+
+  // Часть демо-дисциплин в data.js ещё не перешла на новую форму
+  // (question.correct — число, а не массив индексов) — приводим на лету.
+  function normalizeQuestion(q) {
+    return Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] };
   }
 
   function findTopic(allData, topicId) {
@@ -573,6 +579,7 @@ const LexPrepProgress = (function () {
     recordTournamentResult,
     getInventory,
     addInventory,
+    normalizeQuestion,
     RANKS
   };
 })();

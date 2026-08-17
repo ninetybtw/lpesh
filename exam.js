@@ -17,6 +17,13 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function sameAnswerSet(a, b) {
+  if (!a || !a.length || a.length !== b.length) return false;
+  const sa = [...a].sort();
+  const sb = [...b].sort();
+  return sa.every((v, i) => v === sb[i]);
+}
+
 function shuffle(array) {
   const copy = array.slice();
   for (let i = copy.length - 1; i > 0; i--) {
@@ -44,7 +51,7 @@ function initExam() {
       if (disciplineFilter !== 'all' && d.id !== disciplineFilter) return;
       d.topics.forEach(t => {
         t.test.forEach((q, qIndex) => {
-          pool.push({ topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: q });
+          pool.push({ topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: LexPrepProgress.normalizeQuestion(q) });
         });
       });
     });
@@ -155,15 +162,18 @@ function initExam() {
 
   function renderQuestion() {
     const item = examQuestions[currentIndex];
+    const isMulti = item.question.correct.length > 1;
+    const chosen = examAnswers[currentIndex] || [];
     progressEl.textContent = `Вопрос ${currentIndex + 1} из ${examQuestions.length}`;
     topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
 
     questionBox.innerHTML = `
       <h4>${escapeHtml(item.question.question)}</h4>
+      ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
       <div class="answers">
         ${item.question.options.map((option, i) => `
           <label class="answer">
-            <input type="radio" name="exam-answer" value="${i}" ${examAnswers[currentIndex] === i ? 'checked' : ''}>
+            <input type="${isMulti ? 'checkbox' : 'radio'}" name="exam-answer" value="${i}" ${chosen.includes(i) ? 'checked' : ''}>
             <span>${escapeHtml(option)}</span>
           </label>
         `).join('')}
@@ -172,7 +182,7 @@ function initExam() {
 
     questionBox.querySelectorAll('input[name="exam-answer"]').forEach(input => {
       input.addEventListener('change', () => {
-        examAnswers[currentIndex] = Number(input.value);
+        examAnswers[currentIndex] = Array.from(questionBox.querySelectorAll('input[name="exam-answer"]:checked')).map(el => Number(el.value));
       });
     });
 
@@ -215,7 +225,7 @@ function initExam() {
 
     examQuestions.forEach((item, i) => {
       const chosen = examAnswers[i];
-      const isCorrect = chosen === item.question.correct;
+      const isCorrect = sameAnswerSet(chosen, item.question.correct);
       if (isCorrect) score++;
       else {
         wrongQuestions.push({ ...item, chosen });
@@ -257,16 +267,22 @@ function initExam() {
     if (!wrongQuestions.length) {
       reviewEl.innerHTML = `<p class="topic-desc">Все ответы верные — разбирать нечего.</p>`;
     } else {
-      reviewEl.innerHTML = wrongQuestions.map(item => `
+      reviewEl.innerHTML = wrongQuestions.map(item => {
+        const chosenText = item.chosen && item.chosen.length
+          ? item.chosen.map(i => item.question.options[i]).join('; ')
+          : 'не выбран';
+        const correctText = item.question.correct.map(i => item.question.options[i]).join('; ');
+        return `
         <div class="question">
           <h4>${escapeHtml(item.topicTitle)}: ${escapeHtml(item.question.question)}</h4>
           <div class="question-result is-wrong">
-            <strong>Твой ответ:</strong> ${item.chosen === null ? 'не выбран' : escapeHtml(item.question.options[item.chosen])}<br>
-            <strong>Правильный ответ:</strong> ${escapeHtml(item.question.options[item.question.correct])}<br>
+            <strong>Твой ответ:</strong> ${escapeHtml(chosenText)}<br>
+            <strong>Правильный ответ:</strong> ${escapeHtml(correctText)}<br>
             <strong>Почему:</strong> ${escapeHtml(item.question.explanation)}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     const retryBtn = document.getElementById('retryWeakBtn');

@@ -31,6 +31,13 @@ const DuelEngine = (function () {
     return copy;
   }
 
+  // Часть демо-дисциплин в data.js ещё не перешла на новую форму
+  // (question.correct — число, а не массив индексов) — приводим на лету,
+  // чтобы дуэли/турниры одинаково работали и со старым, и с новым контентом.
+  function normalizeQuestion(q) {
+    return Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] };
+  }
+
   function buildPool(allData, disciplineId, topicId) {
     const pool = [];
     allData.forEach(d => {
@@ -38,7 +45,7 @@ const DuelEngine = (function () {
       d.topics.forEach(t => {
         if (topicId && topicId !== 'all' && t.id !== topicId) return;
         t.test.forEach((q, qIndex) => {
-          pool.push({ topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: q });
+          pool.push({ topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: normalizeQuestion(q) });
         });
       });
     });
@@ -59,5 +66,15 @@ const DuelEngine = (function () {
     return Math.random() < diff.accuracy;
   }
 
-  return { DIFFICULTIES, escapeHtml, shuffle, buildPool, pickQuestions, pickBotName, botAnswerCorrect };
+  // Вопрос может иметь один или несколько правильных ответов
+  // (question.correct — всегда массив индексов). Засчитывается только
+  // полное совпадение выбранного набора с правильным.
+  function sameAnswerSet(chosen, correct) {
+    if (!chosen || !chosen.length || chosen.length !== correct.length) return false;
+    const a = [...chosen].sort();
+    const b = [...correct].sort();
+    return a.every((v, i) => v === b[i]);
+  }
+
+  return { DIFFICULTIES, escapeHtml, shuffle, buildPool, pickQuestions, pickBotName, botAnswerCorrect, sameAnswerSet };
 })();

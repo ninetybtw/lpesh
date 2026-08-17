@@ -10,13 +10,11 @@ public.topic_practice, см. supabase/content.sql и supabase/quiz-content.sql)
 vendor/marked.min.js. Тесты/карточки/практика хранятся "как прислали"
 (сырой JSON с id вариантов, позициями Пленумов и т.п.) и конвертируются
 здесь же под форму, которую уже понимает фронтенд:
-  - test — вопросы с одним правильным ответом (question.correct — числовой
-    индекс), как и раньше в data.js — используется везде (тренажёр, экзамен,
-    дуэли, турниры);
-  - testMulti — вопросы с несколькими правильными ответами
-    (question.correctIndexes — массив индексов); показываются только в
-    собственном тесте темы (app.js), в общий пул экзамена/дуэлей/турниров
-    не попадают, т.к. там расчитан только одиночный выбор;
+  - test — вопросы в единой форме, question.correct ВСЕГДА массив индексов
+    правильных вариантов (для одиночного выбора — длины 1). Радио/чекбоксы
+    и порядок сравнения ответа везде (тренажёр, экзамен, дуэли, турниры,
+    пользовательские тесты) решаются по correct.length, отдельного поля
+    типа вопроса не нужно;
   - cards — как и раньше, {front, back};
   - practice — готовый HTML (позиции Пленумов + судебная практика).
 
@@ -34,26 +32,23 @@ function lexprepEscapeHtml(str) {
   return div.innerHTML;
 }
 
+// Единая форма вопроса для всего фронтенда: correct — всегда массив
+// индексов (для одиночного выбора длиной 1). Радио/чекбоксы и проверка
+// ответа везде решаются по q.correct.length, а не по отдельному полю
+// типа — так один и тот же вопрос одинаково понимают тренажёр, экзамен,
+// дуэли и турниры.
 function lexprepConvertQuiz(rawQuestions) {
-  const single = [];
-  const multi = [];
+  const result = [];
   (rawQuestions || []).forEach(q => {
     const optionTexts = (q.options || []).map(o => o.text);
-    if (q.type === 'multiple') {
-      const correctIndexes = (q.correct || [])
-        .map(id => (q.options || []).findIndex(o => o.id === id))
-        .filter(i => i >= 0);
-      if (correctIndexes.length) {
-        multi.push({ question: q.question, options: optionTexts, correctIndexes, explanation: q.explanation });
-      }
-    } else {
-      const idx = (q.options || []).findIndex(o => o.id === (q.correct || [])[0]);
-      if (idx >= 0) {
-        single.push({ question: q.question, options: optionTexts, correct: idx, explanation: q.explanation });
-      }
+    const correct = (q.correct || [])
+      .map(id => (q.options || []).findIndex(o => o.id === id))
+      .filter(i => i >= 0);
+    if (correct.length) {
+      result.push({ question: q.question, options: optionTexts, correct, explanation: q.explanation });
     }
   });
-  return { single, multi };
+  return result;
 }
 
 function lexprepConvertFlashcards(rawCards) {
@@ -142,7 +137,6 @@ window.LexPrepContentReady = (async function loadDbContent() {
 
     disciplines.forEach(d => {
       const dbTopics = (byDiscipline[d.id] || []).map(t => {
-        const { single, multi } = lexprepConvertQuiz(quizByTopic[t.id]);
         const practiceRow = practiceByTopic[t.id];
         const practiceHtml = practiceRow ? lexprepRenderPractice(practiceRow.acts, practiceRow.case_law) : null;
 
@@ -151,8 +145,7 @@ window.LexPrepContentReady = (async function loadDbContent() {
           title: t.title,
           description: t.section || '',
           theory: `<div class="theory">${marked.parse(t.body_markdown || '')}</div>`,
-          test: single,
-          testMulti: multi,
+          test: lexprepConvertQuiz(quizByTopic[t.id]),
           cards: lexprepConvertFlashcards(cardsByTopic[t.id]),
           practice: practiceHtml
         };

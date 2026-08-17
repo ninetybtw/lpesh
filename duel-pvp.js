@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (const d of DATA) {
         const t = d.topics.find(t => t.id === topicId);
         if (t && t.test[qIndex]) {
-          return { topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: t.test[qIndex] };
+          const q = t.test[qIndex];
+          const question = Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] };
+          return { topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question };
         }
       }
       return null;
@@ -253,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let battleIndex = 0;
     let battleScore = 0;
     let battleAnswered = false;
-    let battleChosen = null;
+    let battleChosen = [];
 
     const progressEl = document.getElementById('pvpProgress');
     const topicLabelEl = document.getElementById('pvpTopicLabel');
@@ -272,21 +274,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderBattleQuestion() {
       battleAnswered = false;
-      battleChosen = null;
+      battleChosen = [];
       roundResultEl.hidden = true;
       answerBtn.textContent = 'Ответить';
       answerBtn.disabled = true;
 
       const item = battleQuestions[battleIndex];
+      const isMulti = item.question.correct.length > 1;
       progressEl.textContent = `Вопрос ${battleIndex + 1} из ${battleQuestions.length}`;
       topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
 
       questionBox.innerHTML = `
         <h4>${escapeHtml(item.question.question)}</h4>
+        ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
         <div class="answers">
           ${item.question.options.map((option, i) => `
             <label class="answer">
-              <input type="radio" name="pvp-answer" value="${i}">
+              <input type="${isMulti ? 'checkbox' : 'radio'}" name="pvp-answer" value="${i}">
               <span>${escapeHtml(option)}</span>
             </label>
           `).join('')}
@@ -295,8 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => {
         input.addEventListener('change', () => {
-          battleChosen = Number(input.value);
-          answerBtn.disabled = false;
+          battleChosen = Array.from(questionBox.querySelectorAll('input[name="pvp-answer"]:checked')).map(el => Number(el.value));
+          answerBtn.disabled = battleChosen.length === 0;
         });
       });
     }
@@ -305,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!battleAnswered) {
         battleAnswered = true;
         const item = battleQuestions[battleIndex];
-        const correct = battleChosen === item.question.correct;
+        const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
         if (correct) battleScore++;
 
         questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => { input.disabled = true; });

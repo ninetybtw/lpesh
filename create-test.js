@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!DATA.length) return;
 
   function emptyQuestion() {
-    return { question: '', options: ['', '', '', ''], correct: 0, explanation: '' };
+    return { question: '', options: ['', '', '', ''], correct: [0], explanation: '' };
   }
 
   let questions = [emptyQuestion(), emptyQuestion(), emptyQuestion()];
@@ -79,10 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           <label>Текст вопроса</label>
           <textarea class="form-textarea" data-q="${qIndex}" data-field="question">${escapeHtml(q.question)}</textarea>
         </div>
+        <p class="qb-question__hint">Отметь галочкой один или несколько правильных вариантов</p>
         <div class="qb-options">
           ${q.options.map((opt, oIndex) => `
             <label class="qb-option">
-              <input type="radio" name="correct-${qIndex}" value="${oIndex}" data-q="${qIndex}" data-correct ${q.correct === oIndex ? 'checked' : ''}>
+              <input type="checkbox" value="${oIndex}" data-q="${qIndex}" data-correct ${q.correct.includes(oIndex) ? 'checked' : ''}>
               <input type="text" class="form-input" placeholder="Вариант ${oIndex + 1}" data-q="${qIndex}" data-option="${oIndex}" value="${escapeHtml(opt)}">
             </label>
           `).join('')}
@@ -106,7 +107,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     questionsContainer.querySelectorAll('[data-correct]').forEach(el => {
       el.addEventListener('change', () => {
-        questions[Number(el.dataset.q)].correct = Number(el.value);
+        const q = questions[Number(el.dataset.q)];
+        const value = Number(el.value);
+        if (el.checked) {
+          if (!q.correct.includes(value)) q.correct.push(value);
+        } else {
+          q.correct = q.correct.filter(v => v !== value);
+        }
       });
     });
     questionsContainer.querySelectorAll('[data-remove]').forEach(btn => {
@@ -142,6 +149,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (const q of questions) {
       if (!q.question.trim() || q.options.some(o => !o.trim())) {
         alert('Заполни текст вопроса и все варианты ответа для каждого вопроса.');
+        return;
+      }
+      if (!q.correct.length) {
+        alert('У каждого вопроса должен быть отмечен хотя бы один правильный вариант.');
         return;
       }
     }

@@ -329,19 +329,6 @@ function initApp() {
           <div class="test-card__body" id="testBody-main" hidden></div>
         </div>
 
-        ${activeTopic.testMulti && activeTopic.testMulti.length ? `
-          <div class="test-card" id="multiTestCard">
-            <button class="test-card__head" type="button" data-test-toggle="multi">
-              <span class="test-card__head-info">
-                <span class="test-card__title">Вопросы с несколькими правильными ответами</span>
-                <span class="test-card__meta">${activeTopic.testMulti.length} вопросов</span>
-              </span>
-              <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="test-card__body" id="testBody-multi" hidden></div>
-          </div>
-        ` : ''}
-
         <h3 class="profile-subheading">Пользовательские тесты</h3>
         <div class="user-tests-list" id="userTestsList"></div>
       </div>
@@ -386,23 +373,35 @@ function initApp() {
     });
   }
 
-  function renderTestQuestions(container, questions, progressKey) {
+  // Вопрос может иметь один или несколько правильных ответов —
+  // q.correct всегда массив индексов (длина 1 для одиночного выбора).
+  // Рендерим radio, если ответ один, checkbox — если несколько.
+  function renderTestQuestions(container, rawQuestions, progressKey) {
+    // На всякий случай приводим старую форму (q.correct — число, из
+    // пользовательских тестов, сохранённых до перехода на массив) к новой.
+    const questions = rawQuestions.map(q => (
+      Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] }
+    ));
     container.innerHTML = `
       <div class="questions-wrap">
-        ${questions.map((q, qIndex) => `
+        ${questions.map((q, qIndex) => {
+          const isMulti = q.correct.length > 1;
+          return `
           <div class="question" data-question="${qIndex}">
             <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
+            ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
             <div class="answers">
               ${q.options.map((option, i) => `
                 <label class="answer">
-                  <input type="radio" name="q-${qIndex}" value="${i}">
+                  <input type="${isMulti ? 'checkbox' : 'radio'}" name="q-${qIndex}" value="${i}">
                   <span>${escapeHtml(option)}</span>
                 </label>
               `).join('')}
             </div>
             <div class="question-result" data-result="${qIndex}"></div>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
 
       <div class="test-actions">
@@ -418,96 +417,10 @@ function initApp() {
       const wrongIndexes = [];
 
       questions.forEach((q, qIndex) => {
-        const chosen = container.querySelector(`input[name="q-${qIndex}"]:checked`);
+        const chosen = Array.from(container.querySelectorAll(`input[name="q-${qIndex}"]:checked`)).map(el => Number(el.value)).sort();
+        const correct = [...q.correct].sort();
         const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
-
-        if (!chosen) {
-          resultBox.className = 'question-result is-wrong';
-          resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${escapeHtml(q.options[q.correct])}</strong>.<br>${escapeHtml(q.explanation || '')}`;
-          wrongIndexes.push(qIndex);
-          return;
-        }
-
-        const chosenIndex = Number(chosen.value);
-
-        if (chosenIndex === q.correct) {
-          score++;
-          resultBox.className = 'question-result is-correct';
-          resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}`;
-        } else {
-          resultBox.className = 'question-result is-wrong';
-          resultBox.innerHTML = `
-            Неверно.<br>
-            <strong>Твой ответ:</strong> ${escapeHtml(q.options[chosenIndex])}<br>
-            <strong>Правильный ответ:</strong> ${escapeHtml(q.options[q.correct])}<br>
-            <strong>Почему не так:</strong> ${escapeHtml(q.explanation || '')}
-          `;
-          wrongIndexes.push(qIndex);
-        }
-      });
-
-      const summaryBox = container.querySelector('[data-summary-box]');
-      const total = questions.length;
-      const percent = Math.round((score / total) * 100);
-
-      LexPrepProgress.recordTestAttempt(progressKey, score, total, wrongIndexes);
-      renderTopics();
-      renderDisciplines();
-      renderGamifyBar();
-
-      summaryBox.classList.add('is-visible');
-      summaryBox.innerHTML = `
-        <h3>Итог теста</h3>
-        <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
-        <p>Результат: <strong>${percent}%</strong>.</p>
-        <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест.</p>
-      `;
-
-      summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
-
-  // Вопросы "выбери все подходящие варианты" — из импортированного набора
-  // тестов, отдельно от renderTestQuestions (там одиночный выбор, format
-  // question.correct — числовой индекс; здесь question.correctIndexes —
-  // массив индексов).
-  function renderMultiTestQuestions(container, questions, progressKey) {
-    container.innerHTML = `
-      <div class="questions-wrap">
-        ${questions.map((q, qIndex) => `
-          <div class="question question--multi" data-question="${qIndex}">
-            <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
-            <p class="question--multi__hint">Выбери все подходящие варианты</p>
-            <div class="answers">
-              ${q.options.map((option, i) => `
-                <label class="answer">
-                  <input type="checkbox" name="mq-${qIndex}" value="${i}">
-                  <span>${escapeHtml(option)}</span>
-                </label>
-              `).join('')}
-            </div>
-            <div class="question-result" data-result="${qIndex}"></div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="test-actions">
-        <button class="btn btn--primary" type="button" data-check-test>Проверить ответы</button>
-      </div>
-
-      <div class="summary" data-summary-box></div>
-    `;
-
-    const checkBtn = container.querySelector('[data-check-test]');
-    checkBtn.addEventListener('click', () => {
-      let score = 0;
-      const wrongIndexes = [];
-
-      questions.forEach((q, qIndex) => {
-        const chosen = Array.from(container.querySelectorAll(`input[name="mq-${qIndex}"]:checked`)).map(el => Number(el.value)).sort();
-        const correct = [...q.correctIndexes].sort();
-        const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
-        const isCorrect = chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
+        const isCorrect = chosen.length > 0 && chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
         const correctText = correct.map(i => q.options[i]).join('; ');
 
         if (isCorrect) {
@@ -517,8 +430,8 @@ function initApp() {
         } else {
           resultBox.className = 'question-result is-wrong';
           resultBox.innerHTML = `
-            Неверно.<br>
-            <strong>Правильные варианты:</strong> ${escapeHtml(correctText)}<br>
+            ${chosen.length ? 'Неверно.' : 'Ответ не выбран.'}<br>
+            <strong>Правильный ответ:</strong> ${escapeHtml(correctText)}<br>
             <strong>Почему:</strong> ${escapeHtml(q.explanation || '')}
           `;
           wrongIndexes.push(qIndex);
@@ -539,7 +452,7 @@ function initApp() {
         <h3>Итог теста</h3>
         <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
         <p>Результат: <strong>${percent}%</strong>.</p>
-        <p class="summary__note">Здесь засчитывается только полностью верный набор вариантов.</p>
+        <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест. В вопросах с несколькими вариантами засчитывается только полностью верный набор ответов.</p>
       `;
 
       summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -612,8 +525,6 @@ function initApp() {
 
         if (id === 'main') {
           renderTestQuestions(body, activeTopic.test, activeTopic.id);
-        } else if (id === 'multi') {
-          renderMultiTestQuestions(body, activeTopic.testMulti, `${activeTopic.id}::multi`);
         } else {
           const test = getUserTests().find(t => String(t.id) === id);
           if (test) renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);
