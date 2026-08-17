@@ -1611,6 +1611,7 @@ body {
   flex-shrink: 0;
   min-width: 30px;
   text-align: right;
+  white-space: nowrap;
 }
 
 [data-theme="light"] .item-progress__track {

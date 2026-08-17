@@ -92,6 +92,17 @@ function lexprepRenderPractice(acts, caseLaw) {
   return `<div class="theory">${actsHtml}${caseLawHtml}</div>`;
 }
 
+// Подстраховка: если запрос к Supabase зависнет (не отклонится и не
+// выполнится — на практике видели такое с supabase-js в некоторых
+// окружениях), страница не должна виснуть с пустыми дисциплинами
+// навсегда. Через 8 секунд просто сдаёмся и остаёмся на demo-контенте.
+function lexprepWithTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('lexprep_content_timeout')), ms))
+  ]);
+}
+
 window.LexPrepContentReady = (async function loadDbContent() {
   try {
     if (typeof LEXPREP_DATA === 'undefined' || typeof LexPrepApi === 'undefined' || typeof marked === 'undefined') return;
@@ -103,13 +114,13 @@ window.LexPrepContentReady = (async function loadDbContent() {
       { data: quizzes, error: quizErr },
       { data: flashcardRows, error: cardsErr },
       { data: practiceRows, error: practiceErr }
-    ] = await Promise.all([
+    ] = await lexprepWithTimeout(Promise.all([
       client.from('disciplines').select('*').order('sort_order'),
       client.from('topics').select('*').order('sort_order'),
       client.from('topic_quiz').select('*'),
       client.from('topic_flashcards').select('*'),
       client.from('topic_practice').select('*')
-    ]);
+    ]), 8000);
     if (discErr || topicErr || !disciplines || !topics) return;
 
     const quizByTopic = {};
