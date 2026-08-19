@@ -98,25 +98,41 @@ function lexprepWithTimeout(promise, ms) {
   ]);
 }
 
+function lexprepFetchAll(client) {
+  return Promise.all([
+    client.from('disciplines').select('*').order('sort_order'),
+    client.from('topics').select('*').order('sort_order'),
+    client.from('topic_quiz').select('*'),
+    client.from('topic_flashcards').select('*'),
+    client.from('topic_practice').select('*')
+  ]);
+}
+
 window.LexPrepContentReady = (async function loadDbContent() {
   try {
     if (typeof LEXPREP_DATA === 'undefined' || typeof LexPrepApi === 'undefined' || typeof marked === 'undefined') return;
 
     const client = LexPrepApi.getClient();
+    let results;
+    try {
+      results = await lexprepWithTimeout(lexprepFetchAll(client), 8000);
+    } catch (e) {
+      // Первая попытка не успела за 8с (медленная сеть) — пробуем ещё раз
+      // с более щедрым таймаутом, прежде чем откатываться на demo-контент.
+      console.warn('LexPrep: первая загрузка контента не удалась, повторяю попытку', e);
+      results = await lexprepWithTimeout(lexprepFetchAll(client), 15000);
+    }
     const [
       { data: disciplines, error: discErr },
       { data: topics, error: topicErr },
       { data: quizzes, error: quizErr },
       { data: flashcardRows, error: cardsErr },
       { data: practiceRows, error: practiceErr }
-    ] = await lexprepWithTimeout(Promise.all([
-      client.from('disciplines').select('*').order('sort_order'),
-      client.from('topics').select('*').order('sort_order'),
-      client.from('topic_quiz').select('*'),
-      client.from('topic_flashcards').select('*'),
-      client.from('topic_practice').select('*')
-    ]), 8000);
-    if (discErr || topicErr || !disciplines || !topics) return;
+    ] = results;
+    if (discErr || topicErr || !disciplines || !topics) {
+      console.error('LexPrep: не удалось загрузить контент из Supabase, показан demo-контент', discErr || topicErr);
+      return;
+    }
 
     const quizByTopic = {};
     (quizzes || []).forEach(q => { quizByTopic[q.topic_id] = q.questions; });
