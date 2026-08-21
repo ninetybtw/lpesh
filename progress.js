@@ -80,6 +80,7 @@ const LexPrepProgress = (function () {
   }
 
   function recordTestAttempt(topicId, score, total, wrongIndexes) {
+    if (!total) return;
     const data = load();
     if (!data.tests[topicId]) data.tests[topicId] = [];
     data.tests[topicId].push({ date: Date.now(), score, total });
@@ -141,8 +142,12 @@ const LexPrepProgress = (function () {
   }
 
   function findTopic(allData, topicId) {
+    // Старые записи (до объединения одиночных/множественных тестов в один
+    // прогресс-ключ) хранились под ключом "topicId::multi" — отрезаем
+    // суффикс, чтобы такие записи по-прежнему находили свою тему.
+    const cleanId = String(topicId).split('::')[0];
     for (const discipline of allData) {
-      const topic = discipline.topics.find(t => t.id === topicId);
+      const topic = discipline.topics.find(t => t.id === cleanId);
       if (topic) return topic;
     }
     return null;

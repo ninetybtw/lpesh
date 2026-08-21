@@ -208,8 +208,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 640px;
-  overflow-y: auto;
 }
 
 .item-btn {

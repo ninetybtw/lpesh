@@ -367,8 +367,7 @@ button { cursor: pointer; }
 }
 
 .sidebar-card--sticky {
-  position: sticky;
-  top: 24px;
+  position: static;
 }
 
 .filter-group {
