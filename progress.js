@@ -171,7 +171,7 @@ const LexPrepProgress = (function () {
         scoreTotal += a.total;
         activityDays.add(new Date(a.date).toDateString());
         const topic = findTopic(allData, topicId);
-        recent.push({ date: a.date, title: topic ? topic.title : topicId, score: a.score, total: a.total });
+        recent.push({ date: a.date, title: topic ? topic.title : 'Тест по теме (недоступна)', score: a.score, total: a.total });
       });
     });
 

@@ -298,7 +298,7 @@ function initApp() {
         <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
         <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
         <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
-        <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">Практика ВС РФ</button>
+        <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
       </div>
 

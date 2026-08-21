@@ -671,6 +671,34 @@ body {
   margin-bottom: 0;
 }
 
+.theory table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 18px;
+  font-size: 14px;
+  overflow-x: auto;
+  display: block;
+}
+
+.theory th,
+.theory td {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+  vertical-align: top;
+  color: #9ca8cb;
+}
+
+.theory th {
+  background: rgba(111, 135, 255, 0.1);
+  color: #f5f7ff;
+  font-weight: 700;
+}
+
+.theory tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .test-box__title {
   color: #f5f7ff;
   font-size: 22px;
@@ -1217,6 +1245,21 @@ body {
 [data-theme="light"] .answer,
 [data-theme="light"] .summary p {
   color: #384152;
+}
+
+[data-theme="light"] .theory th,
+[data-theme="light"] .theory td {
+  border-color: var(--color-border);
+  color: #384152;
+}
+
+[data-theme="light"] .theory th {
+  background: var(--color-primary-light);
+  color: #14161f;
+}
+
+[data-theme="light"] .theory tr:nth-child(even) td {
+  background: #f7f8fd;
 }
 
 [data-theme="light"] .topic-tab {
