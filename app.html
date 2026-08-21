@@ -83,6 +83,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.35-4.35"/></svg>
               </span>
               <input type="search" id="topicSearch" class="app-search__input" placeholder="Найти тему по всем дисциплинам..." autocomplete="off" />
+              <div class="app-search__results" id="searchResults" hidden></div>
             </div>
             <a href="exam.html" class="btn btn--primary app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
@@ -120,37 +121,27 @@
           </div>
 
           <div class="app" id="appLayout">
-            <aside class="panel" id="disciplinesPanel">
-              <div class="panel__head">
-                <div class="panel__title">Дисциплины</div>
-                <div class="panel__subtitle">
-                  Выбери предмет и тему для подготовки
-                </div>
+            <div class="app-selectors">
+              <div class="app-select" data-app-select="discipline">
+                <span class="app-select__label">Дисциплина</span>
+                <button type="button" class="app-select__btn" id="disciplineSelectBtn">
+                  <span class="app-select__value" id="disciplineSelectValue">—</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="app-select__menu" id="disciplineSelectMenu" hidden></div>
               </div>
-              <div class="catalog" id="disciplineList"></div>
-            </aside>
 
-            <aside class="panel" id="topicsPanel">
-              <div class="panel__head">
-                <div class="panel__title">Темы</div>
-                <div class="panel__subtitle">
-                  Структура внутри выбранной дисциплины
-                </div>
+              <div class="app-select" data-app-select="topic">
+                <span class="app-select__label">Тема</span>
+                <button type="button" class="app-select__btn" id="topicSelectBtn">
+                  <span class="app-select__value" id="topicSelectValue">—</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="app-select__menu" id="topicSelectMenu" hidden></div>
               </div>
-              <div class="topics" id="topicList"></div>
-            </aside>
+            </div>
 
             <section class="panel content" id="contentPanel">
-              <button
-                class="content__toggle"
-                id="expandPanelsBtn"
-                type="button"
-                data-toggle-panel
-                aria-label="Показать дисциплины и темы"
-                title="Показать дисциплины и темы"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-              </button>
               <div class="content__scroll" id="contentView"></div>
             </section>
           </div>

@@ -111,11 +111,16 @@ function escapeHtml(str) {
 function initApp() {
   const DATA = LEXPREP_DATA;
 
-  const disciplineList = document.getElementById('disciplineList');
-  const topicList = document.getElementById('topicList');
+  const disciplineSelectBtn = document.getElementById('disciplineSelectBtn');
+  const disciplineSelectValue = document.getElementById('disciplineSelectValue');
+  const disciplineSelectMenu = document.getElementById('disciplineSelectMenu');
+  const topicSelectBtn = document.getElementById('topicSelectBtn');
+  const topicSelectValue = document.getElementById('topicSelectValue');
+  const topicSelectMenu = document.getElementById('topicSelectMenu');
+  const searchResults = document.getElementById('searchResults');
   const contentView = document.getElementById('contentView');
 
-  if (!disciplineList || !topicList || !contentView) return;
+  if (!disciplineSelectBtn || !topicSelectBtn || !contentView) return;
 
   localStorage.setItem('lexprep_visited_app', '1');
 
@@ -165,10 +170,7 @@ function initApp() {
     voiceAnswerResult = null;
   }
 
-  // Единая точка смены темы/дисциплины. focus:false — не трогать режим
-  // «фокуса» (когда левые панели уже свёрнуты, переключение темы из
-  // быстрого переключателя в хлебных крошках не должно снова их
-  // разворачивать-сворачивать — это и была жалоба на «уплывающие» колонки).
+  // Единая точка смены темы/дисциплины.
   function switchTopic(discipline, topic, opts) {
     opts = opts || {};
     activeDiscipline = discipline;
@@ -179,47 +181,26 @@ function initApp() {
       searchQuery = '';
       const searchInput = document.getElementById('topicSearch');
       if (searchInput) searchInput.value = '';
+      if (searchResults) searchResults.hidden = true;
     }
-    renderDisciplines();
-    renderTopics();
+    renderSelectors();
     renderContent();
-    if (opts.focus !== false) enableFocusMode();
   }
 
-  function renderDisciplines() {
-    if (searchQuery) {
-      const q = searchQuery;
-      const matches = [];
-      DATA.forEach(d => {
-        d.topics.forEach(t => {
-          const haystack = `${t.title} ${t.description}`.toLowerCase();
-          if (haystack.includes(q)) matches.push({ discipline: d, topic: t });
-        });
-      });
+  function closeSelectMenus() {
+    if (disciplineSelectMenu) disciplineSelectMenu.hidden = true;
+    if (topicSelectMenu) topicSelectMenu.hidden = true;
+  }
 
-      disciplineList.innerHTML = matches.length
-        ? matches.map(m => `
-            <button class="item-btn search-result-btn" data-discipline="${m.discipline.id}" data-topic="${m.topic.id}">
-              <span class="search-result-btn__topic">${escapeHtml(m.topic.title)}</span>
-              <span class="search-result-btn__discipline">${escapeHtml(m.discipline.title)}</span>
-            </button>
-          `).join('')
-        : `<p class="topic-desc">Ничего не найдено.</p>`;
-
-      disciplineList.querySelectorAll('[data-topic]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const discipline = DATA.find(d => d.id === btn.dataset.discipline);
-          const topic = discipline.topics.find(t => t.id === btn.dataset.topic);
-          switchTopic(discipline, topic);
-        });
-      });
-      return;
-    }
-
-    disciplineList.innerHTML = DATA.map(d => {
+  // Дисциплина и тема — два выпадающих списка над контентом (а не
+  // постоянные боковые колонки): так контент всегда занимает всё окно,
+  // а переключение темы не сворачивает/разворачивает соседние панели.
+  function renderSelectors() {
+    disciplineSelectValue.textContent = activeDiscipline.title;
+    disciplineSelectMenu.innerHTML = DATA.map(d => {
       const progress = LexPrepProgress.getDisciplineProgress(d);
       return `
-      <button class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
+      <button type="button" class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
         ${escapeHtml(d.title)}
         <span class="item-progress">
           <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
@@ -229,24 +210,19 @@ function initApp() {
     `;
     }).join('');
 
-    disciplineList.querySelectorAll('[data-discipline]').forEach(btn => {
+    disciplineSelectMenu.querySelectorAll('[data-discipline]').forEach(btn => {
       btn.addEventListener('click', () => {
-        activeDiscipline = DATA.find(d => d.id === btn.dataset.discipline);
-        activeTopic = activeDiscipline.topics[0];
-        activeView = 'notes';
-        buildCardQueue(false);
-        renderDisciplines();
-        renderTopics();
-        renderContent();
+        const discipline = DATA.find(d => d.id === btn.dataset.discipline);
+        closeSelectMenus();
+        switchTopic(discipline, discipline.topics[0]);
       });
     });
-  }
 
-  function renderTopics() {
-    topicList.innerHTML = activeDiscipline.topics.map(t => {
+    topicSelectValue.textContent = activeTopic.title;
+    topicSelectMenu.innerHTML = activeDiscipline.topics.map(t => {
       const progress = LexPrepProgress.getTopicProgress(t.id, t);
       return `
-      <button class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
+      <button type="button" class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
         ${escapeHtml(t.title)}
         <span class="item-progress">
           <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
@@ -256,16 +232,50 @@ function initApp() {
     `;
     }).join('');
 
-    topicList.querySelectorAll('[data-topic]').forEach(btn => {
+    topicSelectMenu.querySelectorAll('[data-topic]').forEach(btn => {
       btn.addEventListener('click', () => {
-        activeTopic = activeDiscipline.topics.find(t => t.id === btn.dataset.topic);
-        activeView = 'notes';
-        buildCardQueue(false);
-        renderTopics();
-        renderContent();
-        enableFocusMode();
+        const topic = activeDiscipline.topics.find(t => t.id === btn.dataset.topic);
+        closeSelectMenus();
+        switchTopic(activeDiscipline, topic);
       });
     });
+  }
+
+  function renderSearchResults() {
+    if (!searchResults) return;
+    if (!searchQuery) {
+      searchResults.hidden = true;
+      searchResults.innerHTML = '';
+      return;
+    }
+
+    const q = searchQuery;
+    const matches = [];
+    DATA.forEach(d => {
+      d.topics.forEach(t => {
+        const haystack = `${t.title} ${t.description}`.toLowerCase();
+        if (haystack.includes(q)) matches.push({ discipline: d, topic: t });
+      });
+    });
+
+    searchResults.innerHTML = matches.length
+      ? matches.map(m => `
+          <button type="button" class="item-btn search-result-btn" data-discipline="${m.discipline.id}" data-topic="${m.topic.id}">
+            <span class="search-result-btn__topic">${escapeHtml(m.topic.title)}</span>
+            <span class="search-result-btn__discipline">${escapeHtml(m.discipline.title)}</span>
+          </button>
+        `).join('')
+      : `<p class="topic-desc">Ничего не найдено.</p>`;
+
+    searchResults.querySelectorAll('[data-topic]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const discipline = DATA.find(d => d.id === btn.dataset.discipline);
+        const topic = discipline.topics.find(t => t.id === btn.dataset.topic);
+        switchTopic(discipline, topic);
+      });
+    });
+
+    searchResults.hidden = false;
   }
 
   function renderContent(animate) {
@@ -276,25 +286,9 @@ function initApp() {
       <div class="breadcrumbs">
         <span>LexPrep</span>
         <span>→</span>
-        <div class="crumb-switch" data-crumb-switch="discipline">
-          <button type="button" class="crumb-switch__btn">
-            ${escapeHtml(activeDiscipline.title)}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="crumb-switch__menu" hidden>
-            ${DATA.map(d => `<button type="button" class="crumb-switch__item ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-switch-discipline="${d.id}">${escapeHtml(d.title)}</button>`).join('')}
-          </div>
-        </div>
+        <span>${escapeHtml(activeDiscipline.title)}</span>
         <span>→</span>
-        <div class="crumb-switch" data-crumb-switch="topic">
-          <button type="button" class="crumb-switch__btn">
-            ${escapeHtml(activeTopic.title)}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="crumb-switch__menu" hidden>
-            ${activeDiscipline.topics.map(t => `<button type="button" class="crumb-switch__item ${t.id === activeTopic.id ? 'is-active' : ''}" data-switch-topic="${t.id}">${escapeHtml(t.title)}</button>`).join('')}
-          </div>
-        </div>
+        <span>${escapeHtml(activeTopic.title)}</span>
       </div>
 
       <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
@@ -359,37 +353,6 @@ function initApp() {
         <div class="user-tests-list" id="userTestsList"></div>
       </div>
     `;
-
-    // Быстрый переключатель темы/дисциплины прямо в хлебных крошках — не
-    // трогает режим фокуса (левые панели не разворачиваются), чтобы можно
-    // было сменить тему, не теряя место чтения.
-    contentView.querySelectorAll('[data-crumb-switch]').forEach(wrap => {
-      const btn = wrap.querySelector('.crumb-switch__btn');
-      const menu = wrap.querySelector('.crumb-switch__menu');
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const willOpen = menu.hidden;
-        contentView.querySelectorAll('.crumb-switch__menu').forEach(m => { m.hidden = true; });
-        menu.hidden = !willOpen;
-      });
-      menu.addEventListener('click', (e) => e.stopPropagation());
-    });
-
-    contentView.querySelectorAll('[data-switch-discipline]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const discipline = DATA.find(d => d.id === btn.dataset.switchDiscipline);
-        if (!discipline) return;
-        switchTopic(discipline, discipline.topics[0], { focus: false, resetSearch: false });
-      });
-    });
-
-    contentView.querySelectorAll('[data-switch-topic]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const topic = activeDiscipline.topics.find(t => t.id === btn.dataset.switchTopic);
-        if (!topic) return;
-        switchTopic(activeDiscipline, topic, { focus: false, resetSearch: false });
-      });
-    });
 
     if (animate) {
       void contentView.offsetWidth;
@@ -505,8 +468,7 @@ function initApp() {
       const percent = Math.round((score / total) * 100);
 
       LexPrepProgress.recordTestAttempt(progressKey, score, total, wrongIndexes);
-      renderTopics();
-      renderDisciplines();
+      renderSelectors();
       renderGamifyBar();
 
       summaryBox.classList.add('is-visible');
@@ -773,8 +735,7 @@ function initApp() {
         cardFlipped = false;
         voiceAnswerResult = null;
         renderCardSession();
-        renderTopics();
-        renderDisciplines();
+        renderSelectors();
       }, 260);
     }
 
@@ -792,56 +753,33 @@ function initApp() {
     }
   }
 
-  const appLayout = document.getElementById('appLayout');
-
-  function animateFocusMode(collapse) {
-    if (!appLayout) return;
-
-    const startColumns = getComputedStyle(appLayout).gridTemplateColumns;
-    appLayout.classList.toggle('is-focus-mode', collapse);
-    const endColumns = getComputedStyle(appLayout).gridTemplateColumns;
-
-    if (startColumns === endColumns) return;
-
-    appLayout.style.transition = 'none';
-    appLayout.style.gridTemplateColumns = startColumns;
-    appLayout.getBoundingClientRect();
-
-    requestAnimationFrame(() => {
-      appLayout.style.transition = 'grid-template-columns 0.5s cubic-bezier(0.65, 0, 0.35, 1)';
-      appLayout.style.gridTemplateColumns = endColumns;
-    });
-
-    appLayout.addEventListener('transitionend', function handler(e) {
-      if (e.propertyName !== 'grid-template-columns') return;
-      appLayout.style.transition = '';
-      appLayout.style.gridTemplateColumns = '';
-      appLayout.removeEventListener('transitionend', handler);
-    });
-  }
-
-  function enableFocusMode() {
-    animateFocusMode(true);
-  }
-
-  function disableFocusMode() {
-    animateFocusMode(false);
-  }
-
-  document.querySelectorAll('[data-toggle-panel]').forEach(button => {
-    button.addEventListener('click', disableFocusMode);
+  disciplineSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = disciplineSelectMenu.hidden;
+    closeSelectMenus();
+    disciplineSelectMenu.hidden = !willOpen;
   });
+  disciplineSelectMenu.addEventListener('click', (e) => e.stopPropagation());
+
+  topicSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = topicSelectMenu.hidden;
+    closeSelectMenus();
+    topicSelectMenu.hidden = !willOpen;
+  });
+  topicSelectMenu.addEventListener('click', (e) => e.stopPropagation());
 
   document.addEventListener('click', () => {
-    contentView.querySelectorAll('.crumb-switch__menu').forEach(m => { m.hidden = true; });
+    closeSelectMenus();
   });
 
   const searchInput = document.getElementById('topicSearch');
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value.trim().toLowerCase();
-      renderDisciplines();
+      renderSearchResults();
     });
+    searchInput.addEventListener('click', (e) => e.stopPropagation());
   }
 
   function renderGamifyBar() {
@@ -882,8 +820,7 @@ function initApp() {
   }
 
   buildCardQueue(false);
-  renderDisciplines();
-  renderTopics();
+  renderSelectors();
   renderContent();
   renderGamifyBar();
 }
