@@ -268,7 +268,8 @@ function initApp() {
     });
   }
 
-  function renderContent() {
+  function renderContent(animate) {
+    if (animate === undefined) animate = true;
     contentView.classList.remove('content-fade-in');
 
     contentView.innerHTML = `
@@ -390,8 +391,10 @@ function initApp() {
       });
     });
 
-    void contentView.offsetWidth;
-    contentView.classList.add('content-fade-in');
+    if (animate) {
+      void contentView.offsetWidth;
+      contentView.classList.add('content-fade-in');
+    }
 
     renderUserTestsList();
 
@@ -405,7 +408,7 @@ function initApp() {
     contentView.querySelectorAll('[data-view]').forEach(tab => {
       tab.addEventListener('click', () => {
         activeView = tab.dataset.view;
-        renderContent();
+        renderContent(false);
       });
     });
 
