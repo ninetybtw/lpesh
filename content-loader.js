@@ -110,7 +110,12 @@ function lexprepFetchAll(client) {
 
 window.LexPrepContentReady = (async function loadDbContent() {
   try {
-    if (typeof LEXPREP_DATA === 'undefined' || typeof LexPrepApi === 'undefined' || typeof marked === 'undefined') return;
+    if (typeof LEXPREP_DATA === 'undefined' || typeof LexPrepApi === 'undefined' || typeof marked === 'undefined') {
+      console.error('LexPrep: content-loader запустился раньше нужных скриптов, остаёмся на demo-контенте', {
+        LEXPREP_DATA: typeof LEXPREP_DATA, LexPrepApi: typeof LexPrepApi, marked: typeof marked
+      });
+      return;
+    }
 
     const client = LexPrepApi.getClient();
     let results;
@@ -177,6 +182,6 @@ window.LexPrepContentReady = (async function loadDbContent() {
       }
     });
   } catch (e) {
-    // Молча остаёмся на demo-контенте из data.js.
+    console.error('LexPrep: контент из Supabase не загрузился, остаёмся на demo-контенте', e);
   }
 })();
