@@ -1,9 +1,11 @@
 /* ==========================================================================
 SHOP.JS — обмен монет (заработанных в тренажёре) на временный апгрейд
-тарифа. Всё хранится только в localStorage этого браузера — демо-симуляция,
-без реальной оплаты и без технической защиты лимитов. Когда появится
-бэкенд, эта механика должна быть переписана на реальный запрос к серверу,
-который проверяет баланс и продлевает подписку на своей стороне.
+тарифа. Всё хранится только в localStorage этого браузера — демо-симуляция
+оплаты. Дневные/месячные лимиты по тарифу реально проверяются (см. plan.js,
+progress.js), а докупленные здесь расходники (попытки теста, запросы ИИ,
+билеты турнира) реально тратятся сверх лимита. Когда появится бэкенд, эта
+механика должна быть переписана на реальный запрос к серверу, который
+проверяет баланс и продлевает подписку на своей стороне.
 
 Цены рассчитаны так, чтобы обычная активная подготовка (несколько тестов
 в неделю + ежедневное повторение карточек) давала около 300–400 монет
@@ -68,39 +70,13 @@ const CONSUMABLE_ITEMS = [
   }
 ];
 
-const TIER_RANK = { basic: 0, pro: 1, max: 2 };
-
-// Тариф может быть куплен за монеты локально (localStorage) или выдан
-// админом через профиль на сервере (profiles.plan_tier/plan_expires_at,
-// синхронизируется в кэш lexprep_user) — действует более высокий из
-// двух источников, с большим сроком при равном уровне.
+// Разрешение тарифа теперь общее для всего сайта — см. plan.js.
 function getEffectivePlan() {
-  const localTier = localStorage.getItem(PLAN_TIER_KEY) || 'basic';
-  const localExpires = Number(localStorage.getItem(PLAN_EXPIRES_KEY) || 0);
-  const localValid = localTier !== 'basic' && Date.now() <= localExpires;
-
-  let serverTier = 'basic';
-  let serverExpires = 0;
-  try {
-    const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
-    if (user && user.planTier && user.planExpiresAt) {
-      serverTier = user.planTier;
-      serverExpires = new Date(user.planExpiresAt).getTime();
-    }
-  } catch (e) { /* ignore */ }
-  const serverValid = serverTier !== 'basic' && Date.now() <= serverExpires;
-
-  if (!localValid && !serverValid) return { tier: 'basic', expires: 0 };
-  if (localValid && !serverValid) return { tier: localTier, expires: localExpires };
-  if (!localValid && serverValid) return { tier: serverTier, expires: serverExpires };
-
-  return TIER_RANK[serverTier] >= TIER_RANK[localTier]
-    ? { tier: serverTier, expires: serverExpires }
-    : { tier: localTier, expires: localExpires };
+  return LexPrepPlan.getEffectivePlan();
 }
 
 function getActivePlanTier() {
-  return getEffectivePlan().tier;
+  return LexPrepPlan.getTier();
 }
 
 function getPlanDaysLeft() {

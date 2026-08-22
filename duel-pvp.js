@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       openListEl.querySelectorAll('[data-accept]').forEach(btn => {
         btn.addEventListener('click', async () => {
+          if (!checkDuelAllowance()) return;
           btn.disabled = true;
           try {
             const duel = await LexPrepApi.acceptDuelChallenge(btn.dataset.accept);
@@ -182,6 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       myListEl.querySelectorAll('[data-play]').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (!checkDuelAllowance()) return;
           const duel = myDuelsCache.find(d => d.id === btn.dataset.play);
           if (duel) playDuel(duel);
         });
@@ -214,8 +216,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
+    function checkDuelAllowance() {
+      const limit = LexPrepPlan.getLimits().duelsPerDay;
+      if (limit === 0) {
+        errorEl.textContent = 'Дуэли доступны с тарифа «Про» — оформи подписку в магазине.';
+        errorEl.hidden = false;
+        return false;
+      }
+      if (LexPrepProgress.getDailyUsage().duelsPlayed >= limit) {
+        errorEl.textContent = `Дневной лимит дуэлей (${limit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан — попробуй завтра или оформи «Максимум».`;
+        errorEl.hidden = false;
+        return false;
+      }
+      return true;
+    }
+
     createBtn.addEventListener('click', async () => {
       errorEl.hidden = true;
+      if (!checkDuelAllowance()) return;
       const disciplineId = discSelect.value;
       const topicId = topicSelect.value;
       const count = Number(countSelect.value);
@@ -264,6 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const answerBtn = document.getElementById('pvpAnswerBtn');
 
     function playDuel(duel) {
+      LexPrepProgress.incrementDailyUsage('duelsPlayed');
       battleDuel = duel;
       battleQuestions = resolveQuestions(duel.questionIds);
       battleIndex = 0;

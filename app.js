@@ -54,7 +54,7 @@ function initAiChat() {
   function hasPaidPlan(user) {
     if (!user) return false;
     if (user.isAdmin) return true;
-    return user.planTier && user.planTier !== 'basic' && user.planExpiresAt && new Date(user.planExpiresAt).getTime() > Date.now();
+    return typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() !== 'basic';
   }
 
   form.addEventListener('submit', async (e) => {
@@ -199,13 +199,16 @@ function initApp() {
     disciplineSelectValue.textContent = activeDiscipline.title;
     disciplineSelectMenu.innerHTML = DATA.map(d => {
       const progress = LexPrepProgress.getDisciplineProgress(d);
+      const locked = LexPrepPlan.isDisciplineLocked(d.id, DATA);
       return `
-      <button type="button" class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
+      <button type="button" class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''} ${locked ? 'is-locked' : ''}" data-discipline="${d.id}">
         ${escapeHtml(d.title)}
+        ${locked ? '<span class="item-lock-badge">Про</span>' : `
         <span class="item-progress">
           <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
           <span class="item-progress__label">${progress}%</span>
         </span>
+        `}
       </button>
     `;
     }).join('');
@@ -282,6 +285,35 @@ function initApp() {
     if (animate === undefined) animate = true;
     contentView.classList.remove('content-fade-in');
 
+    if (LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA)) {
+      contentView.innerHTML = `
+        <div class="breadcrumbs">
+          <span>LexPrep</span>
+          <span>→</span>
+          <span>${escapeHtml(activeDiscipline.title)}</span>
+          <span>→</span>
+          <span>${escapeHtml(activeTopic.title)}</span>
+        </div>
+
+        <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
+
+        <div class="paywall">
+          <div class="paywall__badge">Тариф «Про»</div>
+          <h2 class="paywall__title">Эта дисциплина закрыта на Базовом тарифе</h2>
+          <p class="paywall__text">
+            На Базовом тарифе полностью открыта только одна дисциплина (её можно выбрать в настройках профиля) — у остальных виден только список тем, без конспекта, тестов и карточек.
+            Оформи «Про» или «Максимум», чтобы открыть все дисциплины без ограничений.
+          </p>
+          <a class="btn btn--primary" href="index.html#pricing">Смотреть тарифы</a>
+        </div>
+      `;
+      if (animate) {
+        void contentView.offsetWidth;
+        contentView.classList.add('content-fade-in');
+      }
+      return;
+    }
+
     contentView.innerHTML = `
       <div class="breadcrumbs">
         <span>LexPrep</span>
@@ -300,6 +332,7 @@ function initApp() {
         <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
         <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
+        ${LexPrepPlan.getLimits().pdfExport ? '<button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>' : ''}
       </div>
 
       <div data-view-panel="notes" ${activeView === 'notes' ? '' : 'hidden'}>
@@ -368,6 +401,11 @@ function initApp() {
       });
     }
 
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+      downloadPdfBtn.addEventListener('click', () => downloadTopicPdf(activeTopic));
+    }
+
     contentView.querySelectorAll('[data-view]').forEach(tab => {
       tab.addEventListener('click', () => {
         activeView = tab.dataset.view;
@@ -396,6 +434,55 @@ function initApp() {
         renderCardSession();
       });
     });
+  }
+
+  // PDF-экспорт конспекта — доступен только на тарифе «Максимум»
+  // (LexPrepPlan.getLimits().pdfExport). jsPDF рисует простой текстовый
+  // документ: заголовок темы + текст конспекта построчно с переносом.
+  // Разметка (жирный/списки/таблицы) не переносится — это читаемая
+  // текстовая копия для офлайн-подготовки, не точная копия вёрстки.
+  function downloadTopicPdf(topic) {
+    if (typeof jspdf === 'undefined') {
+      alert('Не удалось загрузить модуль PDF — попробуй обновить страницу.');
+      return;
+    }
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 48;
+    const marginTop = 56;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = doc.internal.pageSize.getWidth() - marginX * 2;
+    let y = marginTop;
+
+    function addLine(text, fontSize, isBold) {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+      const lines = doc.splitTextToSize(text, maxWidth);
+      lines.forEach(line => {
+        if (y > pageHeight - marginTop) {
+          doc.addPage();
+          y = marginTop;
+        }
+        doc.text(line, marginX, y);
+        y += fontSize * 1.35;
+      });
+    }
+
+    addLine(topic.title, 16, true);
+    y += 8;
+
+    const container = document.createElement('div');
+    container.innerHTML = topic.theory || '';
+    container.querySelectorAll('h1, h2, h3, h4, p, li, tr').forEach(el => {
+      const text = el.textContent.trim().replace(/\s+/g, ' ');
+      if (!text) return;
+      const isHeading = /^H[1-4]$/.test(el.tagName);
+      if (isHeading) y += 6;
+      addLine(text, isHeading ? 13 : 11, isHeading);
+      if (isHeading) y += 2;
+    });
+
+    doc.save(`${topic.title.replace(/[\\/:*?"<>|]/g, '')}.pdf`);
   }
 
   // Вопрос может иметь один или несколько правильных ответов —
@@ -438,8 +525,23 @@ function initApp() {
 
     const checkBtn = container.querySelector('[data-check-test]');
     checkBtn.addEventListener('click', () => {
+      const summaryBox = container.querySelector('[data-summary-box]');
+      const limits = LexPrepPlan.getLimits();
+      const usedToday = LexPrepProgress.getDailyUsage().testsTaken;
+      if (usedToday >= limits.testsPerDay && !LexPrepProgress.spendInventory('testAttempts')) {
+        summaryBox.classList.add('is-visible');
+        summaryBox.innerHTML = `
+          <h3>Дневной лимит тестов исчерпан</h3>
+          <p>На тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» доступно ${limits.testsPerDay} ${limits.testsPerDay === 1 ? 'попытка' : 'попытки'} в день.</p>
+          <p class="summary__note">Оформи более высокий тариф или докупи попытки в <a href="shop.html">магазине</a>.</p>
+        `;
+        summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+
       let score = 0;
       const wrongIndexes = [];
+      const showExplanations = limits.testExplanations;
 
       questions.forEach((q, qIndex) => {
         const chosen = Array.from(container.querySelectorAll(`input[name="q-${qIndex}"]:checked`)).map(el => Number(el.value)).sort();
@@ -447,23 +549,22 @@ function initApp() {
         const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
         const isCorrect = chosen.length > 0 && chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
         const correctText = correct.map(i => q.options[i]).join('; ');
+        const explanationLine = showExplanations ? `<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}` : '';
 
         if (isCorrect) {
           score++;
           resultBox.className = 'question-result is-correct';
-          resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}`;
+          resultBox.innerHTML = `Верно.${explanationLine}`;
         } else {
           resultBox.className = 'question-result is-wrong';
           resultBox.innerHTML = `
             ${chosen.length ? 'Неверно.' : 'Ответ не выбран.'}<br>
-            <strong>Правильный ответ:</strong> ${escapeHtml(correctText)}<br>
-            <strong>Почему:</strong> ${escapeHtml(q.explanation || '')}
+            <strong>Правильный ответ:</strong> ${escapeHtml(correctText)}${explanationLine}
           `;
           wrongIndexes.push(qIndex);
         }
       });
 
-      const summaryBox = container.querySelector('[data-summary-box]');
       const total = questions.length;
       const percent = Math.round((score / total) * 100);
 
@@ -594,6 +695,16 @@ function initApp() {
       area.innerHTML = `
         <div class="cards-empty">
           <p class="topic-desc">Все карточки этой темы повторены. Новые появятся здесь по расписанию интервального повторения — или нажми «Повторить всё» выше, чтобы пройти их ещё раз.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const cardsLimit = LexPrepPlan.getLimits().cardsPerDay;
+    if (LexPrepProgress.getDailyUsage().cardsReviewed >= cardsLimit) {
+      area.innerHTML = `
+        <div class="cards-empty">
+          <p class="topic-desc">Дневной лимит карточек (${cardsLimit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан. Оформи «Про» для безлимитного повторения — <a href="index.html#pricing">смотреть тарифы</a>.</p>
         </div>
       `;
       return;

@@ -286,6 +286,56 @@ body {
   box-shadow: 0 12px 26px rgba(111, 135, 255, 0.22);
 }
 
+.item-btn.is-locked {
+  opacity: 0.7;
+}
+
+.item-lock-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(111, 135, 255, 0.18);
+  color: #b9c4ff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.paywall {
+  max-width: 520px;
+  margin-top: 18px;
+  padding: 28px;
+  border-radius: 20px;
+  border: 1px solid rgba(111, 135, 255, 0.22);
+  background: rgba(111, 135, 255, 0.06);
+}
+
+.paywall__badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(111, 135, 255, 0.18);
+  color: #b9c4ff;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.paywall__title {
+  color: #f5f7ff;
+  font-size: 19px;
+  margin-bottom: 10px;
+}
+
+.paywall__text {
+  color: #9ca8cb;
+  font-size: 14.5px;
+  line-height: 1.65;
+  margin-bottom: 18px;
+}
+
 .item-progress__fill {
   transition: width 0.5s cubic-bezier(0.25, 0.7, 0.35, 1);
 }
@@ -503,6 +553,16 @@ body {
   border-color: rgba(111, 135, 255, 0.35);
 }
 
+.topic-tab--pdf {
+  margin-left: auto;
+  background: rgba(111, 135, 255, 0.14);
+  color: #d3d8ee;
+}
+
+.topic-tab--pdf:hover {
+  background: rgba(111, 135, 255, 0.24);
+}
+
 .note-box {
   background: rgba(111, 135, 255, 0.08);
   border: 1px solid rgba(111, 135, 255, 0.18);
@@ -637,6 +697,13 @@ body {
   color: #6f87ff;
   font-weight: 700;
   margin-bottom: 6px;
+}
+
+/* Барьер от бездумного копипаста конспекта — не настоящая защита
+   (обходится через DevTools), но убирает "выдели всё → Ctrl+C". */
+.theory,
+.flashcard__face {
+  user-select: none;
 }
 
 .theory h2,
@@ -1237,6 +1304,25 @@ body {
 [data-theme="light"] .note-box {
   background: #f7f8fd;
   border: 1px solid #dde3f2;
+}
+
+[data-theme="light"] .paywall {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+[data-theme="light"] .paywall__title {
+  color: #14161f;
+}
+
+[data-theme="light"] .paywall__text {
+  color: #6b7285;
+}
+
+[data-theme="light"] .paywall__badge,
+[data-theme="light"] .item-lock-badge {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
 }
 
 [data-theme="light"] .note-box p,

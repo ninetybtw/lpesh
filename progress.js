@@ -25,10 +25,12 @@ const LexPrepProgress = (function () {
         cards: (raw && raw.cards) || {},
         tests: (raw && raw.tests) || {},
         examAttempts: (raw && raw.examAttempts) || [],
-        weak: (raw && raw.weak) || {}
+        weak: (raw && raw.weak) || {},
+        dailyUsage: (raw && raw.dailyUsage) || null,
+        monthlyUsage: (raw && raw.monthlyUsage) || null
       };
     } catch (e) {
-      return { cards: {}, tests: {}, examAttempts: [], weak: {} };
+      return { cards: {}, tests: {}, examAttempts: [], weak: {}, dailyUsage: null, monthlyUsage: null };
     }
   }
 
@@ -42,6 +44,45 @@ const LexPrepProgress = (function () {
 
   function weakKey(topicId, qIndex) {
     return `${topicId}::${qIndex}`;
+  }
+
+  // Дневные/месячные счётчики для тарифных лимитов (см. plan.js) — тесты,
+  // карточки, дуэли сегодня; турниры в этом месяце. Сбрасываются сами при
+  // смене дня/месяца, отдельно чистить не нужно.
+  function getDailyUsage() {
+    const data = load();
+    const today = new Date().toDateString();
+    if (!data.dailyUsage || data.dailyUsage.day !== today) {
+      return { day: today, cardsReviewed: 0, testsTaken: 0, duelsPlayed: 0 };
+    }
+    return data.dailyUsage;
+  }
+
+  function incrementDailyUsage(key, amount) {
+    const data = load();
+    const usage = getDailyUsage();
+    usage[key] = (usage[key] || 0) + (amount || 1);
+    data.dailyUsage = usage;
+    save(data);
+    return usage[key];
+  }
+
+  function getMonthlyUsage() {
+    const data = load();
+    const month = new Date().toISOString().slice(0, 7);
+    if (!data.monthlyUsage || data.monthlyUsage.month !== month) {
+      return { month, tourneysPlayed: 0 };
+    }
+    return data.monthlyUsage;
+  }
+
+  function incrementMonthlyUsage(key, amount) {
+    const data = load();
+    const usage = getMonthlyUsage();
+    usage[key] = (usage[key] || 0) + (amount || 1);
+    data.monthlyUsage = usage;
+    save(data);
+    return usage[key];
   }
 
   function getCardState(topicId, cardIndex) {
@@ -60,6 +101,7 @@ const LexPrepProgress = (function () {
       reviews: state.reviews + 1
     };
     save(data);
+    incrementDailyUsage('cardsReviewed');
     return data.cards[key];
   }
 
@@ -96,6 +138,7 @@ const LexPrepProgress = (function () {
       }
     }
     save(data);
+    incrementDailyUsage('testsTaken');
   }
 
   function recordExamAttempt(score, total, topics, wrongEntries) {
@@ -316,6 +359,17 @@ const LexPrepProgress = (function () {
     inv[key] = (inv[key] || 0) + amount;
     localStorage.setItem(INVENTORY_KEY, JSON.stringify(inv));
     return inv;
+  }
+
+  // Списывает докупленный расходник сверх дневного лимита тарифа.
+  // Возвращает true, если хватило и списание прошло.
+  function spendInventory(key, amount) {
+    amount = amount || 1;
+    const inv = getInventory();
+    if ((inv[key] || 0) < amount) return false;
+    inv[key] -= amount;
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inv));
+    return true;
   }
 
   /* ---------------- Duel rating (дуэли и турниры против бота) ---------------- */
@@ -584,6 +638,11 @@ const LexPrepProgress = (function () {
     recordTournamentResult,
     getInventory,
     addInventory,
+    spendInventory,
+    getDailyUsage,
+    incrementDailyUsage,
+    getMonthlyUsage,
+    incrementMonthlyUsage,
     normalizeQuestion,
     RANKS
   };

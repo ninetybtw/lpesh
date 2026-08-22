@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReferral();
   initThemeSwitch();
   initNotificationsSwitch();
+  initBasicDisciplineSetting();
   initPasswordForm();
   initPrivacyModal();
   initDangerZone();
@@ -375,6 +376,19 @@ function initNotificationsSwitch() {
   });
 
   syncSwitch();
+}
+
+/* ---------------- Discipline choice for the Basic tier ---------------- */
+function initBasicDisciplineSetting() {
+  const select = document.getElementById('basicDisciplineSelect');
+  if (!select || typeof LEXPREP_DATA === 'undefined' || typeof LexPrepPlan === 'undefined') return;
+
+  select.innerHTML = LEXPREP_DATA.map(d => `<option value="${d.id}">${d.title}</option>`).join('');
+  select.value = LexPrepPlan.getChosenDisciplineId(LEXPREP_DATA);
+
+  select.addEventListener('change', () => {
+    LexPrepPlan.setChosenDisciplineId(select.value);
+  });
 }
 
 /* ---------------- My articles ---------------- */

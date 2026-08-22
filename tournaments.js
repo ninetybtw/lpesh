@@ -56,9 +56,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
+  function tournamentAllowance() {
+    const limit = LexPrepPlan.getLimits().tourneysPerMonth;
+    if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»' };
+    if (LexPrepProgress.getMonthlyUsage().tourneysPlayed >= limit) {
+      return { allowed: false, label: `Лимит ${limit}/мес исчерпан` };
+    }
+    return { allowed: true, label: null };
+  }
+
   function renderList() {
     const balance = LexPrepProgress.getCoins();
-    listEl.innerHTML = TOURNAMENTS.map(t => `
+    const allowance = tournamentAllowance();
+    listEl.innerHTML = TOURNAMENTS.map(t => {
+      const blocked = !allowance.allowed || balance < t.entryFee;
+      const label = !allowance.allowed ? allowance.label : (balance < t.entryFee ? 'Не хватает монет' : 'Участвовать');
+      return `
       <div class="tourney-card">
         <div class="tourney-card__title">${DuelEngine.escapeHtml(t.title)}</div>
         <div class="tourney-card__desc">${DuelEngine.escapeHtml(t.desc)}</div>
@@ -66,18 +79,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span>Взнос: ${t.entryFee} монет</span>
           <span>Приз: ${t.prize} монет</span>
         </div>
-        <button class="btn btn--primary tourney-card__btn" type="button" data-join="${t.id}" ${balance < t.entryFee ? 'disabled' : ''}>
-          ${balance < t.entryFee ? 'Не хватает монет' : 'Участвовать'}
+        <button class="btn btn--primary tourney-card__btn" type="button" data-join="${t.id}" ${blocked ? 'disabled' : ''}>
+          ${label}
         </button>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     listEl.querySelectorAll('[data-join]').forEach(btn => {
       btn.addEventListener('click', () => {
         const tourney = TOURNAMENTS.find(t => t.id === btn.dataset.join);
         if (!tourney) return;
+        if (!tournamentAllowance().allowed) return;
         if (!LexPrepProgress.spendCoins(tourney.entryFee)) return;
         if (typeof initCoinBadge === 'function') initCoinBadge();
+        LexPrepProgress.incrementMonthlyUsage('tourneysPlayed');
         startTournament(tourney);
       });
     });

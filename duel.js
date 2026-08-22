@@ -75,6 +75,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('startDuelBtn').addEventListener('click', () => {
     errorEl.hidden = true;
 
+    const duelLimit = LexPrepPlan.getLimits().duelsPerDay;
+    if (duelLimit === 0) {
+      errorEl.textContent = 'Дуэли доступны с тарифа «Про» — оформи подписку в магазине.';
+      errorEl.hidden = false;
+      return;
+    }
+    if (LexPrepProgress.getDailyUsage().duelsPlayed >= duelLimit) {
+      errorEl.textContent = `Дневной лимит дуэлей (${duelLimit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан — попробуй завтра или оформи «Максимум».`;
+      errorEl.hidden = false;
+      return;
+    }
+
     const count = Number(document.getElementById('duelCount').value);
     const difficulty = document.getElementById('duelDifficulty').value;
     const disciplineId = disciplineSelect.value;
@@ -106,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     if (typeof initCoinBadge === 'function') initCoinBadge();
+    LexPrepProgress.incrementDailyUsage('duelsPlayed');
 
     startDuel(questions, wager, difficulty);
   });
