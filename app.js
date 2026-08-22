@@ -446,40 +446,76 @@ function initApp() {
       alert('Не удалось загрузить модуль PDF — попробуй обновить страницу.');
       return;
     }
+    if (typeof LEXPREP_PDF_FONTS === 'undefined') {
+      alert('Не удалось загрузить шрифт для PDF — попробуй обновить страницу.');
+      return;
+    }
     const { jsPDF } = jspdf;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const marginX = 48;
+
+    // Встроенные шрифты jsPDF (helvetica и т.п.) не знают кириллицу —
+    // без своего шрифта конспект превращается в нечитаемую кашу из
+    // символов. Roboto с кириллицей зашит в vendor/roboto-fonts.js.
+    doc.addFileToVFS('Roboto-Regular.ttf', LEXPREP_PDF_FONTS.regular);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFileToVFS('Roboto-Medium.ttf', LEXPREP_PDF_FONTS.medium);
+    doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
+    doc.setFont('Roboto', 'normal');
+
+    const marginX = 52;
     const marginTop = 56;
+    const marginBottom = 56;
     const pageHeight = doc.internal.pageSize.getHeight();
     const maxWidth = doc.internal.pageSize.getWidth() - marginX * 2;
     let y = marginTop;
 
-    function addLine(text, fontSize, isBold) {
+    function ensureSpace(neededHeight) {
+      if (y + neededHeight > pageHeight - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+      }
+    }
+
+    function addLine(text, fontSize, isBold, indent) {
       doc.setFontSize(fontSize);
-      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.setFont('Roboto', isBold ? 'bold' : 'normal');
+      doc.setTextColor(isBold ? 20 : 45);
+      const lines = doc.splitTextToSize(text, maxWidth - (indent || 0));
       lines.forEach(line => {
-        if (y > pageHeight - marginTop) {
-          doc.addPage();
-          y = marginTop;
-        }
-        doc.text(line, marginX, y);
-        y += fontSize * 1.35;
+        ensureSpace(fontSize * 1.4);
+        doc.text(line, marginX + (indent || 0), y);
+        y += fontSize * 1.4;
       });
     }
 
-    addLine(topic.title, 16, true);
+    addLine(topic.title, 17, true);
+    doc.setTextColor(150);
+    doc.setFontSize(9.5);
+    doc.setFont('Roboto', 'normal');
+    ensureSpace(14);
+    doc.text('LexPrep — конспект для офлайн-подготовки', marginX, y);
     y += 8;
+    doc.setDrawColor(220);
+    doc.line(marginX, y, marginX + maxWidth, y);
+    y += 20;
 
     const container = document.createElement('div');
     container.innerHTML = topic.theory || '';
-    container.querySelectorAll('h1, h2, h3, h4, p, li, tr').forEach(el => {
+    container.querySelectorAll('h1, h2, h3, h4, p, li').forEach(el => {
       const text = el.textContent.trim().replace(/\s+/g, ' ');
       if (!text) return;
       const isHeading = /^H[1-4]$/.test(el.tagName);
-      if (isHeading) y += 6;
-      addLine(text, isHeading ? 13 : 11, isHeading);
-      if (isHeading) y += 2;
+      const isListItem = el.tagName === 'LI';
+      if (isHeading) {
+        y += 8;
+        addLine(text, 13, true);
+        y += 2;
+      } else if (isListItem) {
+        addLine(`•  ${text}`, 11, false, 12);
+      } else {
+        addLine(text, 11, false);
+        y += 4;
+      }
     });
 
     doc.save(`${topic.title.replace(/[\\/:*?"<>|]/g, '')}.pdf`);

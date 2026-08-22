@@ -3,7 +3,7 @@ PROFILE.JS — личный кабинет: навигация по раздел
 подписка, статистика (демо), настройки и переключатель темы
 ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
@@ -16,16 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
   initInfoForm(user);
   initPayment();
   initSubscription();
-  initStats();
-  initGamification();
   initMyArticles();
   initReferral();
   initThemeSwitch();
   initNotificationsSwitch();
-  initBasicDisciplineSetting();
   initPasswordForm();
   initPrivacyModal();
   initDangerZone();
+
+  // Статистика/достижения и выбор дисциплины опираются на LEXPREP_DATA —
+  // до подгрузки реального контента из Supabase это demo-заглушка
+  // (без неё "Последние тесты" не находили тему и показывали id/заглушку).
+  await (window.LexPrepContentReady || Promise.resolve());
+  initStats();
+  initGamification();
+  initBasicDisciplineSetting();
 });
 
 function getUser() {
@@ -206,20 +211,51 @@ function initPayment() {
 }
 
 /* ---------------- Subscription ---------------- */
+const PLAN_PRICES = { basic: '500 ₽ / мес', pro: '700 ₽ / мес', max: '1500 ₽ / мес' };
+const PLAN_FEATURES = {
+  basic: ['1 дисциплина полностью открыта', '15 карточек в день', '1 попытка теста в день, без разбора'],
+  pro: ['Все дисциплины без ограничений', '5 попыток теста в день с разбором', 'ИИ-консультант, дуэли — 3/день, турниры — 1/мес'],
+  max: ['Всё из «Про» без лимитов', 'ИИ-консультант — 35 запросов в день', 'Экспорт конспектов в PDF']
+};
+
 function initSubscription() {
   const cancelBtn = document.getElementById('cancelSubBtn');
   const note = document.getElementById('planNote');
+  const badge = document.getElementById('planBadge');
+  const priceEl = document.getElementById('planPrice');
+  const renewalEl = document.getElementById('planRenewal');
+  const listEl = document.querySelector('.plan-box__list');
+
+  if (typeof LexPrepPlan === 'undefined') return;
+  const { tier, expires } = LexPrepPlan.getEffectivePlan();
+  const title = LexPrepPlan.TIER_TITLES[tier];
+
+  badge.textContent = `Тариф «${title}»`;
+  priceEl.textContent = PLAN_PRICES[tier];
+  listEl.innerHTML = PLAN_FEATURES[tier].map(f => `<li>${f}</li>`).join('');
+
+  if (tier === 'basic') {
+    renewalEl.textContent = 'Бесплатный тариф — можно оформить платный в любой момент.';
+    cancelBtn.hidden = true;
+    note.hidden = true;
+    return;
+  }
+
+  cancelBtn.hidden = false;
+  const renewalDate = new Date(expires).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
   function applyState() {
     const cancelled = localStorage.getItem('lexprep_sub_cancelled') === '1';
     note.hidden = !cancelled;
+    if (cancelled) note.textContent = `Подписка отменена. Доступ к тарифу «${title}» сохранится до конца оплаченного периода — ${renewalDate}.`;
     cancelBtn.textContent = cancelled ? 'Возобновить подписку' : 'Отменить подписку';
+    renewalEl.textContent = `Следующее списание: ${renewalDate}`;
   }
 
   cancelBtn.addEventListener('click', () => {
     const cancelled = localStorage.getItem('lexprep_sub_cancelled') === '1';
     if (!cancelled) {
-      const confirmed = window.confirm('Отменить подписку? Доступ к тарифу «Про» сохранится до конца оплаченного периода.');
+      const confirmed = window.confirm(`Отменить подписку? Доступ к тарифу «${title}» сохранится до конца оплаченного периода.`);
       if (!confirmed) return;
       localStorage.setItem('lexprep_sub_cancelled', '1');
     } else {
