@@ -100,7 +100,23 @@ function initExam() {
     ? `Найдено слабых мест: ${weakCount}. Они будут в начале билета.`
     : 'Слабых мест пока не отмечено — пройди пару тестов в тренажёре, и здесь появится персональная подборка.';
 
+  const examSetupError = document.getElementById('examSetupError');
+
   document.getElementById('startExamBtn').addEventListener('click', () => {
+    examSetupError.hidden = true;
+
+    if (typeof LexPrepPlan !== 'undefined' && typeof LexPrepProgress !== 'undefined') {
+      const examLimit = LexPrepPlan.getLimits().examAttemptsPerMonth;
+      const usedThisMonth = LexPrepProgress.getMonthlyUsage().examAttempts || 0;
+      if (usedThisMonth >= examLimit) {
+        examSetupError.textContent = examLimit === 0
+          ? 'Пробный экзамен доступен с тарифа «Про» — оформи подписку в магазине.'
+          : `Лимит пробных экзаменов (${examLimit} в месяц) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан — попробуй в следующем месяце или оформи «Максимум».`;
+        examSetupError.hidden = false;
+        return;
+      }
+    }
+
     const count = Number(document.getElementById('examCount').value);
     const weakFirst = document.getElementById('examWeakFirst').checked;
     const disciplineFilter = disciplineSelect.value;
@@ -110,6 +126,9 @@ function initExam() {
     if (!questions.length) {
       alert('Не удалось собрать вопросы — попробуй выбрать другую дисциплину.');
       return;
+    }
+    if (typeof LexPrepProgress !== 'undefined') {
+      LexPrepProgress.incrementMonthlyUsage('examAttempts');
     }
     startExam(questions, secondsPerQuestion);
   });
