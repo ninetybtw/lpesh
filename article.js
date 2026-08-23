@@ -1,7 +1,62 @@
-const userArticles = JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]');
+const MONTHS_GENITIVE = [
+  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+];
 
-const articles = [
-  ...userArticles,
+const TOPIC_LABELS = {
+  exam: 'Экзамен',
+  practice: 'Практика ВС РФ',
+  cases: 'Казусы',
+  notes: 'Шпаргалки'
+};
+
+const MODERATION_LABELS = { pending: 'На модерации', rejected: 'Отклонена' };
+
+function formatArticleDate(iso) {
+  const date = new Date(iso);
+  return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
+}
+
+// Пользовательские статьи теперь настоящая таблица с модерацией
+// (public.user_articles) — опубликованные видят все, свои (любого
+// статуса) видит только автор, с пометкой "на модерации"/"отклонена"
+// вместо тега раздела. Пока запрос не вернулся, каталог показывает
+// только встроенные статьи-примеры ниже.
+let userArticles = [];
+
+async function loadUserArticles() {
+  if (typeof LexPrepApi === 'undefined') return;
+  try {
+    const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    const tasks = [LexPrepApi.listPublishedUserArticles()];
+    if (user) tasks.push(LexPrepApi.listMyUserArticles());
+    const [published, mine] = await Promise.all(tasks.map(p => p.catch(() => [])));
+    const seen = new Set();
+    const combined = [];
+    (mine || []).forEach(a => { seen.add(a.id); combined.push(a); });
+    (published || []).forEach(a => { if (!seen.has(a.id)) combined.push(a); });
+    userArticles = combined.map(a => ({
+      id: a.id,
+      tag: a.status !== 'published' ? (MODERATION_LABELS[a.status] || a.status) : TOPIC_LABELS[a.topic] || a.topic,
+      title: a.title,
+      text: a.excerpt,
+      body: a.body,
+      author: a.authorName || 'Аноним',
+      date: formatArticleDate(a.createdAt),
+      sortTs: new Date(a.createdAt).getTime(),
+      likes: 0,
+      readTime: a.readTime || 1,
+      liked: false,
+      saved: false,
+      topic: a.topic,
+      unplayable: a.status !== 'published'
+    }));
+  } catch (e) {
+    userArticles = [];
+  }
+}
+
+const seedArticles = [
   { id: 1, tag: 'Экзамен', title: 'Как разобрать любой казус по обязательствам за 15 минут', text: 'Пошаговый алгоритм разбора задач для семинара с примерами из практики ВС РФ и готовой схемой ответа на экзамене.', author: 'Мария А.', date: '4 августа', likes: 128, readTime: 6, liked: true, saved: true, topic: 'cases',
     body: `<p>Казус по обязательственному праву почти всегда решается по одной и той же логике — важно не пытаться сразу писать ответ, а сначала разложить условие на элементы.</p>
       <h4>Шаг 1. Определи вид обязательства</h4>
@@ -77,6 +132,9 @@ const articles = [
       <p>Такой план не только помогает не забыть важное, но и структурирует речь — комиссия сразу видит, что ты понимаешь логику темы, а не пересказываешь текст билета.</p>`
   }
 ];
+seedArticles.forEach((a, i) => { a.sortTs = 1700000000000 - i * 86400000; });
+
+let articles = [...userArticles, ...seedArticles];
 
 const state = {
   filter: 'all',
@@ -139,7 +197,7 @@ function applySort(list) {
   } else if (state.sort === 'readTime') {
     sorted.sort((a, b) => a.readTime - b.readTime);
   } else {
-    sorted.sort((a, b) => b.id - a.id);
+    sorted.sort((a, b) => b.sortTs - a.sortTs);
   }
 
   return sorted;
@@ -247,7 +305,7 @@ function renderArticles() {
 }
 
 function findArticle(id) {
-  return articles.find(a => a.id === id);
+  return articles.find(a => String(a.id) === String(id));
 }
 
 function renderHistorySidebar() {
@@ -272,7 +330,7 @@ function renderHistorySidebar() {
   `).join('');
 
   historyList.querySelectorAll('[data-history-id]').forEach(btn => {
-    btn.addEventListener('click', () => openArticle(Number(btn.dataset.historyId)));
+    btn.addEventListener('click', () => openArticle(btn.dataset.historyId));
   });
 }
 
@@ -393,3 +451,9 @@ writeArticleBtn.addEventListener('click', () => {
 
 renderArticles();
 renderHistorySidebar();
+
+loadUserArticles().then(() => {
+  articles = [...userArticles, ...seedArticles];
+  renderArticles();
+  renderHistorySidebar();
+});

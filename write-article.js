@@ -1,23 +1,9 @@
 /* ==========================================================================
-WRITE-ARTICLE.JS — форма публикации новой статьи (демо: сохраняется только
-в localStorage этого браузера, без реальной модерации и бэкенда)
+WRITE-ARTICLE.JS — форма публикации новой статьи. Отправляется в
+public.user_articles со статусом pending — виден в общем каталоге только
+после одобрения модератором/админом (см. moderator.js, api.js). Доступно
+только на тарифах «Про»/«Максимум».
 ========================================================================== */
-
-const MONTHS_GENITIVE = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-];
-
-const TOPIC_LABELS = {
-  exam: 'Экзамен',
-  practice: 'Практика ВС РФ',
-  cases: 'Казусы',
-  notes: 'Шпаргалки'
-};
-
-function formatArticleDate(date) {
-  return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
-}
 
 function estimateReadTime(text) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -64,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  if (typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() === 'basic' && !user.isAdmin) {
+    document.getElementById('waBasicGuard').hidden = false;
+    document.getElementById('waFormWrap').hidden = true;
+    return;
+  }
+
   const authorName = document.getElementById('authorName');
   const authorAvatar = document.getElementById('authorAvatar');
   authorName.textContent = user.name || 'Профиль';
@@ -91,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initEditorToolbar(bodyInput);
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     let valid = true;
 
@@ -128,26 +120,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const articles = JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]');
-    const newArticle = {
-      id: Date.now(),
-      tag: TOPIC_LABELS[topicSelect.value],
-      title: titleInput.value.trim(),
-      text: excerptInput.value.trim(),
-      body: bodyInput.innerHTML.trim(),
-      author: user.name || 'Аноним',
-      date: formatArticleDate(new Date()),
-      likes: 0,
-      readTime: estimateReadTime(bodyInput.textContent),
-      liked: false,
-      read: false,
-      saved: false,
-      topic: topicSelect.value
-    };
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
 
-    articles.unshift(newArticle);
-    localStorage.setItem('lexprep_user_articles', JSON.stringify(articles));
+    try {
+      await LexPrepApi.createUserArticle({
+        topic: topicSelect.value,
+        title: titleInput.value.trim(),
+        excerpt: excerptInput.value.trim(),
+        body: bodyInput.innerHTML.trim(),
+        readTime: estimateReadTime(bodyInput.textContent),
+        authorName: user.name || 'Аноним'
+      });
 
-    window.location.href = 'article.html';
+      alert('Статья отправлена на модерацию — как только её одобрят, она появится в общем каталоге.');
+      window.location.href = 'article.html';
+    } catch (err) {
+      alert('Не удалось отправить статью: ' + err.message);
+      submitBtn.disabled = false;
+    }
   });
 });

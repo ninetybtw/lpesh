@@ -166,3 +166,13 @@ WRITE-ARTICLE.CSS — страница создания статьи
 .write-form__counter.is-ok {
   color: var(--color-success);
 }
+
+.tier-guard-notice {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(225, 77, 77, 0.1);
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  color: #e5484d;
+  font-weight: 700;
+}

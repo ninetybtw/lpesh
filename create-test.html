@@ -64,6 +64,7 @@
             </button>
             <div class="profile-dropdown" id="profileDropdown">
               <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
               <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
               <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
               <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
@@ -85,15 +86,21 @@
           <div class="eyebrow">LexPrep / Новый тест</div>
           <h1 class="write-title">Создать тест</h1>
           <p class="topic-desc">
-            Выбери дисциплину и тему, добавь минимум 3 вопроса — тест появится во вкладке «Тесты» этой темы у всех, кто её откроет.
-            Демо-режим: без модерации, всё хранится в этом браузере.
+            Выбери дисциплину и тему, добавь минимум 3 вопроса — после отправки тест уйдёт на проверку модератору
+            и появится во вкладке «Тесты» этой темы у всех, как только будет одобрен.
           </p>
 
+          <div id="ctBasicGuard" class="tier-guard-notice" hidden>
+            Создание тестов доступно с тарифа «Про» — на «Базовом» можно решать тесты, но не публиковать свои.
+            <a href="index.html#pricing" class="btn btn--primary" style="margin-top:12px">Оформить подписку</a>
+          </div>
+
+          <div id="ctFormWrap">
           <div class="write-author">
             <span class="write-author__avatar" id="authorAvatar">U</span>
             <div>
               <div class="write-author__name" id="authorName">Профиль</div>
-              <div class="write-author__hint">Тест будет опубликован от твоего имени, с указанием текущего уровня</div>
+              <div class="write-author__hint">Тест будет опубликован от твоего имени, с указанием текущего уровня, после проверки модератором</div>
             </div>
           </div>
 
@@ -121,22 +128,24 @@
             </div>
 
             <div class="profile-form__submit-row form-group--full">
-              <button type="submit" class="btn btn--primary btn--lg">Опубликовать тест</button>
+              <button type="submit" class="btn btn--primary btn--lg">Отправить на модерацию</button>
               <a href="app.html" class="btn btn--ghost">Отмена</a>
             </div>
           </form>
+          </div>
         </div>
       </section>
     </main>
 
-    <script src="validation.js?v=20260823171541"></script>
-    <script src="data.js?v=20260823171541"></script>
-    <script src="progress.js?v=20260823171541"></script>
+    <script src="validation.js?v=20260823175001"></script>
+    <script src="data.js?v=20260823175001"></script>
+    <script src="progress.js?v=20260823175001"></script>
+    <script src="plan.js?v=20260823175001"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260823171541"></script>
+    <script src="api.js?v=20260823175001"></script>
     <script src="vendor/marked.min.js"></script>
-    <script src="content-loader.js?v=20260823171541"></script>
-    <script src="script.js?v=20260823171541"></script>
-    <script src="create-test.js?v=20260823171541"></script>
+    <script src="content-loader.js?v=20260823175001"></script>
+    <script src="script.js?v=20260823175001"></script>
+    <script src="create-test.js?v=20260823175001"></script>
   </body>
 </html>

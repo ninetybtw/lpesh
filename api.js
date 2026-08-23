@@ -65,6 +65,7 @@ const LexPrepApi = (function () {
       avatar: (profile && profile.avatar_url) || null,
       referralCode: profile && profile.referral_code,
       isAdmin: !!(profile && profile.is_admin),
+      isModerator: !!(profile && profile.is_moderator),
       isBanned: !!(profile && profile.is_banned),
       banReason: profile && profile.ban_reason,
       bonusCoins: (profile && profile.bonus_coins) || 0,
@@ -180,6 +181,7 @@ const LexPrepApi = (function () {
       name: p.name,
       avatar: p.avatar_url,
       isAdmin: !!p.is_admin,
+      isModerator: !!p.is_moderator,
       isBanned: !!p.is_banned,
       banReason: p.ban_reason,
       bonusCoins: p.bonus_coins || 0,
@@ -199,6 +201,7 @@ const LexPrepApi = (function () {
     if (patch.bonusCoins !== undefined) row.bonus_coins = patch.bonusCoins;
     if (patch.planTier !== undefined) row.plan_tier = patch.planTier;
     if (patch.planExpiresAt !== undefined) row.plan_expires_at = patch.planExpiresAt;
+    if (patch.isModerator !== undefined) row.is_moderator = patch.isModerator;
 
     const { data, error } = await client
       .from('profiles')
@@ -221,6 +224,22 @@ const LexPrepApi = (function () {
 
   async function adminSetBanned(userId, isBanned, reason) {
     return adminUpdateUser(userId, { isBanned, banReason: isBanned ? (reason || 'Без указания причины') : null });
+  }
+
+  async function adminSetModerator(userId, isModerator) {
+    return adminUpdateUser(userId, { isModerator });
+  }
+
+  // Модератор тоже может начислять монеты, но не больше +250 за раз —
+  // ограничение дублируется здесь на клиенте для понятной ошибки, а на
+  // сервере его всё равно жёстко проверяет триггер
+  // enforce_profile_update_permissions (см. supabase/moderator.sql).
+  const MODERATOR_COIN_GRANT_LIMIT = 250;
+  async function moderatorGrantCoins(userId, amount, currentBonus) {
+    if (amount > MODERATOR_COIN_GRANT_LIMIT) {
+      throw new Error(`Модератор может начислить не больше ${MODERATOR_COIN_GRANT_LIMIT} монет за раз.`);
+    }
+    return adminGrantCoins(userId, amount, currentBonus);
   }
 
   async function adminDeleteUser(userId) {
@@ -392,6 +411,170 @@ const LexPrepApi = (function () {
     return toFrontendSuggestion(data, new Set());
   }
 
+  /* ---------------- Пользовательские тесты (с модерацией) ----------------
+     public.user_tests (см. supabase/moderator.sql). Автор создаёт тест —
+     он попадает на модерацию (status: pending), после чего модератор или
+     админ либо публикует его (published, виден всем в теме), либо
+     отклоняет (rejected, виден только автору с комментарием). */
+
+  function toFrontendUserTest(t) {
+    return {
+      id: t.id,
+      userId: t.user_id,
+      disciplineId: t.discipline_id,
+      topicId: t.topic_id,
+      title: t.title,
+      questions: t.questions,
+      status: t.status,
+      moderatorComment: t.moderator_comment,
+      createdAt: t.created_at,
+      authorName: t.author_name,
+      authorLevel: t.author_level,
+      authorEmail: t.author_email
+    };
+  }
+
+  async function createUserTest({ disciplineId, topicId, title, questions, authorName, authorLevel }) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('user_tests')
+      .insert({
+        user_id: session.user.id,
+        discipline_id: disciplineId,
+        topic_id: topicId,
+        title,
+        questions,
+        author_name: authorName || 'Аноним',
+        author_level: authorLevel || 1
+      })
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendUserTest(data);
+  }
+
+  async function listPublishedUserTests() {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_tests')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserTest);
+  }
+
+  async function listMyUserTests() {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('user_tests')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserTest);
+  }
+
+  async function moderatorListPendingTests() {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_tests_with_author')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserTest);
+  }
+
+  async function moderatorSetTestStatus(testId, status, comment) {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_tests')
+      .update({ status, moderator_comment: comment || null, reviewed_at: new Date().toISOString() })
+      .eq('id', testId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendUserTest(data);
+  }
+
+  /* ---------------- Пользовательские статьи (с модерацией) ----------------
+     public.user_articles (см. supabase/moderator.sql) — та же логика
+     pending/published/rejected, что и у пользовательских тестов. */
+
+  function toFrontendUserArticle(a) {
+    return {
+      id: a.id,
+      userId: a.user_id,
+      topic: a.topic,
+      title: a.title,
+      excerpt: a.excerpt,
+      body: a.body,
+      readTime: a.read_time,
+      status: a.status,
+      moderatorComment: a.moderator_comment,
+      createdAt: a.created_at,
+      authorName: a.author_name,
+      authorEmail: a.author_email
+    };
+  }
+
+  async function createUserArticle({ topic, title, excerpt, body, readTime, authorName }) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('user_articles')
+      .insert({ user_id: session.user.id, topic, title, excerpt, body, read_time: readTime, author_name: authorName || 'Аноним' })
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendUserArticle(data);
+  }
+
+  async function listPublishedUserArticles() {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_articles')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserArticle);
+  }
+
+  async function listMyUserArticles() {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('user_articles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserArticle);
+  }
+
+  async function moderatorListPendingArticles() {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_articles_with_author')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendUserArticle);
+  }
+
+  async function moderatorSetArticleStatus(articleId, status, comment) {
+    await requireSession();
+    const { data, error } = await client
+      .from('user_articles')
+      .update({ status, moderator_comment: comment || null, reviewed_at: new Date().toISOString() })
+      .eq('id', articleId)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendUserArticle(data);
+  }
+
   /* ---------------- Дуэли против реальных игроков (PvP) ----------------
      public.pvp_duels (см. supabase/duels.sql) — открытое лобби: вызов
      создаётся без конкретного соперника, любой другой пользователь может
@@ -515,9 +698,12 @@ const LexPrepApi = (function () {
 
   return {
     register, login, logout, me, updateProfile, toFrontendUser,
-    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminDeleteUser,
+    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
+    moderatorGrantCoins,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
+    createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus,
+    createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
     askAiConsultant,
     getClient: () => client

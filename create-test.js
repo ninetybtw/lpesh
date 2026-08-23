@@ -1,6 +1,9 @@
 /* ==========================================================================
-CREATE-TEST.JS — форма создания пользовательского теста (демо: сохраняется
-только в localStorage этого браузера, без реальной модерации и бэкенда)
+CREATE-TEST.JS — форма создания пользовательского теста. Отправляется в
+public.user_tests со статусом pending — тест становится виден всем только
+после того, как модератор/админ его одобрит (см. moderator.js, api.js).
+Доступно только на тарифах «Про»/«Максимум» — на «Базовом» можно решать
+чужие опубликованные тесты, но не создавать свои.
 ========================================================================== */
 
 function escapeHtml(str) {
@@ -19,6 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   await (window.LexPrepContentReady || Promise.resolve());
+
+  if (typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() === 'basic' && !user.isAdmin) {
+    document.getElementById('ctBasicGuard').hidden = false;
+    document.getElementById('ctFormWrap').hidden = true;
+    return;
+  }
 
   const authorName = document.getElementById('authorName');
   const authorAvatar = document.getElementById('authorAvatar');
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderQuestions();
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     if (titleInput.value.trim().length < 8) {
@@ -157,30 +166,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
     const gamification = typeof LexPrepProgress !== 'undefined' && LexPrepProgress.getGamification
       ? LexPrepProgress.getGamification()
       : { level: 1 };
 
-    const newTest = {
-      id: Date.now(),
-      disciplineId: disciplineSelect.value,
-      topicId: topicSelect.value,
-      title: titleInput.value.trim(),
-      author: user.name || 'Аноним',
-      authorLevel: gamification.level,
-      createdAt: Date.now(),
-      questions: questions.map(q => ({
-        question: q.question.trim(),
-        options: q.options.map(o => o.trim()),
-        correct: q.correct,
-        explanation: q.explanation.trim()
-      }))
-    };
+    try {
+      await LexPrepApi.createUserTest({
+        disciplineId: disciplineSelect.value,
+        topicId: topicSelect.value,
+        title: titleInput.value.trim(),
+        authorName: user.name || 'Аноним',
+        authorLevel: gamification.level,
+        questions: questions.map(q => ({
+          question: q.question.trim(),
+          options: q.options.map(o => o.trim()),
+          correct: q.correct,
+          explanation: q.explanation.trim()
+        }))
+      });
 
-    const tests = JSON.parse(localStorage.getItem('lexprep_user_tests') || '[]');
-    tests.unshift(newTest);
-    localStorage.setItem('lexprep_user_tests', JSON.stringify(tests));
-
-    window.location.href = `app.html?discipline=${encodeURIComponent(newTest.disciplineId)}&topic=${encodeURIComponent(newTest.topicId)}&view=test&highlight=${newTest.id}`;
+      alert('Тест отправлен на модерацию — как только его одобрят, он появится во вкладке «Тесты» этой темы у всех.');
+      window.location.href = `app.html?discipline=${encodeURIComponent(disciplineSelect.value)}&topic=${encodeURIComponent(topicSelect.value)}&view=test`;
+    } catch (err) {
+      alert('Не удалось отправить тест: ' + err.message);
+      submitBtn.disabled = false;
+    }
   });
 });

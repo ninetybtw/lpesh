@@ -210,6 +210,7 @@ function applyAuthUi(user) {
   document.body.classList.toggle('is-authed', !!user);
   document.body.classList.toggle('is-guest', !user);
   document.body.classList.toggle('is-admin', !!(user && user.isAdmin));
+  document.body.classList.toggle('is-moderator', !!(user && (user.isModerator || user.isAdmin)));
 
   if (user) {
     const nameEl = document.getElementById('profileName');

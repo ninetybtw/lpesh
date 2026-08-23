@@ -1408,3 +1408,11 @@ body.is-authed .cta-section[data-auth="guest"] {
 body.is-admin [data-admin] {
   display: flex !important;
 }
+
+/* видно модераторам и администраторам (profiles.is_moderator/is_admin) */
+[data-moderator] {
+  display: none !important;
+}
+body.is-moderator [data-moderator] {
+  display: flex !important;
+}

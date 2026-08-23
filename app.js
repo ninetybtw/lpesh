@@ -1,5 +1,29 @@
+let publishedUserTests = [];
+let myUserTests = [];
+
+// Пользовательские тесты теперь настоящая таблица с модерацией
+// (public.user_tests) — грузим один раз при старте страницы: все
+// опубликованные (видны всем в теме) плюс свои собственные любого
+// статуса (чтобы автор видел «на модерации»/«отклонено» у своих же
+// тестов). См. renderUserTestsList() ниже и create-test.js/moderator.js.
+async function loadUserTestsCache() {
+  if (typeof LexPrepApi === 'undefined') return;
+  try {
+    const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    const tasks = [LexPrepApi.listPublishedUserTests()];
+    if (user) tasks.push(LexPrepApi.listMyUserTests());
+    const [published, mine] = await Promise.all(tasks);
+    publishedUserTests = published || [];
+    myUserTests = mine || [];
+  } catch (e) {
+    publishedUserTests = [];
+    myUserTests = [];
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await (window.LexPrepContentReady || Promise.resolve());
+  await loadUserTestsCache();
   initApp();
   initAiChat();
 });
@@ -156,8 +180,15 @@ function initApp() {
     return { ratio: matched.length / keywords.length, matched, total: keywords.length };
   }
 
+  // Объединяем опубликованные тесты (видны всем) со своими же тестами
+  // любого статуса (чтобы автор видел свои "на модерации"/"отклонено"),
+  // без дублей — если свой тест уже опубликован, берём только одну копию.
   function getUserTests() {
-    return JSON.parse(localStorage.getItem('lexprep_user_tests') || '[]');
+    const seen = new Set();
+    const combined = [];
+    myUserTests.forEach(t => { seen.add(t.id); combined.push(t); });
+    publishedUserTests.forEach(t => { if (!seen.has(t.id)) combined.push(t); });
+    return combined;
   }
 
   function buildCardQueue(forceAll) {
@@ -616,7 +647,7 @@ function initApp() {
 
     const tests = getUserTests()
       .filter(t => t.topicId === activeTopic.id)
-      .sort((a, b) => b.createdAt - a.createdAt);
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     if (!tests.length) {
       listEl.innerHTML = '<p class="topic-desc">Пока нет пользовательских тестов по этой теме — стань первым, кто его создаст.</p>';
@@ -624,14 +655,19 @@ function initApp() {
       return;
     }
 
+    const statusBadge = {
+      pending: '<span class="item-lock-badge">На модерации</span>',
+      rejected: '<span class="item-lock-badge">Отклонён</span>'
+    };
+
     listEl.innerHTML = tests.map(test => `
       <div class="test-card">
-        <button class="test-card__head" type="button" data-test-toggle="${test.id}">
+        <button class="test-card__head" type="button" data-test-toggle="${test.id}" ${test.status && test.status !== 'published' ? 'data-test-unplayable' : ''}>
           <span class="test-card__author">
-            <span class="test-card__avatar">${escapeHtml((test.author || 'U').trim().charAt(0).toUpperCase())}</span>
+            <span class="test-card__avatar">${escapeHtml((test.authorName || 'U').trim().charAt(0).toUpperCase())}</span>
             <span class="test-card__author-info">
-              <span class="test-card__author-line">${escapeHtml(test.author || 'Аноним')} <span class="test-card__level">Ур. ${test.authorLevel || 1}</span></span>
-              <span class="test-card__title">${escapeHtml(test.title)}</span>
+              <span class="test-card__author-line">${escapeHtml(test.authorName || 'Аноним')} <span class="test-card__level">Ур. ${test.authorLevel || 1}</span></span>
+              <span class="test-card__title">${escapeHtml(test.title)} ${statusBadge[test.status] || ''}</span>
             </span>
           </span>
           <span class="test-card__head-info">
@@ -678,7 +714,14 @@ function initApp() {
           renderTestQuestions(body, activeTopic.test, activeTopic.id);
         } else {
           const test = getUserTests().find(t => String(t.id) === id);
-          if (test) renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);
+          if (!test) return;
+          if (test.status === 'pending') {
+            body.innerHTML = '<p class="topic-desc">Тест ещё на модерации — станет доступен для прохождения, как только его одобрят.</p>';
+          } else if (test.status === 'rejected') {
+            body.innerHTML = `<p class="topic-desc">Тест отклонён модератором.${test.moderatorComment ? ` Причина: ${escapeHtml(test.moderatorComment)}` : ''}</p>`;
+          } else {
+            renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);
+          }
         }
       });
     });

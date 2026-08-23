@@ -65,6 +65,7 @@
             </button>
             <div class="profile-dropdown" id="profileDropdown">
               <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
               <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
               <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
               <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
@@ -86,15 +87,21 @@
           <div class="eyebrow">LexPrep / Новая статья</div>
           <h1 class="write-title">Написать статью</h1>
           <p class="topic-desc">
-            Разбор дела, шпаргалка по теме или личный опыт подготовки — материал появится в общем каталоге сразу после публикации.
-            Демо-режим: без модерации и без реальной отправки на сервер.
+            Разбор дела, шпаргалка по теме или личный опыт подготовки — после отправки статья уйдёт на проверку
+            модератору и появится в общем каталоге, как только будет одобрена.
           </p>
 
+          <div id="waBasicGuard" class="tier-guard-notice" hidden>
+            Публикация статей доступна с тарифа «Про» — на «Базовом» можно читать каталог, но не публиковать свои материалы.
+            <a href="index.html#pricing" class="btn btn--primary" style="margin-top:12px">Оформить подписку</a>
+          </div>
+
+          <div id="waFormWrap">
           <div class="write-author">
             <span class="write-author__avatar" id="authorAvatar">U</span>
             <div>
               <div class="write-author__name" id="authorName">Профиль</div>
-              <div class="write-author__hint">Статья будет опубликована от твоего имени</div>
+              <div class="write-author__hint">Статья будет опубликована от твоего имени после проверки модератором</div>
             </div>
           </div>
 
@@ -154,20 +161,22 @@
             </div>
 
             <div class="profile-form__submit-row form-group--full">
-              <button type="submit" class="btn btn--primary btn--lg">Опубликовать</button>
+              <button type="submit" class="btn btn--primary btn--lg">Отправить на модерацию</button>
               <a href="article.html" class="btn btn--ghost">Отмена</a>
             </div>
           </form>
+          </div>
         </div>
       </section>
     </main>
 
-    <script src="validation.js?v=20260823171541"></script>
-    <script src="data.js?v=20260823171541"></script>
-    <script src="progress.js?v=20260823171541"></script>
+    <script src="validation.js?v=20260823175001"></script>
+    <script src="data.js?v=20260823175001"></script>
+    <script src="progress.js?v=20260823175001"></script>
+    <script src="plan.js?v=20260823175001"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260823171541"></script>
-    <script src="script.js?v=20260823171541"></script>
-    <script src="write-article.js?v=20260823171541"></script>
+    <script src="api.js?v=20260823175001"></script>
+    <script src="script.js?v=20260823175001"></script>
+    <script src="write-article.js?v=20260823175001"></script>
   </body>
 </html>

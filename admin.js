@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="admin-user-cell">
               ${avatarHtml}
               <div>
-                <div class="admin-user-cell__name">${escapeHtml(u.name)}${u.isAdmin ? ' <span class="admin-badge admin-badge--admin">админ</span>' : ''}</div>
+                <div class="admin-user-cell__name">${escapeHtml(u.name)}${u.isAdmin ? ' <span class="admin-badge admin-badge--admin">админ</span>' : ''}${u.isModerator ? ' <span class="admin-badge admin-badge--admin">модератор</span>' : ''}</div>
                 <div class="admin-user-cell__email">${escapeHtml(u.email)}</div>
               </div>
             </div>
@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <button type="button" class="admin-action-btn" data-action="edit-avatar" title="Изменить аватар (URL)">Аватар</button>
               <button type="button" class="admin-action-btn" data-action="grant-coins" title="Начислить монеты">+Монеты</button>
               <button type="button" class="admin-action-btn" data-action="grant-plan" title="Выдать подписку">Тариф</button>
+              <button type="button" class="admin-action-btn" data-action="toggle-moderator" ${u.id === me.id ? 'disabled' : ''}>${u.isModerator ? 'Снять модератора' : 'Сделать модератором'}</button>
               <button type="button" class="admin-action-btn ${u.isBanned ? '' : 'admin-action-btn--warn'}" data-action="toggle-ban" ${u.id === me.id ? 'disabled' : ''}>${u.isBanned ? 'Разбанить' : 'Забанить'}</button>
               <button type="button" class="admin-action-btn admin-action-btn--danger" data-action="delete" ${u.id === me.id ? 'disabled' : ''}>Удалить</button>
             </div>
@@ -162,6 +163,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (!Number.isFinite(days) || days <= 0) return;
           await LexPrepApi.adminGrantSubscription(userId, tier, days);
         }
+      } else if (action === 'toggle-moderator') {
+        if (!confirm(`${user.isModerator ? 'Снять права модератора у' : 'Сделать модератором'} ${user.name}?`)) return;
+        await LexPrepApi.adminSetModerator(userId, !user.isModerator);
       } else if (action === 'toggle-ban') {
         if (user.isBanned) {
           if (!confirm(`Разблокировать ${user.name}?`)) return;
