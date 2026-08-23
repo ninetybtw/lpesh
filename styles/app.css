@@ -336,6 +336,46 @@ body {
   margin-bottom: 18px;
 }
 
+.content-body {
+  position: relative;
+}
+
+.content-body.is-blurred > *:not(.content-lock-overlay) {
+  filter: blur(7px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.content-lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+.content-lock-overlay__card {
+  position: sticky;
+  top: 110px;
+  max-width: 480px;
+  height: max-content;
+  padding: 30px;
+  border-radius: 22px;
+  border: 1px solid rgba(111, 135, 255, 0.3);
+  background: #12162a;
+  box-shadow: 0 30px 70px rgba(2, 8, 24, 0.55);
+  text-align: center;
+}
+
+.content-lock-overlay__card .paywall__badge {
+  margin-bottom: 14px;
+}
+
+.content-lock-overlay__card .paywall__text {
+  text-align: left;
+}
+
 .item-progress__fill {
   transition: width 0.5s cubic-bezier(0.25, 0.7, 0.35, 1);
 }
@@ -1323,6 +1363,12 @@ body {
 [data-theme="light"] .item-lock-badge {
   background: var(--color-primary-light);
   color: var(--color-primary-dark);
+}
+
+[data-theme="light"] .content-lock-overlay__card {
+  background: #ffffff;
+  border-color: var(--color-border);
+  box-shadow: 0 30px 70px rgba(20, 22, 31, 0.18);
 }
 
 [data-theme="light"] .note-box p,

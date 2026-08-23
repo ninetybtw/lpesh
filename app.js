@@ -285,34 +285,7 @@ function initApp() {
     if (animate === undefined) animate = true;
     contentView.classList.remove('content-fade-in');
 
-    if (LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA)) {
-      contentView.innerHTML = `
-        <div class="breadcrumbs">
-          <span>LexPrep</span>
-          <span>→</span>
-          <span>${escapeHtml(activeDiscipline.title)}</span>
-          <span>→</span>
-          <span>${escapeHtml(activeTopic.title)}</span>
-        </div>
-
-        <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
-
-        <div class="paywall">
-          <div class="paywall__badge">Тариф «Про»</div>
-          <h2 class="paywall__title">Эта дисциплина закрыта на Базовом тарифе</h2>
-          <p class="paywall__text">
-            На Базовом тарифе полностью открыта только одна дисциплина (её можно выбрать в настройках профиля) — у остальных виден только список тем, без конспекта, тестов и карточек.
-            Оформи «Про» или «Максимум», чтобы открыть все дисциплины без ограничений.
-          </p>
-          <a class="btn btn--primary" href="index.html#pricing">Смотреть тарифы</a>
-        </div>
-      `;
-      if (animate) {
-        void contentView.offsetWidth;
-        contentView.classList.add('content-fade-in');
-      }
-      return;
-    }
+    const locked = LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA);
 
     contentView.innerHTML = `
       <div class="breadcrumbs">
@@ -326,6 +299,7 @@ function initApp() {
       <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
       <p class="topic-desc">${escapeHtml(activeTopic.description)}</p>
 
+      <div class="content-body ${locked ? 'is-blurred' : ''}">
       <div class="topic-tabs">
         <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
         <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
@@ -385,6 +359,22 @@ function initApp() {
         <h3 class="profile-subheading">Пользовательские тесты</h3>
         <div class="user-tests-list" id="userTestsList"></div>
       </div>
+      </div>
+
+      ${locked ? `
+        <div class="content-lock-overlay">
+          <div class="content-lock-overlay__card">
+            <div class="paywall__badge">Тариф «Про»</div>
+            <h2 class="paywall__title">Эта дисциплина закрыта без подписки</h2>
+            <p class="paywall__text">
+              На тарифе «Базовый» полностью открыта только одна дисциплина (выбирается в настройках профиля) — конспект, карточки и тесты остальных скрыты.
+              На «Про» открываются все дисциплины и темы без ограничений, тесты — с разбором ответов, до 5 попыток в день и дуэли с турнирами.
+              На «Максимум» — вообще без лимитов, плюс экспорт конспектов в PDF.
+            </p>
+            <a class="btn btn--primary" href="index.html#pricing">Оформить подписку</a>
+          </div>
+        </div>
+      ` : ''}
     `;
 
     if (animate) {
