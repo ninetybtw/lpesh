@@ -11,6 +11,7 @@ const ADMIN_TICKET_STATUS_LABEL = { open: 'Открыт', answered: 'Отвеч�
 const ADMIN_SUGGESTION_STATUS_LABEL = { new: 'Новое', reviewing: 'На рассмотрении', accepted: 'Принято', rejected: 'Отклонено' };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await (window.LexPrepContentReady || Promise.resolve());
   const guardEl = document.getElementById('adminGuard');
   const contentEl = document.getElementById('adminContent');
   const bodyEl = document.getElementById('adminUsersBody');
@@ -195,9 +196,168 @@ document.addEventListener('DOMContentLoaded', async () => {
       const target = tab.dataset.adminTab;
       document.querySelectorAll('[data-admin-tab]').forEach(t => t.classList.toggle('is-active', t === tab));
       document.querySelectorAll('[data-admin-panel]').forEach(p => { p.hidden = p.dataset.adminPanel !== target; });
+      if (target === 'tests' && !testsLoaded) loadTests();
+      if (target === 'articles' && !articlesLoaded) loadArticles();
       if (target === 'support' && !ticketsLoaded) loadTickets();
       if (target === 'suggestions' && !suggestionsLoaded) loadSuggestions();
     });
+  });
+
+  /* ---------------- Тесты и статьи на модерации ---------------- */
+
+  const DATA = typeof LEXPREP_DATA !== 'undefined' ? LEXPREP_DATA : [];
+  function disciplineTitle(id) {
+    const d = DATA.find(x => x.id === id);
+    return d ? d.title : id;
+  }
+  function topicTitle(disciplineId, topicId) {
+    const d = DATA.find(x => x.id === disciplineId);
+    const t = d && d.topics.find(x => x.id === topicId);
+    return t ? t.title : topicId;
+  }
+  function testCorrect(q, optionIndex) {
+    const correct = Array.isArray(q.correct) ? q.correct : [q.correct];
+    return correct.includes(optionIndex);
+  }
+
+  const testsList = document.getElementById('adminTestsList');
+  const testsRefreshBtn = document.getElementById('adminTestsRefreshBtn');
+  const testsPendingCountEl = document.getElementById('adminTestsPendingCount');
+  let testsLoaded = false;
+  let pendingTests = [];
+
+  function renderTests(tests) {
+    testsPendingCountEl.textContent = tests.length ? `(${tests.length})` : '';
+    if (!tests.length) {
+      testsList.innerHTML = '<p class="community-empty">Тестов на модерации нет.</p>';
+      return;
+    }
+    testsList.innerHTML = tests.map(t => `
+      <div class="community-item" data-test-id="${t.id}">
+        <div class="community-item__head">
+          <h3>${escapeHtml(t.title)}</h3>
+          <span class="community-badge community-badge--open">${t.questions.length} вопросов</span>
+        </div>
+        <p class="community-item__message">
+          ${escapeHtml(disciplineTitle(t.disciplineId))} → ${escapeHtml(topicTitle(t.disciplineId, t.topicId))}<br>
+          Автор: ${escapeHtml(t.authorName || 'неизвестно')}${t.authorEmail ? ` (${escapeHtml(t.authorEmail)})` : ''}
+        </p>
+        <div class="community-item__meta"><span>${formatDateTime(t.createdAt)}</span></div>
+        <div class="admin-item-actions">
+          <button type="button" class="admin-action-btn" data-test-action="preview">Посмотреть вопросы</button>
+          <button type="button" class="admin-action-btn" data-test-action="publish">Опубликовать</button>
+          <button type="button" class="admin-action-btn admin-action-btn--warn" data-test-action="reject">Отклонить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadTests() {
+    testsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
+    try {
+      pendingTests = await LexPrepApi.moderatorListPendingTests();
+      testsLoaded = true;
+      renderTests(pendingTests);
+    } catch (err) {
+      testsList.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  testsRefreshBtn.addEventListener('click', loadTests);
+
+  testsList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-test-action]');
+    if (!btn) return;
+    const id = btn.closest('[data-test-id]').dataset.testId;
+    const test = pendingTests.find(t => String(t.id) === id);
+    try {
+      if (btn.dataset.testAction === 'preview') {
+        if (!test) return;
+        alert(test.questions.map((q, i) => `${i + 1}. ${q.question}\n${q.options.map((o, oi) => `${testCorrect(q, oi) ? '✓' : ' '} ${o}`).join('\n')}`).join('\n\n'));
+      } else if (btn.dataset.testAction === 'publish') {
+        if (!confirm('Опубликовать этот тест? Он станет виден всем в теме.')) return;
+        await LexPrepApi.moderatorSetTestStatus(id, 'published');
+        await loadTests();
+      } else if (btn.dataset.testAction === 'reject') {
+        const comment = prompt('Причина отклонения (увидит автор):', '');
+        if (comment === null) return;
+        await LexPrepApi.moderatorSetTestStatus(id, 'rejected', comment.trim());
+        await loadTests();
+      }
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    }
+  });
+
+  const articlesList = document.getElementById('adminArticlesList');
+  const articlesRefreshBtn = document.getElementById('adminArticlesRefreshBtn');
+  const articlesPendingCountEl = document.getElementById('adminArticlesPendingCount');
+  let articlesLoaded = false;
+  let pendingArticles = [];
+
+  function renderArticlesQueue(articles) {
+    articlesPendingCountEl.textContent = articles.length ? `(${articles.length})` : '';
+    if (!articles.length) {
+      articlesList.innerHTML = '<p class="community-empty">Статей на модерации нет.</p>';
+      return;
+    }
+    articlesList.innerHTML = articles.map(a => `
+      <div class="community-item" data-article-id="${a.id}">
+        <div class="community-item__head">
+          <h3>${escapeHtml(a.title)}</h3>
+          <span class="community-badge community-badge--open">${escapeHtml(a.topic)}</span>
+        </div>
+        <p class="community-item__message">
+          ${escapeHtml(a.excerpt)}<br>
+          Автор: ${escapeHtml(a.authorName || 'неизвестно')}${a.authorEmail ? ` (${escapeHtml(a.authorEmail)})` : ''}
+        </p>
+        <div class="community-item__meta"><span>${formatDateTime(a.createdAt)} · ~${a.readTime} мин чтения</span></div>
+        <div class="admin-item-actions">
+          <button type="button" class="admin-action-btn" data-article-action="preview">Читать текст</button>
+          <button type="button" class="admin-action-btn" data-article-action="publish">Опубликовать</button>
+          <button type="button" class="admin-action-btn admin-action-btn--warn" data-article-action="reject">Отклонить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadArticles() {
+    articlesList.innerHTML = '<p class="community-empty">Загрузка…</p>';
+    try {
+      pendingArticles = await LexPrepApi.moderatorListPendingArticles();
+      articlesLoaded = true;
+      renderArticlesQueue(pendingArticles);
+    } catch (err) {
+      articlesList.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  articlesRefreshBtn.addEventListener('click', loadArticles);
+
+  articlesList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-article-action]');
+    if (!btn) return;
+    const id = btn.closest('[data-article-id]').dataset.articleId;
+    const article = pendingArticles.find(a => String(a.id) === id);
+    try {
+      if (btn.dataset.articleAction === 'preview') {
+        if (!article) return;
+        const container = document.createElement('div');
+        container.innerHTML = article.body;
+        alert(container.textContent.trim());
+      } else if (btn.dataset.articleAction === 'publish') {
+        if (!confirm('Опубликовать эту статью? Она станет видна всем в каталоге.')) return;
+        await LexPrepApi.moderatorSetArticleStatus(id, 'published');
+        await loadArticles();
+      } else if (btn.dataset.articleAction === 'reject') {
+        const comment = prompt('Причина отклонения (увидит автор):', '');
+        if (comment === null) return;
+        await LexPrepApi.moderatorSetArticleStatus(id, 'rejected', comment.trim());
+        await loadArticles();
+      }
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    }
   });
 
   /* ---------------- Поддержка ---------------- */

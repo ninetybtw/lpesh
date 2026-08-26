@@ -78,9 +78,9 @@
             Аккаунты пользователей — данные из Supabase, изменения реальные и сразу видны всем.
           </p>
           <p class="admin-scope-note">
-            Управление аккаунтами (блокировка/удаление, имя и аватар, выдача монет и подписки).
-            Модерация пользовательских тестов и статей, ответы в поддержке и предложениях — на отдельной
-            <a href="moderator.html">странице модератора</a>, доступной и админам.
+            Управление аккаунтами (блокировка/удаление, имя и аватар, выдача монет и подписки), модерация
+            пользовательских тестов и статей, поддержка и предложения — то же самое доступно и на
+            <a href="moderator.html">странице модератора</a> (у модераторов — без тарифов и удаления аккаунтов).
           </p>
 
           <div id="adminGuard" hidden>
@@ -90,6 +90,8 @@
           <div id="adminContent" hidden>
             <div class="admin-tabs">
               <button type="button" class="admin-tab is-active" data-admin-tab="users">Пользователи</button>
+              <button type="button" class="admin-tab" data-admin-tab="tests">Тесты <span id="adminTestsPendingCount"></span></button>
+              <button type="button" class="admin-tab" data-admin-tab="articles">Статьи <span id="adminArticlesPendingCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="support">Поддержка <span id="adminTicketsOpenCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
             </div>
@@ -118,6 +120,20 @@
               </div>
             </div>
 
+            <div class="admin-tab-panel" data-admin-panel="tests" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminTestsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="adminTestsList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-admin-panel="articles" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminArticlesRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="adminArticlesList"></div>
+            </div>
+
             <div class="admin-tab-panel" data-admin-panel="support" hidden>
               <div class="admin-toolbar">
                 <button class="btn btn--outline" type="button" id="adminTicketsRefreshBtn">Обновить</button>
@@ -136,11 +152,13 @@
       </section>
     </main>
 
-    <script src="data.js?v=20260823175001"></script>
-    <script src="progress.js?v=20260823175001"></script>
+    <script src="data.js?v=20260826180226"></script>
+    <script src="progress.js?v=20260826180226"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260823175001"></script>
-    <script src="script.js?v=20260823175001"></script>
-    <script src="admin.js?v=20260823175001"></script>
+    <script src="api.js?v=20260826180226"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="content-loader.js?v=20260826180226"></script>
+    <script src="script.js?v=20260826180226"></script>
+    <script src="admin.js?v=20260826180226"></script>
   </body>
 </html>

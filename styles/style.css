@@ -1416,3 +1416,114 @@ body.is-admin [data-admin] {
 body.is-moderator [data-moderator] {
   display: flex !important;
 }
+
+/* ---------------- Уведомление о новом уровне/звании (script.js) ---------------- */
+
+.levelup-toast {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 11, 18, 0);
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+
+.levelup-toast.is-visible {
+  background: rgba(10, 11, 18, 0.45);
+  pointer-events: auto;
+}
+
+.levelup-toast__card {
+  position: relative;
+  width: min(360px, calc(100vw - 40px));
+  padding: 36px 28px 28px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-alt) 100%);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  overflow: hidden;
+  transform: scale(0.85) translateY(10px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.levelup-toast.is-visible .levelup-toast__card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.levelup-toast__glow {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, var(--color-primary-light) 0%, transparent 70%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.levelup-toast__close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.levelup-toast__close:hover {
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+}
+
+.levelup-toast__icon {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 14px;
+  display: block;
+  filter: drop-shadow(0 8px 20px rgba(61, 90, 254, 0.35));
+  animation: levelup-bounce 0.6s ease 0.15s both;
+}
+
+.levelup-toast__eyebrow {
+  position: relative;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.levelup-toast__level {
+  position: relative;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.levelup-toast__rank {
+  position: relative;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+@keyframes levelup-bounce {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}

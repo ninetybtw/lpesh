@@ -12,7 +12,50 @@ document.addEventListener('DOMContentLoaded', () => {
   initRevealOnScroll();
   initAuthState();
   initOnlineCounter();
+  initLevelUpToast();
 });
+
+/* ---------------- Уведомление о новом уровне/звании ----------------
+   progress.js кидает событие 'lexprep:levelup' (см. checkLevelUp() там)
+   при любом действии, поднимающем XP выше границы следующего уровня —
+   карточки, тесты, экзамен. Слушатель здесь один на все страницы, чтобы
+   всплывающее окно выглядело одинаково независимо от того, где именно
+   человек прокачался. */
+function initLevelUpToast() {
+  window.addEventListener('lexprep:levelup', (e) => {
+    showLevelUpToast(e.detail);
+  });
+}
+
+function showLevelUpToast(detail) {
+  const existing = document.querySelector('.levelup-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'levelup-toast';
+  toast.innerHTML = `
+    <div class="levelup-toast__card">
+      <button type="button" class="levelup-toast__close" aria-label="Закрыть">&times;</button>
+      <div class="levelup-toast__glow"></div>
+      <img class="levelup-toast__icon" src="assets/badges/${detail.rankIcon}" alt="${detail.rankName}" />
+      <div class="levelup-toast__eyebrow">${detail.rankChanged ? 'Новое звание!' : 'Новый уровень!'}</div>
+      <div class="levelup-toast__level">Уровень ${detail.level}</div>
+      <div class="levelup-toast__rank">${detail.rankName}</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+  function close() {
+    toast.classList.remove('is-visible');
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  toast.querySelector('.levelup-toast__close').addEventListener('click', close);
+  toast.addEventListener('click', (e) => { if (e.target === toast) close(); });
+  setTimeout(close, 6000);
+}
 
 /* ---------------- Coin balance badge (shop shortcut) ---------------- */
 function initCoinBadge() {

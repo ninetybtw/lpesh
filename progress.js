@@ -102,6 +102,7 @@ const LexPrepProgress = (function () {
     };
     save(data);
     incrementDailyUsage('cardsReviewed');
+    checkLevelUp();
     return data.cards[key];
   }
 
@@ -139,6 +140,7 @@ const LexPrepProgress = (function () {
     }
     save(data);
     incrementDailyUsage('testsTaken');
+    checkLevelUp();
   }
 
   function recordExamAttempt(score, total, topics, wrongEntries) {
@@ -155,6 +157,7 @@ const LexPrepProgress = (function () {
       }
     });
     save(data);
+    checkLevelUp();
   }
 
   function getWeakQuestions(allData, limit) {
@@ -432,6 +435,29 @@ const LexPrepProgress = (function () {
       xpForNextLevel,
       progressPercent
     };
+  }
+
+  // Всплывающее уведомление о новом уровне/звании — прогресс.js сам ничего
+  // не рендерит (никакого DOM в этом модуле), а лишь кидает событие
+  // 'lexprep:levelup' в window; слушатель на него и сама UI-модалка живут
+  // в script.js, чтобы работать одинаково на всех страницах. Первый же
+  // вызов после подключения этого кода на новом браузере молча
+  // "запоминает" текущий уровень, не показывая всплывающее окно задним
+  // числом уже опытным пользователям.
+  const LAST_SEEN_LEVEL_KEY = 'lexprep_last_seen_level';
+
+  function checkLevelUp() {
+    const info = getGamification();
+    const storedLevel = localStorage.getItem(LAST_SEEN_LEVEL_KEY);
+    const lastLevel = storedLevel === null ? info.level : Number(storedLevel);
+    localStorage.setItem(LAST_SEEN_LEVEL_KEY, String(info.level));
+
+    if (info.level > lastLevel && typeof window !== 'undefined' && window.dispatchEvent) {
+      const rankChanged = getRank(info.level).key !== getRank(lastLevel).key;
+      window.dispatchEvent(new CustomEvent('lexprep:levelup', {
+        detail: { level: info.level, rankName: info.rankName, rankIcon: info.rankIcon, rankChanged }
+      }));
+    }
   }
 
   /* ---------------- Achievements (8 categories x 5 tiers) ---------------- */
