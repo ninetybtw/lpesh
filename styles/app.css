@@ -1108,6 +1108,11 @@ body {
   backface-visibility: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(13, 24, 53, 0.75), rgba(8, 16, 34, 0.92));
+  /* карточки с большим количеством текста иначе вылезают за пределы
+     фиксированной высоты .flashcard__inner и наезжают на всё, что идёт
+     после карточки (точки уровня, подсказка "Оцени...") — вместо этого
+     длинный текст прокручивается внутри самой карточки */
+  overflow-y: auto;
 }
 
 .flashcard__face--back {
@@ -1736,6 +1741,19 @@ body {
 
   .ai-chat__toggle span {
     display: none;
+  }
+
+  .flashcard__inner {
+    min-height: 280px;
+  }
+
+  .flashcard__face {
+    padding: 24px 18px;
+    max-height: 60vh;
+  }
+
+  .flashcard__face p {
+    font-size: 16px;
   }
 }
 

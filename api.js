@@ -498,6 +498,14 @@ const LexPrepApi = (function () {
     return toFrontendUserTest(data);
   }
 
+  // Автор может удалить свой тест в любом статусе; модератор/админ — любой
+  // (RLS "Users can delete own tests", см. supabase/user-content-delete.sql).
+  async function deleteUserTest(testId) {
+    await requireSession();
+    const { error } = await client.from('user_tests').delete().eq('id', testId);
+    if (error) throw friendlyError(error);
+  }
+
   /* ---------------- Пользовательские статьи (с модерацией) ----------------
      public.user_articles (см. supabase/moderator.sql) — та же логика
      pending/published/rejected, что и у пользовательских тестов. */
@@ -573,6 +581,12 @@ const LexPrepApi = (function () {
       .single();
     if (error) throw friendlyError(error);
     return toFrontendUserArticle(data);
+  }
+
+  async function deleteUserArticle(articleId) {
+    await requireSession();
+    const { error } = await client.from('user_articles').delete().eq('id', articleId);
+    if (error) throw friendlyError(error);
   }
 
   /* ---------------- Дуэли против реальных игроков (PvP) ----------------
@@ -702,8 +716,8 @@ const LexPrepApi = (function () {
     moderatorGrantCoins,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
-    createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus,
-    createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus,
+    createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,
+    createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
     askAiConsultant,
     getClient: () => client

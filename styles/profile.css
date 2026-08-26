@@ -757,7 +757,8 @@ body {
 }
 
 /* ---------------- My articles ---------------- */
-.my-articles-list {
+.my-articles-list,
+.my-tests-list {
   display: flex;
   flex-direction: column;
   gap: 10px;

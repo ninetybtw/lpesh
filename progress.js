@@ -122,11 +122,21 @@ const LexPrepProgress = (function () {
       });
   }
 
+  // Учитывается (даёт опыт, попадает в статистику и "Последние тесты" в
+  // профиле) только первое прохождение конкретного теста — повторные
+  // попытки того же теста по-прежнему можно проходить и видеть свой
+  // результат, но в data.tests новая запись больше не добавляется,
+  // поэтому среднюю оценку/счётчик тестов/опыт они не трогают. Слабые
+  // места (data.weak) при этом обновляются всегда — важно знать, что
+  // вопрос всё ещё даётся тяжело, даже если это не первая попытка.
   function recordTestAttempt(topicId, score, total, wrongIndexes) {
     if (!total) return;
     const data = load();
     if (!data.tests[topicId]) data.tests[topicId] = [];
-    data.tests[topicId].push({ date: Date.now(), score, total });
+    const alreadyCounted = data.tests[topicId].length > 0;
+    if (!alreadyCounted) {
+      data.tests[topicId].push({ date: Date.now(), score, total });
+    }
 
     const total_ = total;
     for (let i = 0; i < total_; i++) {
@@ -140,7 +150,7 @@ const LexPrepProgress = (function () {
     }
     save(data);
     incrementDailyUsage('testsTaken');
-    checkLevelUp();
+    if (!alreadyCounted) checkLevelUp();
   }
 
   function recordExamAttempt(score, total, topics, wrongEntries) {
@@ -208,17 +218,22 @@ const LexPrepProgress = (function () {
     const activityDays = new Set();
     const recent = [];
 
+    // Считаем только первую попытку по каждому тесту (topicId, либо
+    // "topicId::user::testId" для пользовательских тестов) — повторное
+    // прохождение уже пройденного теста больше не задваивает счётчик и
+    // среднюю оценку (см. recordTestAttempt: сама запись новой попытки в
+    // data.tests теперь тоже происходит только один раз на тест).
     Object.keys(data.tests).forEach(topicId => {
       const attempts = data.tests[topicId];
-      if (attempts.length) touchedTopics.add(topicId);
-      attempts.forEach(a => {
-        testsCount++;
-        scoreSum += a.score;
-        scoreTotal += a.total;
-        activityDays.add(new Date(a.date).toDateString());
-        const topic = findTopic(allData, topicId);
-        recent.push({ date: a.date, title: topic ? topic.title : 'Тест по теме (недоступна)', score: a.score, total: a.total });
-      });
+      if (!attempts.length) return;
+      touchedTopics.add(topicId);
+      const a = attempts[0];
+      testsCount++;
+      scoreSum += a.score;
+      scoreTotal += a.total;
+      activityDays.add(new Date(a.date).toDateString());
+      const topic = findTopic(allData, topicId);
+      recent.push({ date: a.date, title: topic ? topic.title : 'Тест по теме (недоступна)', score: a.score, total: a.total });
     });
 
     data.examAttempts.forEach(a => {
@@ -230,10 +245,14 @@ const LexPrepProgress = (function () {
       recent.push({ date: a.date, title: 'Пробный экзамен', score: a.score, total: a.total });
     });
 
+    // Каждая карточка учитывается один раз (сам факт, что она хоть
+    // раз пройдена), а не по числу повторений — иначе повторные заходы
+    // по расписанию интервального повторения бесконечно накручивали бы
+    // счётчик и опыт за одни и те же карточки.
     let cardsReviewed = 0;
     Object.keys(data.cards).forEach(key => {
       touchedTopics.add(key.split('::')[0]);
-      cardsReviewed += data.cards[key].reviews || 0;
+      cardsReviewed++;
     });
 
     recent.sort((a, b) => b.date - a.date);
@@ -404,13 +423,18 @@ const LexPrepProgress = (function () {
     return stats;
   }
 
+  // Опыт за тест начисляется только за первую попытку (повторное
+  // прохождение уже пройденного теста опыт не даёт), за карточку — один
+  // раз за сам факт прохождения, а не за каждое повторение по расписанию
+  // интервального повторения.
   function computeXp(data) {
     let xp = 0;
     Object.keys(data.tests).forEach(topicId => {
-      data.tests[topicId].forEach(a => { xp += a.score * 2; });
+      const attempts = data.tests[topicId];
+      if (attempts.length) xp += attempts[0].score * 2;
     });
     data.examAttempts.forEach(a => { xp += a.score * 3; });
-    Object.keys(data.cards).forEach(key => { xp += (data.cards[key].reviews || 0) * 2; });
+    xp += Object.keys(data.cards).length * 2;
     return xp;
   }
 
@@ -486,7 +510,12 @@ const LexPrepProgress = (function () {
 
     let testsCount = 0, testScoreSum = 0, testScoreTotal = 0;
     Object.keys(data.tests).forEach(topicId => {
-      data.tests[topicId].forEach(a => { testsCount++; testScoreSum += a.score; testScoreTotal += a.total; });
+      const attempts = data.tests[topicId];
+      if (!attempts.length) return;
+      const a = attempts[0];
+      testsCount++;
+      testScoreSum += a.score;
+      testScoreTotal += a.total;
     });
     const testAvgPercent = testScoreTotal ? Math.round((testScoreSum / testScoreTotal) * 100) : 0;
 

@@ -71,6 +71,7 @@
               <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
               <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
               <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
               <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
               <a href="support.html" class="profile-dropdown__item">Поддержка</a>
               <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
@@ -121,6 +122,12 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h9M8 13h9M8 17h5"/></svg>
                 </span>
                 Мои статьи
+              </button>
+              <button class="profile-nav__item" type="button" data-section="tests">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10l2 2 4-4"/><path d="M8 16h8"/></svg>
+                </span>
+                Мои тесты
               </button>
               <button class="profile-nav__item" type="button" data-section="referral">
                 <span class="profile-nav__icon">
@@ -309,6 +316,18 @@
                 </div>
               </section>
 
+              <!-- МОИ ТЕСТЫ -->
+              <section class="profile-section" id="section-tests" data-section-panel="tests">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Мои тесты</h2>
+                  <p class="profile-card__subtitle">Тесты, которые ты отправил(а) на модерацию. После одобрения модератором тест увидят все в этой теме.</p>
+
+                  <div class="my-tests-list" id="myTestsList"></div>
+
+                  <a href="app.html" class="btn btn--primary" id="myTestsCreateBtn" style="margin-top: 16px;">Создать тест</a>
+                </div>
+              </section>
+
               <!-- РЕФЕРАЛЬНАЯ ПРОГРАММА -->
               <section class="profile-section" id="section-referral" data-section-panel="referral">
                 <div class="profile-card">
@@ -481,15 +500,15 @@
       </div>
     </div>
 
-    <script src="validation.js?v=20260826180226"></script>
-    <script src="data.js?v=20260826180226"></script>
-    <script src="progress.js?v=20260826180226"></script>
-    <script src="plan.js?v=20260826180226"></script>
+    <script src="validation.js?v=20260826183827"></script>
+    <script src="data.js?v=20260826183827"></script>
+    <script src="progress.js?v=20260826183827"></script>
+    <script src="plan.js?v=20260826183827"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260826180226"></script>
+    <script src="api.js?v=20260826183827"></script>
     <script src="vendor/marked.min.js"></script>
-    <script src="content-loader.js?v=20260826180226"></script>
-    <script src="script.js?v=20260826180226"></script>
-    <script src="profile.js?v=20260826180226"></script>
+    <script src="content-loader.js?v=20260826183827"></script>
+    <script src="script.js?v=20260826183827"></script>
+    <script src="profile.js?v=20260826183827"></script>
   </body>
 </html>

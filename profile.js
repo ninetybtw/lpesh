@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initStats();
   initGamification();
   initBasicDisciplineSetting();
+  initMyTests();
 });
 
 function getUser() {
@@ -427,17 +428,31 @@ function initBasicDisciplineSetting() {
   });
 }
 
-/* ---------------- My articles ---------------- */
-function getUserArticles() {
-  return JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]');
+/* ---------------- Мои статьи / мои тесты (с модерацией) ----------------
+   Раньше публиковались сразу в localStorage этого браузера, теперь идут
+   через public.user_articles/public.user_tests (см. moderator.js) —
+   отправленное здесь может быть на модерации, отклонено (с комментарием
+   модератора) или уже опубликовано и видно всем. */
+
+const MY_CONTENT_STATUS_LABEL = { pending: 'На модерации', published: 'Опубликован(а)', rejected: 'Отклонён(а)' };
+
+function formatMyContentDate(iso) {
+  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
 
 function initMyArticles() {
   const list = document.getElementById('myArticlesList');
-  if (!list) return;
+  if (!list || typeof LexPrepApi === 'undefined') return;
 
-  function render() {
-    const articles = getUserArticles();
+  async function render() {
+    list.innerHTML = '<p class="topic-desc">Загрузка…</p>';
+    let articles;
+    try {
+      articles = await LexPrepApi.listMyUserArticles();
+    } catch (err) {
+      list.innerHTML = `<p class="topic-desc">Не удалось загрузить: ${escapeAttr(err.message)}</p>`;
+      return;
+    }
 
     if (!articles.length) {
       list.innerHTML = '<p class="topic-desc">Ты ещё не опубликовал(а) ни одной статьи.</p>';
@@ -448,23 +463,83 @@ function initMyArticles() {
       <div class="my-article-item" data-article-id="${article.id}">
         <div class="my-article-item__main">
           <div class="my-article-item__top">
-            <span class="my-article-item__tag">${escapeAttr(article.tag || '')}</span>
-            <span class="my-article-item__date">${escapeAttr(article.date || '')}</span>
+            <span class="my-article-item__tag">${escapeAttr(MY_CONTENT_STATUS_LABEL[article.status] || article.status)}</span>
+            <span class="my-article-item__date">${escapeAttr(formatMyContentDate(article.createdAt))}</span>
           </div>
           <span class="my-article-item__title">${escapeAttr(article.title || '')}</span>
+          ${article.status === 'rejected' && article.moderatorComment ? `<span class="my-article-item__date">Причина: ${escapeAttr(article.moderatorComment)}</span>` : ''}
         </div>
         <button class="btn btn--outline my-article-item__delete" type="button" data-delete-id="${article.id}">Удалить</button>
       </div>
     `).join('');
 
     list.querySelectorAll('[data-delete-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.deleteId);
-        const confirmed = window.confirm('Удалить эту статью? Действие нельзя отменить.');
-        if (!confirmed) return;
-        const remaining = getUserArticles().filter(a => a.id !== id);
-        localStorage.setItem('lexprep_user_articles', JSON.stringify(remaining));
-        render();
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.deleteId;
+        if (!window.confirm('Удалить эту статью? Действие нельзя отменить.')) return;
+        try {
+          await LexPrepApi.deleteUserArticle(id);
+          render();
+        } catch (err) {
+          alert('Не удалось удалить: ' + err.message);
+        }
+      });
+    });
+  }
+
+  render();
+}
+
+function initMyTests() {
+  const list = document.getElementById('myTestsList');
+  if (!list || typeof LexPrepApi === 'undefined') return;
+
+  const DATA = typeof LEXPREP_DATA !== 'undefined' ? LEXPREP_DATA : [];
+  function topicTitle(disciplineId, topicId) {
+    const d = DATA.find(x => x.id === disciplineId);
+    const t = d && d.topics.find(x => x.id === topicId);
+    return t ? t.title : topicId;
+  }
+
+  async function render() {
+    list.innerHTML = '<p class="topic-desc">Загрузка…</p>';
+    let tests;
+    try {
+      tests = await LexPrepApi.listMyUserTests();
+    } catch (err) {
+      list.innerHTML = `<p class="topic-desc">Не удалось загрузить: ${escapeAttr(err.message)}</p>`;
+      return;
+    }
+
+    if (!tests.length) {
+      list.innerHTML = '<p class="topic-desc">Ты ещё не отправил(а) ни одного теста на модерацию.</p>';
+      return;
+    }
+
+    list.innerHTML = tests.map(test => `
+      <div class="my-article-item" data-test-id="${test.id}">
+        <div class="my-article-item__main">
+          <div class="my-article-item__top">
+            <span class="my-article-item__tag">${escapeAttr(MY_CONTENT_STATUS_LABEL[test.status] || test.status)}</span>
+            <span class="my-article-item__date">${escapeAttr(formatMyContentDate(test.createdAt))} · ${test.questions.length} вопросов</span>
+          </div>
+          <span class="my-article-item__title">${escapeAttr(test.title)} — ${escapeAttr(topicTitle(test.disciplineId, test.topicId))}</span>
+          ${test.status === 'rejected' && test.moderatorComment ? `<span class="my-article-item__date">Причина: ${escapeAttr(test.moderatorComment)}</span>` : ''}
+        </div>
+        <button class="btn btn--outline my-article-item__delete" type="button" data-delete-id="${test.id}">Удалить</button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.deleteId;
+        if (!window.confirm('Удалить этот тест? Действие нельзя отменить.')) return;
+        try {
+          await LexPrepApi.deleteUserTest(id);
+          render();
+        } catch (err) {
+          alert('Не удалось удалить: ' + err.message);
+        }
       });
     });
   }

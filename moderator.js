@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <button type="button" class="admin-action-btn" data-test-action="preview">Посмотреть вопросы</button>
           <button type="button" class="admin-action-btn" data-test-action="publish">Опубликовать</button>
           <button type="button" class="admin-action-btn admin-action-btn--warn" data-test-action="reject">Отклонить</button>
+          <button type="button" class="admin-action-btn admin-action-btn--danger" data-test-action="delete">Удалить</button>
         </div>
       </div>
     `).join('');
@@ -143,6 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'rejected', comment.trim());
+        await loadTests();
+      } else if (btn.dataset.testAction === 'delete') {
+        if (!confirm('Удалить этот тест безвозвратно?')) return;
+        await LexPrepApi.deleteUserTest(id);
         await loadTests();
       }
     } catch (err) {
@@ -184,6 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <button type="button" class="admin-action-btn" data-article-action="preview">Читать текст</button>
           <button type="button" class="admin-action-btn" data-article-action="publish">Опубликовать</button>
           <button type="button" class="admin-action-btn admin-action-btn--warn" data-article-action="reject">Отклонить</button>
+          <button type="button" class="admin-action-btn admin-action-btn--danger" data-article-action="delete">Удалить</button>
         </div>
       </div>
     `).join('');
@@ -223,6 +229,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'rejected', comment.trim());
+        await loadArticles();
+      } else if (btn.dataset.articleAction === 'delete') {
+        if (!confirm('Удалить эту статью безвозвратно?')) return;
+        await LexPrepApi.deleteUserArticle(id);
         await loadArticles();
       }
     } catch (err) {
