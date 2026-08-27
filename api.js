@@ -502,8 +502,13 @@ const LexPrepApi = (function () {
   // (RLS "Users can delete own tests", см. supabase/user-content-delete.sql).
   async function deleteUserTest(testId) {
     await requireSession();
-    const { error } = await client.from('user_tests').delete().eq('id', testId);
+    // RLS на DELETE не даёт явной ошибки доступа — просто удаляет 0 строк,
+    // если политика не разрешает. .select() позволяет отличить это от
+    // настоящего успеха и показать понятную ошибку вместо тихого "ничего
+    // не произошло".
+    const { data, error } = await client.from('user_tests').delete().eq('id', testId).select();
     if (error) throw friendlyError(error);
+    if (!data || !data.length) throw new Error('Не удалось удалить тест — похоже, не хватает прав.');
   }
 
   /* ---------------- Пользовательские статьи (с модерацией) ----------------
@@ -585,8 +590,9 @@ const LexPrepApi = (function () {
 
   async function deleteUserArticle(articleId) {
     await requireSession();
-    const { error } = await client.from('user_articles').delete().eq('id', articleId);
+    const { data, error } = await client.from('user_articles').delete().eq('id', articleId).select();
     if (error) throw friendlyError(error);
+    if (!data || !data.length) throw new Error('Не удалось удалить статью — похоже, не хватает прав.');
   }
 
   /* ---------------- Дуэли против реальных игроков (PvP) ----------------
