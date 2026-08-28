@@ -78,18 +78,23 @@ console.log(`Карточки: ${flashcardRows.reduce((s, r) => s + r.cards.leng
 
 /* ---------------- Тесты (+ chast2) ---------------- */
 
+const LETTERS = ['a', 'b', 'c', 'd', 'e', 'f'];
+
 // Варианты ответа и строка "✔ Ответ: X" встречаются то с ведущим "- ",
 // то без — разбираем блок вопроса построчно, а не одним жадным regex'ом
 // на "- "-префикс, чтобы не терять безпрефиксные строки ответа.
+// options/correct — в той же форме {id,text}/id-массив, что и у
+// civil/constitutional/criminal-law (см. lexprepConvertQuiz в
+// content-loader.js — он ожидает именно эту форму, а не голые строки).
 function parseQuestions(body) {
   const blocks = body.split(/(?=^\*\*\d+\.\*\*)/m).filter(b => /^\*\*\d+\.\*\*/.test(b));
   return blocks.map(block => {
     const question = (block.match(/^\*\*\d+\.\*\*\s*(.+)/) || [])[1].trim();
     const optionMatches = [...block.matchAll(/^-?\s*([А-Я])\)\s*(.+)$/gm)];
-    const options = optionMatches.map(m => m[2].trim());
+    const options = optionMatches.map((m, i) => ({ id: LETTERS[i] || String(i), text: m[2].trim() }));
     const answerLetter = (block.match(/✔\s*Ответ:\s*([А-Я])/) || [])[1];
     const correctIndex = optionMatches.findIndex(m => m[1] === answerLetter);
-    return { question, options, correct: [correctIndex], explanation: '' };
+    return { question, options, correct: [LETTERS[correctIndex] || String(correctIndex)], explanation: '' };
   });
 }
 

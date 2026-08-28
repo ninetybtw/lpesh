@@ -65,14 +65,19 @@ const flashcardRows = cardsFiles.map(f => {
 });
 console.log(`Карточки: ${flashcardRows.reduce((s, r) => s + r.cards.length, 0)} штук по ${flashcardRows.length} темам.`);
 
+// Источник уже хранит options как [{id,text}] и correct как [id] — та же
+// форма, что и у civil/constitutional/criminal-law в БД (см.
+// lexprepConvertQuiz в content-loader.js), поэтому просто прокидываем
+// как есть, без "конвертации" в голые строки/индексы.
 const testFiles = fs.readdirSync(jsonDir).filter(f => /^test_\d+\.json$/.test(f));
 const quizRows = testFiles.map(f => {
   const t = readJson(f);
-  const questions = t.questions.map(q => {
-    const options = q.options.map(o => o.text);
-    const correct = q.correct.map(id => q.options.findIndex(o => o.id === id)).filter(i => i >= 0);
-    return { question: q.question, options, correct, explanation: q.explanation || '' };
-  });
+  const questions = t.questions.map(q => ({
+    question: q.question,
+    options: q.options,
+    correct: q.correct,
+    explanation: q.explanation || ''
+  }));
   return { topic_id: topicId(t.topic), questions };
 });
 console.log(`Тесты: ${quizRows.reduce((s, r) => s + r.questions.length, 0)} вопросов по ${quizRows.length} темам.`);
