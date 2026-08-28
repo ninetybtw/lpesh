@@ -67,10 +67,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderList() {
     const balance = LexPrepProgress.getCoins();
+    const tickets = LexPrepProgress.getInventory().tourneyTickets || 0;
     const allowance = tournamentAllowance();
     listEl.innerHTML = TOURNAMENTS.map(t => {
-      const blocked = !allowance.allowed || balance < t.entryFee;
-      const label = !allowance.allowed ? allowance.label : (balance < t.entryFee ? 'Не хватает монет' : 'Участвовать');
+      const freeEntry = tickets > 0;
+      const blocked = !allowance.allowed || (!freeEntry && balance < t.entryFee);
+      const label = !allowance.allowed
+        ? allowance.label
+        : (freeEntry ? 'Участвовать (билет бесплатно)' : (balance < t.entryFee ? 'Не хватает монет' : 'Участвовать'));
       return `
       <div class="tourney-card">
         <div class="tourney-card__title">${DuelEngine.escapeHtml(t.title)}</div>
@@ -91,7 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tourney = TOURNAMENTS.find(t => t.id === btn.dataset.join);
         if (!tourney) return;
         if (!tournamentAllowance().allowed) return;
-        if (!LexPrepProgress.spendCoins(tourney.entryFee)) return;
+        // Купленный в магазине билет (LexPrepProgress inventory.tourneyTickets)
+        // избавляет от обычного взноса монетами — пробуем сначала его,
+        // и только если билетов нет, списываем монеты.
+        const usedTicket = LexPrepProgress.spendInventory('tourneyTickets');
+        if (!usedTicket && !LexPrepProgress.spendCoins(tourney.entryFee)) return;
         if (typeof initCoinBadge === 'function') initCoinBadge();
         LexPrepProgress.incrementMonthlyUsage('tourneysPlayed');
         startTournament(tourney);

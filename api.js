@@ -71,7 +71,8 @@ const LexPrepApi = (function () {
       bonusCoins: (profile && profile.bonus_coins) || 0,
       planTier: (profile && profile.plan_tier) || 'basic',
       planExpiresAt: profile && profile.plan_expires_at,
-      duelRating: (profile && profile.duel_rating) || 1000
+      duelRating: (profile && profile.duel_rating) || 1000,
+      aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
   }
 
@@ -146,6 +147,28 @@ const LexPrepApi = (function () {
       .single();
     if (error) throw friendlyError(error);
 
+    return toFrontendUser(session.user, data);
+  }
+
+  // Докупленные в магазине запросы к ИИ-консультанту сверх дневного
+  // лимита (см. shop.js, supabase/ai-extra-requests.sql) — Edge Function
+  // ai-consultant списывает их сама, когда дневной лимит исчерпан.
+  // currentValue передаётся вызывающим кодом (из уже загруженного
+  // user.aiExtraRequests), чтобы не делать лишний round-trip за ним сюда.
+  async function addAiExtraRequests(amount, currentValue) {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) {
+      const err = new Error('not_authenticated');
+      err.status = 401;
+      throw err;
+    }
+    const { data, error } = await client
+      .from('profiles')
+      .update({ ai_extra_requests: (currentValue || 0) + amount })
+      .eq('id', session.user.id)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
     return toFrontendUser(session.user, data);
   }
 
@@ -717,7 +740,7 @@ const LexPrepApi = (function () {
   }
 
   return {
-    register, login, logout, me, updateProfile, toFrontendUser,
+    register, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     moderatorGrantCoins,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,

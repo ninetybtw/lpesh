@@ -1,11 +1,17 @@
 /* ==========================================================================
 SHOP.JS — обмен монет (заработанных в тренажёре) на временный апгрейд
-тарифа. Всё хранится только в localStorage этого браузера — демо-симуляция
-оплаты. Дневные/месячные лимиты по тарифу реально проверяются (см. plan.js,
-progress.js), а докупленные здесь расходники (попытки теста, запросы ИИ,
-билеты турнира) реально тратятся сверх лимита. Когда появится бэкенд, эта
-механика должна быть переписана на реальный запрос к серверу, который
-проверяет баланс и продлевает подписку на своей стороне.
+тарифа. Оплата и баланс монет — демо-симуляция в localStorage этого
+браузера. Дневные/месячные лимиты по тарифу реально проверяются (см.
+plan.js, progress.js), а докупленные здесь расходники реально тратятся
+сверх лимита: попытки теста и билеты турнира — из localStorage-инвентаря
+(LexPrepProgress.spendInventory, проверяется в app.js/tournaments.js),
+запросы ИИ-консультанту — единственный расходник, реально живущий на
+сервере (profiles.ai_extra_requests, списывается Edge Function'ей
+ai-consultant, см. supabase/ai-extra-requests.sql) — это обязательно,
+иначе клиентский счётчик никак не повлиял бы на серверную проверку
+лимита. Когда появится бэкенд, вся эта механика должна быть переписана
+на реальный запрос к серверу, который проверяет баланс и продлевает
+подписку на своей стороне.
 
 Цены рассчитаны так, чтобы обычная активная подготовка (несколько тестов
 в неделю + ежедневное повторение карточек) давала около 300–400 монет
@@ -55,7 +61,12 @@ const CONSUMABLE_ITEMS = [
     price: 120,
     amount: 3,
     unit: 'запр.',
-    inventoryKey: 'aiRequests',
+    // Единственный товар, который реально расходуется не в этом браузере,
+    // а на сервере (Edge Function ai-consultant списывает
+    // profiles.ai_extra_requests сама, когда дневной лимит тарифа
+    // исчерпан) — остальные расходники (тесты, билеты турнира) тратятся
+    // из localStorage-инвентаря, см. LexPrepProgress.spendInventory.
+    serverBacked: true,
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
   },
   {
@@ -89,11 +100,35 @@ function activatePlan(tier) {
   localStorage.setItem(PLAN_EXPIRES_KEY, String(Date.now() + 30 * 24 * 60 * 60 * 1000));
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+document.addEventListener('DOMContentLoaded', async () => {
+  let user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
     return;
+  }
+
+  // aiExtraRequests живёт на сервере (списывается Edge Function'ей вне
+  // этого браузера) — кэш в localStorage может быть устаревшим, поэтому
+  // подтягиваем свежий профиль перед тем, как показывать магазин.
+  if (typeof LexPrepApi !== 'undefined') {
+    try {
+      const fresh = await LexPrepApi.me();
+      user = { ...user, ...fresh };
+      localStorage.setItem('lexprep_user', JSON.stringify(user));
+
+      // Разовая миграция: раньше "запросы ИИ" писались только в локальный
+      // инвентарь (см. историю CONSUMABLE_ITEMS выше) и никогда не
+      // работали — сервер про них не знал. Если у кого-то остался такой
+      // неиспользованный (и по сути пропавший впустую) остаток, зачисляем
+      // его на настоящий серверный счётчик один раз и обнуляем локальный.
+      const staleAiRequests = LexPrepProgress.getInventory().aiRequests || 0;
+      if (staleAiRequests > 0) {
+        const migrated = await LexPrepApi.addAiExtraRequests(staleAiRequests, user.aiExtraRequests || 0);
+        user = { ...user, ...migrated };
+        localStorage.setItem('lexprep_user', JSON.stringify(user));
+        LexPrepProgress.addInventory('aiRequests', -staleAiRequests);
+      }
+    } catch (e) { /* остаёмся на кэше, если сеть недоступна */ }
   }
 
   const avatarPreview = document.getElementById('shopAvatarPreview');
@@ -177,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     consumableGrid.innerHTML = CONSUMABLE_ITEMS.map(item => {
       const canAfford = balance >= item.price;
-      const owned = inventory[item.inventoryKey] || 0;
+      const owned = item.serverBacked ? (user.aiExtraRequests || 0) : (inventory[item.inventoryKey] || 0);
       const actionHtml = canAfford
         ? `<button class="btn btn--primary shop-item__btn" type="button" data-buy-consumable="${item.id}">Купить за ${item.price}</button>`
         : `<button class="btn btn--outline shop-item__btn" type="button" disabled>Не хватает монет</button>`;
@@ -197,12 +232,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     consumableGrid.querySelectorAll('[data-buy-consumable]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.buyConsumable;
         const item = CONSUMABLE_ITEMS.find(i => i.id === id);
         if (!item) return;
-        if (!LexPrepProgress.spendCoins(item.price)) return;
-        LexPrepProgress.addInventory(item.inventoryKey, item.amount);
+
+        if (item.serverBacked) {
+          if (LexPrepProgress.getCoins() < item.price) return;
+          // Списываем монеты только после того, как сервер подтвердил
+          // начисление — иначе при сетевой ошибке деньги ушли бы, а
+          // запросы не появились.
+          btn.disabled = true;
+          try {
+            const updated = await LexPrepApi.addAiExtraRequests(item.amount, user.aiExtraRequests || 0);
+            user = { ...user, ...updated };
+            localStorage.setItem('lexprep_user', JSON.stringify(user));
+            LexPrepProgress.spendCoins(item.price);
+          } catch (err) {
+            alert('Не удалось купить: ' + err.message);
+            btn.disabled = false;
+            return;
+          }
+        } else {
+          if (!LexPrepProgress.spendCoins(item.price)) return;
+          LexPrepProgress.addInventory(item.inventoryKey, item.amount);
+        }
+
         renderGrid();
         renderConsumables();
         if (typeof initCoinBadge === 'function') initCoinBadge();

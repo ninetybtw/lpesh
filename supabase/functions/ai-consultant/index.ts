@@ -10,6 +10,8 @@
 //   supabase functions deploy ai-consultant
 //   supabase secrets set NVIDIA_API_KEY=nvapi-...
 // (service_role уже доступен функции автоматически как SUPABASE_SERVICE_ROLE_KEY)
+// Перед первым деплоем этой версии выполни supabase/ai-extra-requests.sql
+// в SQL Editor — функция читает и списывает profiles.ai_extra_requests.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -56,7 +58,7 @@ serve(async (req) => {
 
     const { data: profile, error: profileErr } = await callerClient
       .from('profiles')
-      .select('is_admin, plan_tier, plan_expires_at, is_banned')
+      .select('is_admin, plan_tier, plan_expires_at, is_banned, ai_extra_requests')
       .eq('id', caller.id)
       .single();
     if (profileErr) throw profileErr;
@@ -99,9 +101,15 @@ serve(async (req) => {
       .maybeSingle();
 
     const usedToday = usageRow?.count || 0;
-    if (usedToday >= dailyLimit) {
+    // Дневной лимит тарифа исчерпан — но если в магазине куплены "лишние"
+    // запросы (profiles.ai_extra_requests, см. shop.js), используем один
+    // из них вместо отказа. Списываем ниже, только если запрос реально
+    // выполнился (после успешного ответа NVIDIA), а не заранее.
+    const extraRequests = profile.ai_extra_requests || 0;
+    const usingExtraRequest = usedToday >= dailyLimit;
+    if (usingExtraRequest && extraRequests <= 0) {
       return new Response(JSON.stringify({
-        error: `Дневной лимит исчерпан (${dailyLimit} запросов). Попробуй завтра.`
+        error: `Дневной лимит исчерпан (${dailyLimit} запросов). Попробуй завтра или купи дополнительные запросы в магазине.`
       }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -132,11 +140,23 @@ serve(async (req) => {
     const reply = aiData?.choices?.[0]?.message?.content?.trim();
     if (!reply) throw new Error('Пустой ответ от ИИ — попробуй переформулировать вопрос.');
 
-    await adminClient
-      .from('ai_consultant_usage')
-      .upsert({ user_id: caller.id, day: today, count: usedToday + 1 }, { onConflict: 'user_id,day' });
+    if (usingExtraRequest) {
+      await adminClient
+        .from('profiles')
+        .update({ ai_extra_requests: extraRequests - 1 })
+        .eq('id', caller.id);
+    } else {
+      await adminClient
+        .from('ai_consultant_usage')
+        .upsert({ user_id: caller.id, day: today, count: usedToday + 1 }, { onConflict: 'user_id,day' });
+    }
 
-    return new Response(JSON.stringify({ reply, remaining: dailyLimit - usedToday - 1, limit: dailyLimit }), {
+    return new Response(JSON.stringify({
+      reply,
+      remaining: usingExtraRequest ? 0 : dailyLimit - usedToday - 1,
+      limit: dailyLimit,
+      extraRequestsLeft: usingExtraRequest ? extraRequests - 1 : extraRequests
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (err) {

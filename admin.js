@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (amountStr === null) return;
         const amount = Number(amountStr);
         if (!Number.isFinite(amount) || amount === 0) return;
+        if (Math.abs(amount) >= 100000 && !confirm(`Подтверди: начислить ${amount} монет — похоже на опечатку в количестве нулей.`)) return;
         await LexPrepApi.adminGrantCoins(userId, amount, user.bonusCoins);
       } else if (action === 'grant-plan') {
         const tier = prompt('Тариф: basic, pro или max', user.planTier === 'basic' ? 'pro' : user.planTier);
