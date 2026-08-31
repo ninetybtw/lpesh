@@ -132,13 +132,6 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// Иконки для кнопки озвучки конспекта — тот же стиль obводки, что и у
-// остальных SVG-иконок в приложении (viewBox 24x24, stroke-width 2).
-const ICON_SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
-const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
-const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
-
 function initApp() {
   const DATA = LEXPREP_DATA;
 
@@ -154,10 +147,6 @@ function initApp() {
   if (!disciplineSelectBtn || !topicSelectBtn || !contentView) return;
 
   localStorage.setItem('lexprep_visited_app', '1');
-
-  window.addEventListener('pagehide', () => {
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-  });
 
   const urlParams = new URLSearchParams(window.location.search);
   let activeDiscipline = DATA.find(d => d.id === urlParams.get('discipline')) || DATA[0];
@@ -215,7 +204,6 @@ function initApp() {
   // Единая точка смены темы/дисциплины.
   function switchTopic(discipline, topic, opts) {
     opts = opts || {};
-    stopSpeaking();
     activeDiscipline = discipline;
     activeTopic = topic;
     activeView = 'notes';
@@ -350,12 +338,8 @@ function initApp() {
         <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
         ${LexPrepPlan.getLimits().pdfExport ? `
-          <button class="topic-tab topic-tab--audio" type="button" id="listenTopicBtn"><span class="topic-tab__icon">${ICON_SPEAKER}</span>Слушать конспект</button>
-          <select class="topic-tab topic-tab--voice" id="ttsVoiceSelect" title="Голос озвучки"></select>
           <button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>
-        ` : `
-          <a class="topic-tab topic-tab--audio topic-tab--locked" href="index.html#pricing" title="Доступно на тарифе «Максимум»"><span class="topic-tab__icon">${ICON_LOCK}</span>Слушать конспект</a>
-        `}
+        ` : ''}
       </div>
 
       <div data-view-panel="notes" ${activeView === 'notes' ? '' : 'hidden'}>
@@ -443,27 +427,6 @@ function initApp() {
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
     if (downloadPdfBtn) {
       downloadPdfBtn.addEventListener('click', () => downloadTopicPdf(activeTopic));
-    }
-
-    const listenTopicBtn = document.getElementById('listenTopicBtn');
-    if (listenTopicBtn) {
-      updateListenButton(listenTopicBtn);
-      listenTopicBtn.addEventListener('click', () => toggleSpeaking(activeTopic, listenTopicBtn));
-    }
-
-    const ttsVoiceSelect = document.getElementById('ttsVoiceSelect');
-    if (ttsVoiceSelect) {
-      populateVoiceSelect(ttsVoiceSelect);
-      // Список голосов у некоторых браузеров (Chrome) подгружается
-      // асинхронно после первого обращения к speechSynthesis —
-      // перерисовываем select, когда он реально готов.
-      if (typeof speechSynthesis !== 'undefined') {
-        speechSynthesis.onvoiceschanged = () => populateVoiceSelect(ttsVoiceSelect);
-      }
-      ttsVoiceSelect.addEventListener('change', () => {
-        localStorage.setItem(TTS_VOICE_KEY, ttsVoiceSelect.value);
-        if (speechState !== 'idle') stopSpeaking();
-      });
     }
 
     contentView.querySelectorAll('[data-view]').forEach(tab => {
@@ -579,128 +542,6 @@ function initApp() {
     });
 
     doc.save(`${topic.title.replace(/[\\/:*?"<>|]/g, '')}.pdf`);
-  }
-
-  /* ---------------- Аудиоозвучка конспекта (тариф «Максимум») ----------------
-     Через встроенный в браузер Web Speech API (window.speechSynthesis) —
-     без бэкенда и без ключей API. Качество и набор доступных голосов
-     целиком зависят от браузера/ОС пользователя, поэтому рядом с кнопкой
-     даём выбрать голос из того, что реально есть на этом устройстве
-     (см. renderVoicePicker) — так можно на месте подобрать наиболее
-     приятный. Если понадобится гарантированно качественный голос
-     независимо от устройства — это отдельная задача с облачным TTS
-     (Yandex SpeechKit/ElevenLabs и т.п.), нужен ключ API и Edge Function,
-     чтобы ключ не утёк на клиент, аналогично ai-consultant. */
-  const TTS_VOICE_KEY = 'lexprep_tts_voice';
-  let speechState = 'idle'; // idle | playing | paused
-
-  function getTopicSpeechChunks(topic) {
-    const container = document.createElement('div');
-    container.innerHTML = topic.theory || '';
-    const chunks = [];
-    container.querySelectorAll('h1, h2, h3, h4, p, li').forEach(el => {
-      const text = el.textContent.trim().replace(/\s+/g, ' ');
-      if (text) chunks.push(text);
-    });
-    return chunks;
-  }
-
-  function getRussianVoices() {
-    if (typeof speechSynthesis === 'undefined') return [];
-    const voices = speechSynthesis.getVoices();
-    const ru = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('ru'));
-    return ru.length ? ru : voices;
-  }
-
-  function getSelectedVoice() {
-    const voices = getRussianVoices();
-    if (!voices.length) return null;
-    const savedUri = localStorage.getItem(TTS_VOICE_KEY);
-    return voices.find(v => v.voiceURI === savedUri) || voices[0];
-  }
-
-  // Список голосов зависит от браузера/ОС пользователя — даём выбрать
-  // из того, что реально есть на устройстве, и запоминаем выбор.
-  function populateVoiceSelect(select) {
-    const voices = getRussianVoices();
-    if (!voices.length) {
-      select.innerHTML = '<option value="">Голоса не найдены</option>';
-      select.disabled = true;
-      return;
-    }
-    select.disabled = false;
-    const savedUri = localStorage.getItem(TTS_VOICE_KEY);
-    const current = voices.find(v => v.voiceURI === savedUri) || voices[0];
-    select.innerHTML = voices.map(v => `
-      <option value="${escapeHtml(v.voiceURI)}" ${v.voiceURI === current.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)}</option>
-    `).join('');
-    if (!savedUri) localStorage.setItem(TTS_VOICE_KEY, current.voiceURI);
-  }
-
-  function updateListenButton(btn) {
-    if (speechState === 'playing') {
-      btn.innerHTML = `<span class="topic-tab__icon">${ICON_PAUSE}</span>Пауза`;
-      btn.classList.add('is-playing');
-    } else if (speechState === 'paused') {
-      btn.innerHTML = `<span class="topic-tab__icon">${ICON_PLAY}</span>Продолжить`;
-      btn.classList.add('is-playing');
-    } else {
-      btn.innerHTML = `<span class="topic-tab__icon">${ICON_SPEAKER}</span>Слушать конспект`;
-      btn.classList.remove('is-playing');
-    }
-  }
-
-  function stopSpeaking() {
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-    speechState = 'idle';
-    const btn = document.getElementById('listenTopicBtn');
-    if (btn) updateListenButton(btn);
-  }
-
-  function toggleSpeaking(topic, btn) {
-    if (typeof speechSynthesis === 'undefined') {
-      alert('Браузер не поддерживает озвучку текста — попробуй другой браузер (Chrome, Edge).');
-      return;
-    }
-
-    if (speechState === 'playing') {
-      speechSynthesis.pause();
-      speechState = 'paused';
-      updateListenButton(btn);
-      return;
-    }
-    if (speechState === 'paused') {
-      speechSynthesis.resume();
-      speechState = 'playing';
-      updateListenButton(btn);
-      return;
-    }
-
-    const chunks = getTopicSpeechChunks(topic);
-    if (!chunks.length) {
-      alert('В этой теме пока нечего озвучивать — конспект пуст.');
-      return;
-    }
-
-    speechSynthesis.cancel();
-    const voice = getSelectedVoice();
-
-    chunks.forEach((text, i) => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU';
-      if (voice) utterance.voice = voice;
-      utterance.rate = 1;
-      if (i === chunks.length - 1) {
-        utterance.onend = () => {
-          speechState = 'idle';
-          updateListenButton(btn);
-        };
-      }
-      speechSynthesis.speak(utterance);
-    });
-
-    speechState = 'playing';
-    updateListenButton(btn);
   }
 
   // Вопрос может иметь один или несколько правильных ответов —
