@@ -132,6 +132,13 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Иконки для кнопки озвучки конспекта — тот же стиль obводки, что и у
+// остальных SVG-иконок в приложении (viewBox 24x24, stroke-width 2).
+const ICON_SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
 function initApp() {
   const DATA = LEXPREP_DATA;
 
@@ -343,11 +350,11 @@ function initApp() {
         <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
         ${LexPrepPlan.getLimits().pdfExport ? `
-          <button class="topic-tab topic-tab--audio" type="button" id="listenTopicBtn">🔊 Слушать конспект</button>
+          <button class="topic-tab topic-tab--audio" type="button" id="listenTopicBtn"><span class="topic-tab__icon">${ICON_SPEAKER}</span>Слушать конспект</button>
           <select class="topic-tab topic-tab--voice" id="ttsVoiceSelect" title="Голос озвучки"></select>
           <button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>
         ` : `
-          <a class="topic-tab topic-tab--audio topic-tab--locked" href="index.html#pricing" title="Доступно на тарифе «Максимум»">🔒 Слушать конспект</a>
+          <a class="topic-tab topic-tab--audio topic-tab--locked" href="index.html#pricing" title="Доступно на тарифе «Максимум»"><span class="topic-tab__icon">${ICON_LOCK}</span>Слушать конспект</a>
         `}
       </div>
 
@@ -632,13 +639,13 @@ function initApp() {
 
   function updateListenButton(btn) {
     if (speechState === 'playing') {
-      btn.textContent = '⏸ Пауза';
+      btn.innerHTML = `<span class="topic-tab__icon">${ICON_PAUSE}</span>Пауза`;
       btn.classList.add('is-playing');
     } else if (speechState === 'paused') {
-      btn.textContent = '▶ Продолжить';
+      btn.innerHTML = `<span class="topic-tab__icon">${ICON_PLAY}</span>Продолжить`;
       btn.classList.add('is-playing');
     } else {
-      btn.textContent = '🔊 Слушать конспект';
+      btn.innerHTML = `<span class="topic-tab__icon">${ICON_SPEAKER}</span>Слушать конспект`;
       btn.classList.remove('is-playing');
     }
   }

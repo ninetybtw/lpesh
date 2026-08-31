@@ -139,15 +139,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (btn.dataset.testAction === 'publish') {
         if (!confirm('Опубликовать этот тест? Он станет виден всем в теме.')) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'published');
+        await LexPrepApi.logAdminAction('publish-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
       } else if (btn.dataset.testAction === 'reject') {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'rejected', comment.trim());
+        await LexPrepApi.logAdminAction('reject-test', { targetUserId: test && test.userId, targetLabel: test && test.title, details: comment.trim() });
         await loadTests();
       } else if (btn.dataset.testAction === 'delete') {
         if (!confirm('Удалить этот тест безвозвратно?')) return;
         await LexPrepApi.deleteUserTest(id);
+        await LexPrepApi.logAdminAction('delete-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
       }
     } catch (err) {
@@ -224,15 +227,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (btn.dataset.articleAction === 'publish') {
         if (!confirm('Опубликовать эту статью? Она станет видна всем в каталоге.')) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'published');
+        await LexPrepApi.logAdminAction('publish-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
       } else if (btn.dataset.articleAction === 'reject') {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'rejected', comment.trim());
+        await LexPrepApi.logAdminAction('reject-article', { targetUserId: article && article.userId, targetLabel: article && article.title, details: comment.trim() });
         await loadArticles();
       } else if (btn.dataset.articleAction === 'delete') {
         if (!confirm('Удалить эту статью безвозвратно?')) return;
         await LexPrepApi.deleteUserArticle(id);
+        await LexPrepApi.logAdminAction('delete-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
       }
     } catch (err) {
@@ -327,12 +333,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = prompt('Новое имя:', user.name);
         if (name === null || !name.trim()) return;
         await LexPrepApi.adminUpdateUser(userId, { name: name.trim() });
+        await LexPrepApi.logAdminAction('edit-name', { targetUserId: userId, targetLabel: user.email, details: `«${user.name}» → «${name.trim()}»` });
       } else if (action === 'edit-avatar') {
         const url = prompt('Ссылка на аватар (пусто — убрать аватар):', user.avatar || '');
         if (url === null) return;
         await LexPrepApi.adminUpdateUser(userId, { avatar: url.trim() || null });
+        await LexPrepApi.logAdminAction('edit-avatar', { targetUserId: userId, targetLabel: user.email });
       } else if (action === 'grant-coins') {
-        const amountStr = prompt(`Сколько монет начислить сверху текущих ${user.bonusCoins}? Максимум ${MOD_COIN_GRANT_LIMIT} за раз (можно отрицательное число).`, '100');
+        const amountStr = prompt(`Сколько монет начислить сверху уже начисленных вручную ${user.bonusCoins}? Максимум ${MOD_COIN_GRANT_LIMIT} за раз. Это не полный баланс пользователя в магазине — тот дополнительно учитывает заработанные и потраченные монеты. (можно отрицательное число)`, '100');
         if (amountStr === null) return;
         const amount = Number(amountStr);
         if (!Number.isFinite(amount) || amount === 0) return;
@@ -341,15 +349,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
         await LexPrepApi.moderatorGrantCoins(userId, amount, user.bonusCoins);
+        await LexPrepApi.logAdminAction('grant-coins', { targetUserId: userId, targetLabel: user.email, details: `${amount > 0 ? '+' : ''}${amount} (было ${user.bonusCoins})` });
       } else if (action === 'toggle-ban') {
         if (user.isBanned) {
           if (!confirm(`Разблокировать ${user.name}?`)) return;
           await LexPrepApi.adminSetBanned(userId, false);
+          await LexPrepApi.logAdminAction('unban', { targetUserId: userId, targetLabel: user.email });
         } else {
           const reason = prompt(`Причина блокировки ${user.name} (необязательно):`, '');
           if (reason === null) return;
           if (!confirm(`Заблокировать ${user.name}? Аккаунт будет выходить из сессии автоматически.`)) return;
           await LexPrepApi.adminSetBanned(userId, true, reason);
+          await LexPrepApi.logAdminAction('ban', { targetUserId: userId, targetLabel: user.email, details: reason || 'без причины' });
         }
       }
       await loadUsers();
@@ -394,10 +405,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  let tickets = [];
   async function loadTickets() {
     ticketsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
     try {
-      const tickets = await LexPrepApi.adminListSupportTickets();
+      tickets = await LexPrepApi.adminListSupportTickets();
       ticketsLoaded = true;
       renderTickets(tickets);
     } catch (err) {
@@ -412,13 +424,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!btn) return;
     const item = btn.closest('[data-ticket-id]');
     const id = item.dataset.ticketId;
+    const ticket = tickets.find(t => String(t.id) === id);
     try {
       if (btn.dataset.ticketAction === 'reply') {
         const reply = prompt('Ответ пользователю:', '');
         if (reply === null || !reply.trim()) return;
         await LexPrepApi.adminReplyTicket(id, reply.trim());
+        await LexPrepApi.logAdminAction('reply-ticket', { targetUserId: ticket && ticket.userId, targetLabel: ticket && ticket.subject, details: reply.trim() });
       } else if (btn.dataset.ticketAction === 'close') {
         await LexPrepApi.adminSetTicketStatus(id, 'closed');
+        await LexPrepApi.logAdminAction('close-ticket', { targetUserId: ticket && ticket.userId, targetLabel: ticket && ticket.subject });
       }
       await loadTickets();
     } catch (err) {
@@ -460,10 +475,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  let suggestions = [];
   async function loadSuggestions() {
     suggestionsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
     try {
-      const suggestions = await LexPrepApi.listSuggestions();
+      suggestions = await LexPrepApi.listSuggestions();
       suggestionsLoaded = true;
       renderSuggestions(suggestions);
     } catch (err) {
@@ -479,13 +495,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const item = btn.closest('[data-suggestion-id]');
     const id = item.dataset.suggestionId;
     const action = btn.dataset.suggestionAction;
+    const suggestion = suggestions.find(s => String(s.id) === id);
     try {
       if (action === 'comment') {
         const comment = prompt('Комментарий команды:', '');
         if (comment === null) return;
         await LexPrepApi.adminUpdateSuggestion(id, { adminComment: comment.trim() });
+        await LexPrepApi.logAdminAction('comment-suggestion', { targetUserId: suggestion && suggestion.userId, targetLabel: suggestion && suggestion.title, details: comment.trim() });
       } else {
         await LexPrepApi.adminUpdateSuggestion(id, { status: action });
+        await LexPrepApi.logAdminAction('suggestion-status', { targetUserId: suggestion && suggestion.userId, targetLabel: suggestion && suggestion.title, details: action });
       }
       await loadSuggestions();
     } catch (err) {

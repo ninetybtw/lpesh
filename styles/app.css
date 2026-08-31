@@ -604,10 +604,24 @@ body {
 
 .topic-tab--audio {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
   background: rgba(111, 135, 255, 0.14);
   color: #d3d8ee;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.topic-tab__icon {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+}
+
+.topic-tab__icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .topic-tab--audio:hover {

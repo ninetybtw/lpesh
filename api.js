@@ -285,6 +285,55 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  /* ---------------- Журнал действий админов/модераторов ----------------
+     public.admin_audit_log (см. supabase/admin-audit-log.sql). Пишет
+     сюда сам фронтенд сразу после успешного действия — не подмена
+     нормального сервера аудита, но лучше, чем ничего, и не даёт
+     модератору незаметно замести следы (insert разрешён только "от
+     своего имени", RLS без update/delete). Видит журнал только админ. */
+
+  async function logAdminAction(action, opts) {
+    opts = opts || {};
+    try {
+      const session = await requireSession();
+      const me = await fetchProfile(session.user.id);
+      await client.from('admin_audit_log').insert({
+        actor_id: session.user.id,
+        actor_name: me.name || session.user.email,
+        actor_role: me.is_admin ? 'admin' : 'moderator',
+        action,
+        target_user_id: opts.targetUserId || null,
+        target_label: opts.targetLabel || null,
+        details: opts.details || null
+      });
+    } catch (e) {
+      // Журнал — вспомогательная функция, не должен ронять само
+      // действие админа/модератора, если запись лога не удалась.
+      console.error('LexPrep: не удалось записать в журнал действий', e);
+    }
+  }
+
+  async function adminListAuditLog(limit) {
+    await requireSession();
+    const { data, error } = await client
+      .from('admin_audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit || 200);
+    if (error) throw friendlyError(error);
+    return data.map(row => ({
+      id: row.id,
+      actorId: row.actor_id,
+      actorName: row.actor_name,
+      actorRole: row.actor_role,
+      action: row.action,
+      targetUserId: row.target_user_id,
+      targetLabel: row.target_label,
+      details: row.details,
+      createdAt: row.created_at
+    }));
+  }
+
   /* ---------------- Поддержка ----------------
      Тикеты живут в public.support_tickets (см.
      supabase/support-suggestions.sql). Пользователь видит и создаёт
@@ -742,6 +791,7 @@ const LexPrepApi = (function () {
   return {
     register, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
+    logAdminAction, adminListAuditLog,
     moderatorGrantCoins,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,

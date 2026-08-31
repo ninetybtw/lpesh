@@ -95,6 +95,7 @@
               <button type="button" class="admin-tab" data-admin-tab="articles">Статьи <span id="adminArticlesPendingCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="support">Поддержка <span id="adminTicketsOpenCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
+              <button type="button" class="admin-tab" data-admin-tab="logs">Журнал действий</button>
             </div>
 
             <div class="admin-tab-panel is-active" data-admin-panel="users">
@@ -110,7 +111,7 @@
                     <tr>
                       <th>Пользователь</th>
                       <th>Тариф</th>
-                      <th>Монеты (бонус)</th>
+                      <th title="Только сумма, начисленная админом/модератором вручную — не путать с полным балансом монет пользователя в магазине, который также учитывает заработанные в тренажёре и уже потраченные">Начислено вручную ⓘ</th>
                       <th>Статус</th>
                       <th>Регистрация</th>
                       <th>Действия</th>
@@ -148,18 +149,43 @@
               </div>
               <div class="community-list" id="adminSuggestionsList"></div>
             </div>
+
+            <div class="admin-tab-panel" data-admin-panel="logs" hidden>
+              <p class="admin-scope-note">
+                Что делали модераторы и другие админы: бан/разбан, начисление монет, выдача тарифа/роли,
+                публикация/отклонение/удаление тестов и статей, ответы в поддержке и предложениях, удаление аккаунтов.
+                Журнал неизменяем — записи нельзя ни отредактировать, ни удалить.
+              </p>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminLogsRefreshBtn">Обновить</button>
+              </div>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Когда</th>
+                      <th>Кто</th>
+                      <th>Действие</th>
+                      <th>Кому/что</th>
+                      <th>Подробности</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminLogsBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <script src="data.js?v=20260831141758"></script>
-    <script src="progress.js?v=20260831141758"></script>
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260831141758"></script>
+    <script src="api.js?v=20260831160000"></script>
     <script src="vendor/marked.min.js"></script>
-    <script src="content-loader.js?v=20260831141758"></script>
-    <script src="script.js?v=20260831141758"></script>
-    <script src="admin.js?v=20260831141758"></script>
+    <script src="content-loader.js?v=20260831160000"></script>
+    <script src="script.js?v=20260831160000"></script>
+    <script src="admin.js?v=20260831160000"></script>
   </body>
 </html>

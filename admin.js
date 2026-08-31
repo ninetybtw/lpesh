@@ -138,17 +138,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = prompt('Новое имя:', user.name);
         if (name === null || !name.trim()) return;
         await LexPrepApi.adminUpdateUser(userId, { name: name.trim() });
+        await LexPrepApi.logAdminAction('edit-name', { targetUserId: userId, targetLabel: user.email, details: `«${user.name}» → «${name.trim()}»` });
       } else if (action === 'edit-avatar') {
         const url = prompt('Ссылка на аватар (пусто — убрать аватар):', user.avatar || '');
         if (url === null) return;
         await LexPrepApi.adminUpdateUser(userId, { avatar: url.trim() || null });
+        await LexPrepApi.logAdminAction('edit-avatar', { targetUserId: userId, targetLabel: user.email });
       } else if (action === 'grant-coins') {
-        const amountStr = prompt(`Сколько монет начислить сверху текущих ${user.bonusCoins}? (можно отрицательное число)`, '100');
+        const amountStr = prompt(`Сколько монет начислить сверху уже начисленных вручную ${user.bonusCoins}? Это не полный баланс пользователя в магазине — тот дополнительно учитывает заработанные и потраченные монеты. (можно отрицательное число)`, '100');
         if (amountStr === null) return;
         const amount = Number(amountStr);
         if (!Number.isFinite(amount) || amount === 0) return;
         if (Math.abs(amount) >= 100000 && !confirm(`Подтверди: начислить ${amount} монет — похоже на опечатку в количестве нулей.`)) return;
         await LexPrepApi.adminGrantCoins(userId, amount, user.bonusCoins);
+        await LexPrepApi.logAdminAction('grant-coins', { targetUserId: userId, targetLabel: user.email, details: `${amount > 0 ? '+' : ''}${amount} (было ${user.bonusCoins})` });
       } else if (action === 'grant-plan') {
         const tier = prompt('Тариф: basic, pro или max', user.planTier === 'basic' ? 'pro' : user.planTier);
         if (tier === null) return;
@@ -158,28 +161,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (tier === 'basic') {
           await LexPrepApi.adminUpdateUser(userId, { planTier: 'basic', planExpiresAt: null });
+          await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: 'basic (снята подписка)' });
         } else {
           const daysStr = prompt('На сколько дней?', '30');
           if (daysStr === null) return;
           const days = Number(daysStr);
           if (!Number.isFinite(days) || days <= 0) return;
           await LexPrepApi.adminGrantSubscription(userId, tier, days);
+          await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: `${tier} на ${days} дн.` });
         }
       } else if (action === 'toggle-moderator') {
         if (!confirm(`${user.isModerator ? 'Снять права модератора у' : 'Сделать модератором'} ${user.name}?`)) return;
         await LexPrepApi.adminSetModerator(userId, !user.isModerator);
+        await LexPrepApi.logAdminAction('toggle-moderator', { targetUserId: userId, targetLabel: user.email, details: user.isModerator ? 'сняты права модератора' : 'выданы права модератора' });
       } else if (action === 'toggle-ban') {
         if (user.isBanned) {
           if (!confirm(`Разблокировать ${user.name}?`)) return;
           await LexPrepApi.adminSetBanned(userId, false);
+          await LexPrepApi.logAdminAction('unban', { targetUserId: userId, targetLabel: user.email });
         } else {
           const reason = prompt(`Причина блокировки ${user.name} (необязательно):`, '');
           if (reason === null) return;
           if (!confirm(`Заблокировать ${user.name}? Аккаунт будет выходить из сессии автоматически.`)) return;
           await LexPrepApi.adminSetBanned(userId, true, reason);
+          await LexPrepApi.logAdminAction('ban', { targetUserId: userId, targetLabel: user.email, details: reason || 'без причины' });
         }
       } else if (action === 'delete') {
         if (!confirm(`Удалить аккаунт ${user.name} (${user.email}) безвозвратно? Это действие нельзя отменить.`)) return;
+        await LexPrepApi.logAdminAction('delete-user', { targetUserId: userId, targetLabel: user.email });
         await LexPrepApi.adminDeleteUser(userId);
       }
       await loadUsers();
@@ -201,8 +210,65 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (target === 'articles' && !articlesLoaded) loadArticles();
       if (target === 'support' && !ticketsLoaded) loadTickets();
       if (target === 'suggestions' && !suggestionsLoaded) loadSuggestions();
+      if (target === 'logs' && !logsLoaded) loadLogs();
     });
   });
+
+  /* ---------------- Журнал действий админов/модераторов ---------------- */
+
+  const ADMIN_LOG_ACTION_LABEL = {
+    'edit-name': 'изменил(а) имя',
+    'edit-avatar': 'изменил(а) аватар',
+    'grant-coins': 'начислил(а) монеты',
+    'grant-plan': 'выдал(а) тариф',
+    'toggle-moderator': 'изменил(а) роль модератора',
+    'ban': 'заблокировал(а)',
+    'unban': 'разблокировал(а)',
+    'delete-user': 'удалил(а) аккаунт',
+    'publish-test': 'опубликовал(а) тест',
+    'reject-test': 'отклонил(а) тест',
+    'delete-test': 'удалил(а) тест',
+    'publish-article': 'опубликовал(а) статью',
+    'reject-article': 'отклонил(а) статью',
+    'delete-article': 'удалил(а) статью',
+    'reply-ticket': 'ответил(а) на тикет',
+    'close-ticket': 'закрыл(а) тикет',
+    'comment-suggestion': 'прокомментировал(а) предложение',
+    'suggestion-status': 'сменил(а) статус предложения'
+  };
+
+  const logsBody = document.getElementById('adminLogsBody');
+  const logsRefreshBtn = document.getElementById('adminLogsRefreshBtn');
+  let logsLoaded = false;
+
+  function renderLogs(logs) {
+    if (!logs.length) {
+      logsBody.innerHTML = '<tr><td colspan="5" class="admin-empty">Записей пока нет.</td></tr>';
+      return;
+    }
+    logsBody.innerHTML = logs.map(l => `
+      <tr>
+        <td>${formatDateTime(l.createdAt)}</td>
+        <td>${escapeHtml(l.actorName || '—')} <span class="admin-badge ${l.actorRole === 'admin' ? 'admin-badge--admin' : ''}">${l.actorRole === 'admin' ? 'админ' : 'модератор'}</span></td>
+        <td>${escapeHtml(ADMIN_LOG_ACTION_LABEL[l.action] || l.action)}</td>
+        <td>${escapeHtml(l.targetLabel || '—')}</td>
+        <td>${escapeHtml(l.details || '—')}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadLogs() {
+    logsBody.innerHTML = '<tr><td colspan="5" class="admin-empty">Загрузка…</td></tr>';
+    try {
+      const logs = await LexPrepApi.adminListAuditLog();
+      logsLoaded = true;
+      renderLogs(logs);
+    } catch (err) {
+      logsBody.innerHTML = `<tr><td colspan="5" class="admin-empty">Не удалось загрузить: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  logsRefreshBtn.addEventListener('click', loadLogs);
 
   /* ---------------- Тесты и статьи на модерации ---------------- */
 
@@ -279,15 +345,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (btn.dataset.testAction === 'publish') {
         if (!confirm('Опубликовать этот тест? Он станет виден всем в теме.')) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'published');
+        await LexPrepApi.logAdminAction('publish-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
       } else if (btn.dataset.testAction === 'reject') {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'rejected', comment.trim());
+        await LexPrepApi.logAdminAction('reject-test', { targetUserId: test && test.userId, targetLabel: test && test.title, details: comment.trim() });
         await loadTests();
       } else if (btn.dataset.testAction === 'delete') {
         if (!confirm('Удалить этот тест безвозвратно?')) return;
         await LexPrepApi.deleteUserTest(id);
+        await LexPrepApi.logAdminAction('delete-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
       }
     } catch (err) {
@@ -355,15 +424,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (btn.dataset.articleAction === 'publish') {
         if (!confirm('Опубликовать эту статью? Она станет видна всем в каталоге.')) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'published');
+        await LexPrepApi.logAdminAction('publish-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
       } else if (btn.dataset.articleAction === 'reject') {
         const comment = prompt('Причина отклонения (увидит автор):', '');
         if (comment === null) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'rejected', comment.trim());
+        await LexPrepApi.logAdminAction('reject-article', { targetUserId: article && article.userId, targetLabel: article && article.title, details: comment.trim() });
         await loadArticles();
       } else if (btn.dataset.articleAction === 'delete') {
         if (!confirm('Удалить эту статью безвозвратно?')) return;
         await LexPrepApi.deleteUserArticle(id);
+        await LexPrepApi.logAdminAction('delete-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
       }
     } catch (err) {
@@ -412,10 +484,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  let tickets = [];
   async function loadTickets() {
     ticketsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
     try {
-      const tickets = await LexPrepApi.adminListSupportTickets();
+      tickets = await LexPrepApi.adminListSupportTickets();
       ticketsLoaded = true;
       renderTickets(tickets);
     } catch (err) {
@@ -430,13 +503,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!btn) return;
     const item = btn.closest('[data-ticket-id]');
     const id = item.dataset.ticketId;
+    const ticket = tickets.find(t => String(t.id) === id);
     try {
       if (btn.dataset.ticketAction === 'reply') {
         const reply = prompt('Ответ пользователю:', '');
         if (reply === null || !reply.trim()) return;
         await LexPrepApi.adminReplyTicket(id, reply.trim());
+        await LexPrepApi.logAdminAction('reply-ticket', { targetUserId: ticket && ticket.userId, targetLabel: ticket && ticket.subject, details: reply.trim() });
       } else if (btn.dataset.ticketAction === 'close') {
         await LexPrepApi.adminSetTicketStatus(id, 'closed');
+        await LexPrepApi.logAdminAction('close-ticket', { targetUserId: ticket && ticket.userId, targetLabel: ticket && ticket.subject });
       }
       await loadTickets();
     } catch (err) {
@@ -478,10 +554,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  let suggestions = [];
   async function loadSuggestions() {
     suggestionsList.innerHTML = '<p class="community-empty">Загрузка…</p>';
     try {
-      const suggestions = await LexPrepApi.listSuggestions();
+      suggestions = await LexPrepApi.listSuggestions();
       suggestionsLoaded = true;
       renderSuggestions(suggestions);
     } catch (err) {
@@ -497,13 +574,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const item = btn.closest('[data-suggestion-id]');
     const id = item.dataset.suggestionId;
     const action = btn.dataset.suggestionAction;
+    const suggestion = suggestions.find(s => String(s.id) === id);
     try {
       if (action === 'comment') {
         const comment = prompt('Комментарий команды:', '');
         if (comment === null) return;
         await LexPrepApi.adminUpdateSuggestion(id, { adminComment: comment.trim() });
+        await LexPrepApi.logAdminAction('comment-suggestion', { targetUserId: suggestion && suggestion.userId, targetLabel: suggestion && suggestion.title, details: comment.trim() });
       } else {
         await LexPrepApi.adminUpdateSuggestion(id, { status: action });
+        await LexPrepApi.logAdminAction('suggestion-status', { targetUserId: suggestion && suggestion.userId, targetLabel: suggestion && suggestion.title, details: action });
       }
       await loadSuggestions();
     } catch (err) {
