@@ -1129,12 +1129,13 @@ select.form-input option {
   gap: 12px;
   margin-top: 20px;
 }
-.footer__social {
+.footer__socials .footer__social {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  margin-bottom: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: #b8bac4;
@@ -1143,8 +1144,9 @@ select.form-input option {
 .footer__social svg {
   width: 18px;
   height: 18px;
+  display: block;
 }
-.footer__social:hover {
+.footer__socials .footer__social:hover {
   background: var(--color-primary, #3d5afe);
   color: #fff;
 }
