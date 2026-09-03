@@ -4,7 +4,7 @@
 --
 -- Модератор (profiles.is_moderator = true) может:
 --   - банить/разбанивать пользователей, менять им имя и аватар
---   - начислять монеты, но не больше +250 за одно начисление (проверяется
+--   - начислять монеты, но не больше +1000 за одно начисление (проверяется
 --     и в триггере ниже, и дополнительно в moderator.js на клиенте)
 --   - отвечать на тикеты поддержки и предложения (те же таблицы/политики,
 --     что уже использует админ — просто добавляем OR is_moderator())
@@ -37,7 +37,7 @@ create policy "Moderators can update any profile"
 
 -- Расширяем триггер прав из admin.sql: полноправны только админы, у
 -- модераторов через свой UPDATE проходят только имя/аватар/бан/бонусные
--- монеты (и монеты — не больше +250 за одно обновление), тариф и
+-- монеты (и монеты — не больше +1000 за одно обновление), тариф и
 -- админские/модераторские флаги других людей менять не могут.
 create or replace function public.enforce_profile_update_permissions()
 returns trigger
@@ -58,8 +58,8 @@ begin
     new.email := old.email;
     new.id := old.id;
     new.created_at := old.created_at;
-    if new.bonus_coins - old.bonus_coins > 250 then
-      new.bonus_coins := old.bonus_coins + 250;
+    if new.bonus_coins - old.bonus_coins > 1000 then
+      new.bonus_coins := old.bonus_coins + 1000;
     end if;
     return new;
   end if;

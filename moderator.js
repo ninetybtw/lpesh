@@ -1,7 +1,7 @@
 /* ==========================================================================
 MODERATOR.JS — панель модератора: очередь тестов/статей на публикацию,
 ограниченное управление пользователями (бан, имя, аватар, монеты — не
-больше 250 за раз, без тарифов и удаления), поддержка и предложения.
+больше 1000 за раз, без тарифов и удаления), поддержка и предложения.
 Доступ проверяется по profiles.is_moderator ИЛИ is_admin (админ видит и
 может всё то же, что модератор, плюс отдельную admin.html).
 ========================================================================== */
@@ -9,7 +9,7 @@ MODERATOR.JS — панель модератора: очередь тестов/
 const MOD_TICKET_STATUS_LABEL = { open: 'Открыт', answered: 'Отвечено', closed: 'Закрыт' };
 const MOD_FEEDBACK_STATUS_LABEL = { new: 'Новое', read: 'Прочитано', closed: 'Закрыто' };
 const MOD_SUGGESTION_STATUS_LABEL = { new: 'Новое', reviewing: 'На рассмотрении', accepted: 'Принято', rejected: 'Отклонено' };
-const MOD_COIN_GRANT_LIMIT = 250;
+const MOD_COIN_GRANT_LIMIT = 1000;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await (window.LexPrepContentReady || Promise.resolve());
