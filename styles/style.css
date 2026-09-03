@@ -888,6 +888,12 @@ STYLE.CSS — компоненты и секции страницы
   color: var(--color-success);
   font-weight: 800;
 }
+.price-card__note {
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
+}
 
 /* ---------------- FAQ / ACCORDION ---------------- */
 .accordion__item {
