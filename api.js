@@ -334,6 +334,50 @@ const LexPrepApi = (function () {
     }));
   }
 
+  /* ---------------- Обратная связь с главной страницы ----------------
+     public.homepage_feedback (см. supabase/homepage-feedback.sql) —
+     форма на index.html#feedback открыта гостям (имя/email вручную, без
+     аккаунта), поэтому submitHomepageFeedback не требует сессии. Смотрят
+     и меняют статус только админы/модераторы. */
+
+  function toFrontendFeedback(f) {
+    return {
+      id: f.id,
+      name: f.name,
+      email: f.email,
+      message: f.message,
+      status: f.status,
+      createdAt: f.created_at
+    };
+  }
+
+  async function submitHomepageFeedback({ name, email, message }) {
+    const { error } = await client.from('homepage_feedback').insert({ name, email, message });
+    if (error) throw friendlyError(error);
+  }
+
+  async function adminListHomepageFeedback() {
+    await requireSession();
+    const { data, error } = await client
+      .from('homepage_feedback')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendFeedback);
+  }
+
+  async function adminSetFeedbackStatus(id, status) {
+    await requireSession();
+    const { data, error } = await client
+      .from('homepage_feedback')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendFeedback(data);
+  }
+
   /* ---------------- Поддержка ----------------
      Тикеты живут в public.support_tickets (см.
      supabase/support-suggestions.sql). Пользователь видит и создаёт
@@ -793,6 +837,7 @@ const LexPrepApi = (function () {
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     logAdminAction, adminListAuditLog,
     moderatorGrantCoins,
+    submitHomepageFeedback, adminListHomepageFeedback, adminSetFeedbackStatus,
     createSupportTicket, listMySupportTickets, adminListSupportTickets, adminReplyTicket, adminSetTicketStatus,
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
     createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,

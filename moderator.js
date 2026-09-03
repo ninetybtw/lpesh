@@ -7,6 +7,7 @@ MODERATOR.JS — панель модератора: очередь тестов/
 ========================================================================== */
 
 const MOD_TICKET_STATUS_LABEL = { open: 'Открыт', answered: 'Отвечено', closed: 'Закрыт' };
+const MOD_FEEDBACK_STATUS_LABEL = { new: 'Новое', read: 'Прочитано', closed: 'Закрыто' };
 const MOD_SUGGESTION_STATUS_LABEL = { new: 'Новое', reviewing: 'На рассмотрении', accepted: 'Принято', rejected: 'Отклонено' };
 const MOD_COIN_GRANT_LIMIT = 250;
 
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (target === 'articles' && !articlesLoaded) loadArticles();
       if (target === 'users' && !usersLoaded) loadUsers();
       if (target === 'support' && !ticketsLoaded) loadTickets();
+      if (target === 'feedback' && !feedbackLoaded) loadFeedback();
       if (target === 'suggestions' && !suggestionsLoaded) loadSuggestions();
     });
   });
@@ -436,6 +438,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         await LexPrepApi.logAdminAction('close-ticket', { targetUserId: ticket && ticket.userId, targetLabel: ticket && ticket.subject });
       }
       await loadTickets();
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    }
+  });
+
+  /* ---------------- Обратная связь с главной страницы ---------------- */
+
+  const feedbackList = document.getElementById('modFeedbackList');
+  const feedbackRefreshBtn = document.getElementById('modFeedbackRefreshBtn');
+  const feedbackNewCountEl = document.getElementById('modFeedbackNewCount');
+  let feedbackLoaded = false;
+
+  function renderFeedback(items) {
+    const newCount = items.filter(f => f.status === 'new').length;
+    feedbackNewCountEl.textContent = newCount ? `(${newCount})` : '';
+
+    if (!items.length) {
+      feedbackList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
+      return;
+    }
+    feedbackList.innerHTML = items.map(f => `
+      <div class="community-item" data-feedback-id="${f.id}">
+        <div class="community-item__head">
+          <h3>${escapeHtml(f.name)}</h3>
+          <span class="community-badge community-badge--${f.status}">${MOD_FEEDBACK_STATUS_LABEL[f.status] || f.status}</span>
+        </div>
+        <p class="community-item__message">${escapeHtml(f.message)}</p>
+        <div class="community-item__meta"><span>${escapeHtml(f.email)}</span> · <span>${formatDateTime(f.createdAt)}</span></div>
+        <div class="admin-item-actions">
+          <a class="admin-action-btn" href="mailto:${encodeURIComponent(f.email)}">Ответить на email</a>
+          ${f.status !== 'read' ? '<button type="button" class="admin-action-btn" data-feedback-action="read">Отметить прочитанным</button>' : ''}
+          ${f.status !== 'closed' ? '<button type="button" class="admin-action-btn" data-feedback-action="close">Закрыть</button>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  let feedbackItems = [];
+  async function loadFeedback() {
+    feedbackList.innerHTML = '<p class="community-empty">Загрузка…</p>';
+    try {
+      feedbackItems = await LexPrepApi.adminListHomepageFeedback();
+      feedbackLoaded = true;
+      renderFeedback(feedbackItems);
+    } catch (err) {
+      feedbackList.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  feedbackRefreshBtn.addEventListener('click', loadFeedback);
+
+  feedbackList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-feedback-action]');
+    if (!btn) return;
+    const item = btn.closest('[data-feedback-id]');
+    const id = item.dataset.feedbackId;
+    const fb = feedbackItems.find(f => String(f.id) === id);
+    try {
+      const status = btn.dataset.feedbackAction === 'close' ? 'closed' : 'read';
+      await LexPrepApi.adminSetFeedbackStatus(id, status);
+      await LexPrepApi.logAdminAction(status === 'closed' ? 'close-feedback' : 'read-feedback', { targetLabel: fb && `${fb.name} <${fb.email}>` });
+      await loadFeedback();
     } catch (err) {
       alert('Ошибка: ' + err.message);
     }

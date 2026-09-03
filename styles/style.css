@@ -856,12 +856,17 @@ STYLE.CSS — компоненты и секции страницы
 .price-card__price {
   font-size: 34px;
   font-weight: 800;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
 }
 .price-card__price span {
   font-size: 15px;
   font-weight: 600;
   color: var(--color-text-muted);
+}
+.price-card__annual {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
 }
 .price-card__list {
   display: flex;

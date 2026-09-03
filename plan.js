@@ -16,7 +16,7 @@ const LexPrepPlan = (function () {
   const LIMITS = {
     basic: { cardsPerDay: 15, testsPerDay: 1, testExplanations: false, duelsPerDay: 0, tourneysPerMonth: 0, pdfExport: false, examAttemptsPerMonth: 0 },
     pro: { cardsPerDay: Infinity, testsPerDay: 5, testExplanations: true, duelsPerDay: 3, tourneysPerMonth: 1, pdfExport: false, examAttemptsPerMonth: 3 },
-    max: { cardsPerDay: Infinity, testsPerDay: Infinity, testExplanations: true, duelsPerDay: Infinity, tourneysPerMonth: Infinity, pdfExport: true, examAttemptsPerMonth: Infinity }
+    max: { cardsPerDay: Infinity, testsPerDay: Infinity, testExplanations: true, duelsPerDay: Infinity, tourneysPerMonth: 5, pdfExport: true, examAttemptsPerMonth: Infinity }
   };
 
   const TIER_TITLES = { basic: 'Базовый', pro: 'Про', max: 'Максимум' };

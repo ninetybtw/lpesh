@@ -94,6 +94,7 @@
               <button type="button" class="admin-tab" data-admin-tab="tests">Тесты <span id="adminTestsPendingCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="articles">Статьи <span id="adminArticlesPendingCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="support">Поддержка <span id="adminTicketsOpenCount"></span></button>
+              <button type="button" class="admin-tab" data-admin-tab="feedback">Обратная связь <span id="adminFeedbackNewCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
               <button type="button" class="admin-tab" data-admin-tab="logs">Журнал действий</button>
             </div>
@@ -143,6 +144,16 @@
               <div class="community-list" id="adminTicketsList"></div>
             </div>
 
+            <div class="admin-tab-panel" data-admin-panel="feedback" hidden>
+              <p class="admin-scope-note">
+                Обращения из формы «Обратная связь» на главной странице — их оставляют в том числе гости без аккаунта.
+              </p>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminFeedbackRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="adminFeedbackList"></div>
+            </div>
+
             <div class="admin-tab-panel" data-admin-panel="suggestions" hidden>
               <div class="admin-toolbar">
                 <button class="btn btn--outline" type="button" id="adminSuggestionsRefreshBtn">Обновить</button>
@@ -182,11 +193,11 @@
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260831160000"></script>
+    <script src="api.js?v=20260903000000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260831160000"></script>
-    <script src="script.js?v=20260831160000"></script>
-    <script src="admin.js?v=20260831160000"></script>
+    <script src="script.js?v=20260903000000"></script>
+    <script src="admin.js?v=20260903000000"></script>
     <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

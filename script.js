@@ -207,8 +207,10 @@ function initFeedbackForm() {
   const form = document.getElementById('feedbackForm');
   const success = document.getElementById('feedbackSuccess');
   const emailInput = document.getElementById('fbEmail');
+  const nameInput = document.getElementById('fbName');
+  const messageInput = document.getElementById('fbMessage');
   if (!form) return;
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     if (emailInput && !validateEmailField(emailInput)) {
@@ -216,10 +218,23 @@ function initFeedbackForm() {
       return;
     }
 
-    form.reset();
-    if (success) {
-      success.classList.add('is-visible');
-      setTimeout(() => success.classList.remove('is-visible'), 4000);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await LexPrepApi.submitHomepageFeedback({
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        message: messageInput.value.trim()
+      });
+      form.reset();
+      if (success) {
+        success.classList.add('is-visible');
+        setTimeout(() => success.classList.remove('is-visible'), 4000);
+      }
+    } catch (err) {
+      alert('Не удалось отправить сообщение: ' + err.message);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }

@@ -23,18 +23,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     {
       id: 'quick',
       title: 'Быстрый турнир',
-      desc: '3 раунда по 5 вопросов из всех тем. Взнос — 30 монет, приз чемпиону — 150 монет.',
+      desc: '3 раунда по 5 вопросов из всех тем. Без взноса, приз чемпиону — 150 монет.',
       questionsPerRound: 5,
-      entryFee: 30,
       prize: 150,
       rounds: ['easy', 'medium', 'hard']
     },
     {
       id: 'weekly',
       title: 'Турнир недели',
-      desc: '3 раунда по 10 вопросов из всех тем. Взнос — 60 монет, приз чемпиону — 320 монет.',
+      desc: '3 раунда по 10 вопросов из всех тем. Без взноса, приз чемпиону — 320 монет.',
       questionsPerRound: 10,
-      entryFee: 60,
       prize: 320,
       rounds: ['easy', 'medium', 'hard']
     }
@@ -56,34 +54,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
+  // Участие в турнирах бесплатное (без взноса монетами) — ограничение
+  // только по числу турниров в месяц согласно тарифу. Купленный в
+  // магазине "билет" (LexPrepProgress inventory.tourneyTickets) даёт один
+  // турнир сверх этого месячного лимита.
   function tournamentAllowance() {
     const limit = LexPrepPlan.getLimits().tourneysPerMonth;
-    if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»' };
+    if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»', usesTicket: false };
     if (LexPrepProgress.getMonthlyUsage().tourneysPlayed >= limit) {
-      return { allowed: false, label: `Лимит ${limit}/мес исчерпан` };
+      const tickets = LexPrepProgress.getInventory().tourneyTickets || 0;
+      if (tickets > 0) return { allowed: true, label: null, usesTicket: true };
+      return { allowed: false, label: `Лимит ${limit}/мес исчерпан`, usesTicket: false };
     }
-    return { allowed: true, label: null };
+    return { allowed: true, label: null, usesTicket: false };
   }
 
   function renderList() {
-    const balance = LexPrepProgress.getCoins();
-    const tickets = LexPrepProgress.getInventory().tourneyTickets || 0;
     const allowance = tournamentAllowance();
     listEl.innerHTML = TOURNAMENTS.map(t => {
-      const freeEntry = tickets > 0;
-      const blocked = !allowance.allowed || (!freeEntry && balance < t.entryFee);
       const label = !allowance.allowed
         ? allowance.label
-        : (freeEntry ? 'Участвовать (билет бесплатно)' : (balance < t.entryFee ? 'Не хватает монет' : 'Участвовать'));
+        : (allowance.usesTicket ? 'Участвовать (билет сверх лимита)' : 'Участвовать');
       return `
       <div class="tourney-card">
         <div class="tourney-card__title">${DuelEngine.escapeHtml(t.title)}</div>
         <div class="tourney-card__desc">${DuelEngine.escapeHtml(t.desc)}</div>
         <div class="tourney-card__meta">
-          <span>Взнос: ${t.entryFee} монет</span>
           <span>Приз: ${t.prize} монет</span>
         </div>
-        <button class="btn btn--primary tourney-card__btn" type="button" data-join="${t.id}" ${blocked ? 'disabled' : ''}>
+        <button class="btn btn--primary tourney-card__btn" type="button" data-join="${t.id}" ${!allowance.allowed ? 'disabled' : ''}>
           ${label}
         </button>
       </div>
@@ -94,13 +93,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', () => {
         const tourney = TOURNAMENTS.find(t => t.id === btn.dataset.join);
         if (!tourney) return;
-        if (!tournamentAllowance().allowed) return;
-        // Купленный в магазине билет (LexPrepProgress inventory.tourneyTickets)
-        // избавляет от обычного взноса монетами — пробуем сначала его,
-        // и только если билетов нет, списываем монеты.
-        const usedTicket = LexPrepProgress.spendInventory('tourneyTickets');
-        if (!usedTicket && !LexPrepProgress.spendCoins(tourney.entryFee)) return;
-        if (typeof initCoinBadge === 'function') initCoinBadge();
+        const currentAllowance = tournamentAllowance();
+        if (!currentAllowance.allowed) return;
+        if (currentAllowance.usesTicket) LexPrepProgress.spendInventory('tourneyTickets');
         LexPrepProgress.incrementMonthlyUsage('tourneysPlayed');
         startTournament(tourney);
       });
@@ -284,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       msgEl.textContent = `Все три раунда пройдены. Приз: +${activeTourney.prize} монет. Всего турниров с титулом чемпиона: ${tourneyStats.champions}.`;
     } else {
       titleEl.textContent = `Выбывание — ${ROUND_LABELS[roundIndex]}`;
-      msgEl.textContent = `Раунд проигран, взнос ${activeTourney.entryFee} монет не возвращается. Дуэльный рейтинг обновлён за пройденные раунды.`;
+      msgEl.textContent = 'Раунд проигран. Дуэльный рейтинг обновлён за пройденные раунды.';
     }
 
     showView('results');

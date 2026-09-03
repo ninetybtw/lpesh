@@ -66,6 +66,8 @@ function initSections() {
     panels.forEach(panel => panel.classList.toggle('is-active', panel.dataset.sectionPanel === section));
   }
 
+  const validSections = Array.from(navItems).map(i => i.dataset.section);
+
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       activate(item.dataset.section);
@@ -73,8 +75,17 @@ function initSections() {
     });
   });
 
+  // Ссылки на разделы профиля есть не только в этом сайдбаре, но и в
+  // выпадающем меню профиля в шапке (profile.html#subscription и т.д.).
+  // Клик по такой ссылке, когда мы уже на profile.html, не перезагружает
+  // страницу — меняется только location.hash, поэтому реагируем на
+  // hashchange, иначе такие ссылки выглядят нерабочими.
+  window.addEventListener('hashchange', () => {
+    const section = window.location.hash.replace('#', '');
+    if (validSections.includes(section)) activate(section);
+  });
+
   const initial = window.location.hash.replace('#', '');
-  const validSections = Array.from(navItems).map(i => i.dataset.section);
   activate(validSections.includes(initial) ? initial : 'info');
 }
 
@@ -212,11 +223,11 @@ function initPayment() {
 }
 
 /* ---------------- Subscription ---------------- */
-const PLAN_PRICES = { basic: 'Бесплатно', pro: '700 ₽ / мес', max: '1500 ₽ / мес' };
+const PLAN_PRICES = { basic: 'Бесплатно', pro: '600 ₽ / мес (5040 ₽ / год)', max: '1000 ₽ / мес (9600 ₽ / год)' };
 const PLAN_FEATURES = {
   basic: ['1 дисциплина полностью открыта', '15 карточек в день', '1 попытка теста в день, без разбора', 'Нельзя публиковать свои тесты и статьи'],
-  pro: ['Все конспекты и карточки без ограничений', '5 попыток теста в день с разбором', 'Пробный экзамен — 3 попытки в месяц', 'ИИ-консультант, дуэли — 3/день, турниры — 1/мес', 'Публикация своих тестов и статей (после модерации)'],
-  max: ['Всё из «Про» без лимитов', 'ИИ-консультант — 35 запросов в день', 'Безлимит: пробные экзамены, дуэли, турниры', 'Экспорт конспектов в PDF']
+  pro: ['Все конспекты и карточки без ограничений', '5 попыток теста в день с разбором', 'Пробный экзамен — 3 попытки в месяц', 'ИИ-консультант, дуэли — 3/день, турниры — 1/мес без взноса', 'Публикация своих тестов и статей (после модерации)'],
+  max: ['Всё из «Про» без лимитов', 'ИИ-консультант — 35 запросов в день', 'Безлимит: пробные экзамены, дуэли', 'Турниры — до 5 участий в месяц без взноса', 'Экспорт конспектов в PDF']
 };
 
 function initSubscription() {
