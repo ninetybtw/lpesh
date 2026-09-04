@@ -1746,6 +1746,10 @@ body {
   color: var(--color-text-muted);
 }
 
+.ai-chat__attach[hidden] {
+  display: none;
+}
+
 .ai-chat__attach svg {
   width: 16px;
   height: 16px;

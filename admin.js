@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <button type="button" class="admin-action-btn" data-action="edit-name" title="Изменить имя">Имя</button>
               <button type="button" class="admin-action-btn" data-action="edit-avatar" title="Изменить аватар (URL)">Аватар</button>
               <button type="button" class="admin-action-btn" data-action="grant-coins" title="Начислить монеты">+Монеты</button>
-              <button type="button" class="admin-action-btn" data-action="grant-plan" title="Выдать подписку">Тариф</button>
+              <button type="button" class="admin-action-btn" data-action="grant-plan" title="Выдать подписку (месяц или год — год открывает продвинутого ИИ-консультанта)">Тариф</button>
               <button type="button" class="admin-action-btn" data-action="toggle-moderator" ${u.id === me.id ? 'disabled' : ''}>${u.isModerator ? 'Снять модератора' : 'Сделать модератором'}</button>
               <button type="button" class="admin-action-btn ${u.isBanned ? '' : 'admin-action-btn--warn'}" data-action="toggle-ban" ${u.id === me.id ? 'disabled' : ''}>${u.isBanned ? 'Разбанить' : 'Забанить'}</button>
               <button type="button" class="admin-action-btn admin-action-btn--danger" data-action="delete" ${u.id === me.id ? 'disabled' : ''}>Удалить</button>
@@ -164,13 +164,35 @@ document.addEventListener('DOMContentLoaded', async () => {
           await LexPrepApi.adminUpdateUser(userId, { planTier: 'basic', planExpiresAt: null, planBillingPeriod: 'monthly' });
           await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: 'basic (снята подписка)' });
         } else {
-          const daysStr = prompt('На сколько дней?', '30');
-          if (daysStr === null) return;
-          const days = Number(daysStr);
-          if (!Number.isFinite(days) || days <= 0) return;
-          const periodStr = prompt('Период оплаты: monthly (помесячно) или annual (год, даёт продвинутого ИИ-консультанта)', 'monthly');
-          if (periodStr === null) return;
-          const billingPeriod = periodStr.trim().toLowerCase() === 'annual' ? 'annual' : 'monthly';
+          // Период и срок жёстко связаны одним выбором, а не двумя
+          // независимыми полями — иначе можно было случайно выдать,
+          // например, "год" всего на 30 дней или наоборот, и подписка не
+          // соответствовала бы своему периоду оплаты.
+          const choiceStr = prompt(
+            `Период для тарифа «${tier}»:\n1 — месяц (30 дней, обычный ИИ-консультант)\n2 — год (365 дней, + продвинутый ИИ-консультант с загрузкой файлов)\n3 — свой срок в днях (помесячная оплата)`,
+            '1'
+          );
+          if (choiceStr === null) return;
+          const choice = choiceStr.trim();
+
+          let days, billingPeriod;
+          if (choice === '2') {
+            days = 365;
+            billingPeriod = 'annual';
+          } else if (choice === '3') {
+            const daysStr = prompt('На сколько дней?', '30');
+            if (daysStr === null) return;
+            days = Number(daysStr);
+            if (!Number.isFinite(days) || days <= 0) {
+              alert('Нужно целое число дней больше нуля.');
+              return;
+            }
+            billingPeriod = 'monthly';
+          } else {
+            days = 30;
+            billingPeriod = 'monthly';
+          }
+
           await LexPrepApi.adminGrantSubscription(userId, tier, days, billingPeriod);
           await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: `${tier} на ${days} дн. (${billingPeriod})` });
         }
