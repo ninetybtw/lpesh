@@ -71,6 +71,7 @@ const LexPrepApi = (function () {
       bonusCoins: (profile && profile.bonus_coins) || 0,
       planTier: (profile && profile.plan_tier) || 'basic',
       planExpiresAt: profile && profile.plan_expires_at,
+      planBillingPeriod: (profile && profile.plan_billing_period) || 'monthly',
       duelRating: (profile && profile.duel_rating) || 1000,
       aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
@@ -210,6 +211,7 @@ const LexPrepApi = (function () {
       bonusCoins: p.bonus_coins || 0,
       planTier: p.plan_tier || 'basic',
       planExpiresAt: p.plan_expires_at,
+      planBillingPeriod: p.plan_billing_period || 'monthly',
       createdAt: p.created_at
     }));
   }
@@ -224,6 +226,7 @@ const LexPrepApi = (function () {
     if (patch.bonusCoins !== undefined) row.bonus_coins = patch.bonusCoins;
     if (patch.planTier !== undefined) row.plan_tier = patch.planTier;
     if (patch.planExpiresAt !== undefined) row.plan_expires_at = patch.planExpiresAt;
+    if (patch.planBillingPeriod !== undefined) row.plan_billing_period = patch.planBillingPeriod;
     if (patch.isModerator !== undefined) row.is_moderator = patch.isModerator;
 
     const { data, error } = await client
@@ -240,9 +243,9 @@ const LexPrepApi = (function () {
     return adminUpdateUser(userId, { bonusCoins: (currentBonus || 0) + amount });
   }
 
-  async function adminGrantSubscription(userId, tier, days) {
+  async function adminGrantSubscription(userId, tier, days, billingPeriod) {
     const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-    return adminUpdateUser(userId, { planTier: tier, planExpiresAt: expires });
+    return adminUpdateUser(userId, { planTier: tier, planExpiresAt: expires, planBillingPeriod: billingPeriod === 'annual' ? 'annual' : 'monthly' });
   }
 
   async function adminSetBanned(userId, isBanned, reason) {
@@ -253,11 +256,11 @@ const LexPrepApi = (function () {
     return adminUpdateUser(userId, { isModerator });
   }
 
-  // Модератор тоже может начислять монеты, но не больше +250 за раз —
+  // Модератор тоже может начислять монеты, но не больше +1000 за раз —
   // ограничение дублируется здесь на клиенте для понятной ошибки, а на
   // сервере его всё равно жёстко проверяет триггер
   // enforce_profile_update_permissions (см. supabase/moderator.sql).
-  const MODERATOR_COIN_GRANT_LIMIT = 250;
+  const MODERATOR_COIN_GRANT_LIMIT = 1000;
   async function moderatorGrantCoins(userId, amount, currentBonus) {
     if (amount > MODERATOR_COIN_GRANT_LIMIT) {
       throw new Error(`Модератор может начислить не больше ${MODERATOR_COIN_GRANT_LIMIT} монет за раз.`);
@@ -832,6 +835,29 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  // Продвинутый ИИ-консультант — только для годовой подписки, см.
+  // supabase/functions/ai-consultant-pro/index.ts. attachment — опционально
+  // { name, content } с уже прочитанным текстом файла (см. app.js).
+  async function askAiConsultantPro(message, history, attachment) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-consultant-pro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ message, history: history || [], attachment: attachment || null })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось получить ответ от продвинутого ИИ-консультанта.');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
   return {
     register, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
@@ -843,7 +869,7 @@ const LexPrepApi = (function () {
     createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,
     createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
-    askAiConsultant,
+    askAiConsultant, askAiConsultantPro,
     getClient: () => client
   };
 })();

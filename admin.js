@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     bodyEl.innerHTML = filtered.map(u => {
       const planActive = u.planTier !== 'basic' && u.planExpiresAt && new Date(u.planExpiresAt).getTime() > Date.now();
       const planLabel = planActive
-        ? `${PLAN_TITLES[u.planTier] || u.planTier} до ${formatDate(u.planExpiresAt)}`
+        ? `${PLAN_TITLES[u.planTier] || u.planTier} до ${formatDate(u.planExpiresAt)}${u.planBillingPeriod === 'annual' ? ' (год)' : ''}`
         : 'Базовая';
 
       const avatarHtml = u.avatar
@@ -161,15 +161,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
         if (tier === 'basic') {
-          await LexPrepApi.adminUpdateUser(userId, { planTier: 'basic', planExpiresAt: null });
+          await LexPrepApi.adminUpdateUser(userId, { planTier: 'basic', planExpiresAt: null, planBillingPeriod: 'monthly' });
           await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: 'basic (снята подписка)' });
         } else {
           const daysStr = prompt('На сколько дней?', '30');
           if (daysStr === null) return;
           const days = Number(daysStr);
           if (!Number.isFinite(days) || days <= 0) return;
-          await LexPrepApi.adminGrantSubscription(userId, tier, days);
-          await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: `${tier} на ${days} дн.` });
+          const periodStr = prompt('Период оплаты: monthly (помесячно) или annual (год, даёт продвинутого ИИ-консультанта)', 'monthly');
+          if (periodStr === null) return;
+          const billingPeriod = periodStr.trim().toLowerCase() === 'annual' ? 'annual' : 'monthly';
+          await LexPrepApi.adminGrantSubscription(userId, tier, days, billingPeriod);
+          await LexPrepApi.logAdminAction('grant-plan', { targetUserId: userId, targetLabel: user.email, details: `${tier} на ${days} дн. (${billingPeriod})` });
         }
       } else if (action === 'toggle-moderator') {
         if (!confirm(`${user.isModerator ? 'Снять права модератора у' : 'Сделать модератором'} ${user.name}?`)) return;

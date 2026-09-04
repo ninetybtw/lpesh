@@ -70,6 +70,28 @@ const LexPrepPlan = (function () {
     return getTier() === 'basic' && disciplineId !== getChosenDisciplineId(DATA);
   }
 
+  // "Продвинутый" ИИ-консультант — доступен только тем, у кого действующий
+  // тариф выдан на сервере (админом) с periodом 'annual', то есть кто
+  // фактически оплатил подписку сразу на год. Локальный тариф, купленный
+  // в магазине за монеты, никогда не даёт этот статус — там нет понятия
+  // годовой оплаты (см. shop.js). Если локальный шоп-тариф сейчас выше
+  // серверного и именно он определяет getTier(), продвинутый консультант
+  // тоже не включается — реальная годовая подписка должна быть активна
+  // именно как источник текущего тарифа.
+  function hasAnnualPlan() {
+    if (getTier() === 'basic') return false;
+    try {
+      const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+      if (!user || user.planBillingPeriod !== 'annual') return false;
+      if (!user.planTier || user.planTier === 'basic') return false;
+      if (user.planTier !== getTier()) return false;
+      const serverExpires = user.planExpiresAt ? new Date(user.planExpiresAt).getTime() : 0;
+      return Date.now() <= serverExpires;
+    } catch (e) {
+      return false;
+    }
+  }
+
   return {
     LIMITS,
     TIER_TITLES,
@@ -78,6 +100,7 @@ const LexPrepPlan = (function () {
     getLimits,
     getChosenDisciplineId,
     setChosenDisciplineId,
-    isDisciplineLocked
+    isDisciplineLocked,
+    hasAnnualPlan
   };
 })();

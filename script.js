@@ -13,7 +13,35 @@ document.addEventListener('DOMContentLoaded', () => {
   initAuthState();
   initOnlineCounter();
   initLevelUpToast();
+  initCatalogStats();
 });
+
+/* ---------------- Живые цифры "N отраслей права" / "N тем в базе" ----------------
+   Раньше были захардкожены в HTML (index.html, auth.html) и расходились с
+   реальным каталогом при каждом импорте новой дисциплины. Теперь считаем
+   напрямую агрегатным select'ом в disciplines/topics — раз только для
+   счётчика, не тянем сюда весь content-loader.js с конспектами. Если
+   запрос не выполнился (нет сети, сработал таймаут и т.п.) — просто
+   оставляем статичные числа, зашитые в HTML, как разумный фолбэк. */
+function initCatalogStats() {
+  const disciplinesEl = document.getElementById('statDisciplines');
+  const topicsEl = document.getElementById('statTopics');
+  if (!disciplinesEl && !topicsEl) return;
+  if (typeof LexPrepApi === 'undefined') return;
+
+  const client = LexPrepApi.getClient();
+  Promise.all([
+    client.from('disciplines').select('*', { count: 'exact', head: true }),
+    client.from('topics').select('*', { count: 'exact', head: true })
+  ]).then(([disciplines, topics]) => {
+    if (disciplinesEl && typeof disciplines.count === 'number' && disciplines.count > 0) {
+      disciplinesEl.textContent = disciplines.count;
+    }
+    if (topicsEl && typeof topics.count === 'number' && topics.count > 0) {
+      topicsEl.textContent = topics.count;
+    }
+  }).catch(() => {});
+}
 
 /* ---------------- Уведомление о новом уровне/звании ----------------
    progress.js кидает событие 'lexprep:levelup' (см. checkLevelUp() там)

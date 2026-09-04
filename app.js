@@ -31,20 +31,71 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ---------------- AI consultant chat widget ----------------
    Реальные ответы идут через Edge Function ai-consultant (NVIDIA API,
    ключ только на сервере) — доступ только на тарифах pro/max, лимит в
-   день сервер проверяет сам. Здесь только UI + история для контекста. */
+   день сервер проверяет сам. Здесь только UI + история для контекста.
+
+   У тех, кто оплатил подписку сразу на год (LexPrepPlan.hasAnnualPlan()),
+   вместо обычного консультанта — "продвинутый" (золотая кнопка, другая
+   модель на сервере — ai-consultant-pro, отдельный дневной лимит) с
+   возможностью прикрепить файл. Реально читаем только текстовые форматы
+   (.txt/.md/.json/.csv) через FileReader — PDF/DOCX не парсим, это
+   отдельная задача на будущее; для них честно показываем, что формат
+   пока не поддерживается, вместо того чтобы притворяться, что консультант
+   их обработал. */
+const AI_ATTACHMENT_TEXT_EXTENSIONS = ['.txt', '.md', '.markdown', '.json', '.csv'];
+const AI_ATTACHMENT_MAX_BYTES = 200 * 1024;
+
 function initAiChat() {
+  const chatRoot = document.getElementById('aiChat');
   const toggle = document.getElementById('aiChatToggle');
+  const toggleText = document.getElementById('aiChatToggleText');
+  const badge = document.getElementById('aiChatBadge');
+  const title = document.getElementById('aiChatTitle');
   const panel = document.getElementById('aiChatPanel');
   const closeBtn = document.getElementById('aiChatClose');
   const form = document.getElementById('aiChatForm');
   const input = document.getElementById('aiChatInput');
   const body = document.getElementById('aiChatBody');
+  const attachBtn = document.getElementById('aiChatAttachBtn');
+  const fileInput = document.getElementById('aiChatFileInput');
+  const attachmentBox = document.getElementById('aiChatAttachment');
   if (!toggle || !panel || !form || !input || !body) return;
 
   const history = [];
   let sending = false;
+  let pendingAttachment = null; // { name, content }
+
+  function currentUser() {
+    try {
+      return JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hasPaidPlan(user) {
+    if (!user) return false;
+    if (user.isAdmin) return true;
+    return typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() !== 'basic';
+  }
+
+  function isAdvanced(user) {
+    return !!user && typeof LexPrepPlan !== 'undefined' && LexPrepPlan.hasAnnualPlan();
+  }
+
+  // Внешний вид переключаем один раз при открытии виджета — подписка не
+  // меняется прямо во время диалога, а перепроверять на каждый рендер
+  // сообщения незачем.
+  function applyAdvancedUi(advanced) {
+    if (chatRoot) chatRoot.classList.toggle('ai-chat--advanced', advanced);
+    if (toggleText) toggleText.textContent = advanced ? 'ИИ-консультант Про' : 'ИИ-консультант';
+    if (badge) badge.textContent = advanced ? '★' : 'ИИ';
+    if (title) title.textContent = advanced ? 'Продвинутый ИИ-консультант' : 'ИИ-консультант';
+    if (attachBtn) attachBtn.hidden = !advanced;
+    if (!advanced) clearAttachment();
+  }
 
   function open() {
+    applyAdvancedUi(isAdvanced(currentUser()));
     panel.hidden = false;
     input.focus();
   }
@@ -67,18 +118,61 @@ function initAiChat() {
     return msg;
   }
 
-  function currentUser() {
-    try {
-      return JSON.parse(localStorage.getItem('lexprep_user') || 'null');
-    } catch (e) {
-      return null;
+  function clearAttachment() {
+    pendingAttachment = null;
+    if (fileInput) fileInput.value = '';
+    if (attachmentBox) {
+      attachmentBox.hidden = true;
+      attachmentBox.innerHTML = '';
     }
   }
 
-  function hasPaidPlan(user) {
-    if (!user) return false;
-    if (user.isAdmin) return true;
-    return typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() !== 'basic';
+  function renderAttachment() {
+    if (!attachmentBox || !pendingAttachment) return;
+    attachmentBox.hidden = false;
+    attachmentBox.innerHTML = '';
+    const chip = document.createElement('span');
+    chip.className = 'ai-chat__attachment-chip';
+    chip.textContent = pendingAttachment.name;
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'ai-chat__attachment-remove';
+    removeBtn.setAttribute('aria-label', 'Убрать файл');
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', clearAttachment);
+    chip.appendChild(removeBtn);
+    attachmentBox.appendChild(chip);
+  }
+
+  if (attachBtn && fileInput) {
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      const lowerName = file.name.toLowerCase();
+      const isTextFile = AI_ATTACHMENT_TEXT_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+      if (!isTextFile) {
+        addMessage(`Формат файла «${file.name}» пока не поддерживается — сейчас можно прикреплять только текстовые файлы (${AI_ATTACHMENT_TEXT_EXTENSIONS.join(', ')}). Поддержка PDF/DOCX появится позже.`, 'bot');
+        fileInput.value = '';
+        return;
+      }
+      if (file.size > AI_ATTACHMENT_MAX_BYTES) {
+        addMessage(`Файл «${file.name}» слишком большой (максимум ${Math.round(AI_ATTACHMENT_MAX_BYTES / 1024)} КБ).`, 'bot');
+        fileInput.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingAttachment = { name: file.name, content: String(reader.result || '') };
+        renderAttachment();
+      };
+      reader.onerror = () => {
+        addMessage('Не удалось прочитать файл.', 'bot');
+      };
+      reader.readAsText(file);
+    });
   }
 
   form.addEventListener('submit', async (e) => {
@@ -102,13 +196,19 @@ function initAiChat() {
       return;
     }
 
-    addMessage(text, 'user');
+    const advanced = isAdvanced(user);
+    const attachment = advanced ? pendingAttachment : null;
+
+    addMessage(attachment ? `${text} 📎 ${attachment.name}` : text, 'user');
     input.value = '';
+    clearAttachment();
     sending = true;
     const pending = addMessage('Печатает…', 'bot');
 
     try {
-      const result = await LexPrepApi.askAiConsultant(text, history);
+      const result = advanced
+        ? await LexPrepApi.askAiConsultantPro(text, history, attachment)
+        : await LexPrepApi.askAiConsultant(text, history);
       pending.textContent = result.reply;
       history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
       if (typeof result.remaining === 'number' && result.remaining <= 2) {
