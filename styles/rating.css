@@ -1,0 +1,177 @@
+/* ==========================================================================
+RATING.CSS — страница рейтинга
+========================================================================== */
+
+.rating-page {
+  min-height: 100vh;
+  background: var(--color-bg-alt);
+}
+
+.rating-shell {
+  padding: 40px 0 72px;
+}
+
+.rating-demo-note {
+  margin: 14px 0 24px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.rating-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.rating-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.rating-legend__icon {
+  width: 24px;
+  height: 24px;
+}
+
+.rating-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rating-row {
+  display: grid;
+  grid-template-columns: 40px 44px 1fr auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.rating-row.is-you {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.rating-row__place {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.rating-row__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.rating-row__info {
+  min-width: 0;
+}
+
+.rating-row__name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-row__you-tag {
+  display: inline-flex;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.rating-row__university {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-row__league {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.rating-row__badge {
+  width: 26px;
+  height: 26px;
+}
+
+.rating-row__league-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  display: none;
+}
+
+.rating-row__level {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.rating-row__xp {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  min-width: 64px;
+  text-align: right;
+}
+
+@media (min-width: 720px) {
+  .rating-row__league-name {
+    display: inline;
+  }
+}
+
+@media (max-width: 640px) {
+  .rating-row {
+    grid-template-columns: 32px 36px 1fr;
+    row-gap: 6px;
+  }
+
+  .rating-row__league,
+  .rating-row__level,
+  .rating-row__xp {
+    grid-column: 3;
+    justify-self: start;
+  }
+}

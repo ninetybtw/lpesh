@@ -7,13 +7,112 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNav();
   initSmoothAnchors();
   initAccordion();
-  initDemoNavigation();
   initHeroMock();
-  initThemeToggle();
   initFeedbackForm();
   initRevealOnScroll();
   initAuthState();
+  initOnlineCounter();
+  initLevelUpToast();
+  initCatalogStats();
 });
+
+/* ---------------- Живые цифры "N отраслей права" / "N тем в базе" ----------------
+   Раньше были захардкожены в HTML (index.html, auth.html) и расходились с
+   реальным каталогом при каждом импорте новой дисциплины. Теперь считаем
+   напрямую агрегатным select'ом в disciplines/topics — раз только для
+   счётчика, не тянем сюда весь content-loader.js с конспектами. Если
+   запрос не выполнился (нет сети, сработал таймаут и т.п.) — просто
+   оставляем статичные числа, зашитые в HTML, как разумный фолбэк. */
+function initCatalogStats() {
+  const disciplinesEl = document.getElementById('statDisciplines');
+  const topicsEl = document.getElementById('statTopics');
+  if (!disciplinesEl && !topicsEl) return;
+  if (typeof LexPrepApi === 'undefined') return;
+
+  const client = LexPrepApi.getClient();
+  Promise.all([
+    client.from('disciplines').select('*', { count: 'exact', head: true }),
+    client.from('topics').select('*', { count: 'exact', head: true })
+  ]).then(([disciplines, topics]) => {
+    if (disciplinesEl && typeof disciplines.count === 'number' && disciplines.count > 0) {
+      disciplinesEl.textContent = disciplines.count;
+    }
+    if (topicsEl && typeof topics.count === 'number' && topics.count > 0) {
+      topicsEl.textContent = topics.count;
+    }
+  }).catch(() => {});
+}
+
+/* ---------------- Уведомление о новом уровне/звании ----------------
+   progress.js кидает событие 'lexprep:levelup' (см. checkLevelUp() там)
+   при любом действии, поднимающем XP выше границы следующего уровня —
+   карточки, тесты, экзамен. Слушатель здесь один на все страницы, чтобы
+   всплывающее окно выглядело одинаково независимо от того, где именно
+   человек прокачался. */
+function initLevelUpToast() {
+  window.addEventListener('lexprep:levelup', (e) => {
+    showLevelUpToast(e.detail);
+  });
+}
+
+function showLevelUpToast(detail) {
+  const existing = document.querySelector('.levelup-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'levelup-toast';
+  toast.innerHTML = `
+    <div class="levelup-toast__card">
+      <button type="button" class="levelup-toast__close" aria-label="Закрыть">&times;</button>
+      <div class="levelup-toast__glow"></div>
+      <img class="levelup-toast__icon" src="assets/badges/${detail.rankIcon}" alt="${detail.rankName}" />
+      <div class="levelup-toast__eyebrow">${detail.rankChanged ? 'Новое звание!' : 'Новый уровень!'}</div>
+      <div class="levelup-toast__level">Уровень ${detail.level}</div>
+      <div class="levelup-toast__rank">${detail.rankName}</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+  function close() {
+    toast.classList.remove('is-visible');
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  toast.querySelector('.levelup-toast__close').addEventListener('click', close);
+  toast.addEventListener('click', (e) => { if (e.target === toast) close(); });
+  setTimeout(close, 6000);
+}
+
+/* ---------------- Coin balance badge (shop shortcut) ---------------- */
+function initCoinBadge() {
+  const countEl = document.getElementById('coinCount');
+  if (!countEl || typeof LexPrepProgress === 'undefined' || typeof LexPrepProgress.getCoins !== 'function') return;
+  countEl.textContent = LexPrepProgress.getCoins();
+}
+
+/* ---------------- Online users counter (demo, no real backend/websocket yet) ---------------- */
+function initOnlineCounter() {
+  const countEl = document.getElementById('onlineCount');
+  if (!countEl) return;
+
+  function computeBase() {
+    const hour = new Date().getHours();
+    const activity = hour >= 8 && hour <= 23 ? 1 : 0.4;
+    return Math.round((60 + Math.random() * 60) * activity);
+  }
+
+  let current = Number(sessionStorage.getItem('lexprep_online_count')) || computeBase();
+  countEl.textContent = current;
+
+  setInterval(() => {
+    const drift = Math.round((Math.random() - 0.5) * 6);
+    current = Math.max(12, current + drift);
+    sessionStorage.setItem('lexprep_online_count', String(current));
+    countEl.textContent = current;
+  }, 4000 + Math.random() * 3000);
+}
 
 /* ---------------- Header shadow on scroll ---------------- */
 function initHeaderScroll() {
@@ -36,13 +135,15 @@ function initMobileNav() {
   const mobileNav = document.getElementById('mobileNav');
   if (!burger || !mobileNav) return;
   burger.addEventListener('click', () => {
-    burger.classList.toggle('is-active');
-    mobileNav.classList.toggle('is-open');
+    const isOpen = burger.classList.toggle('is-active');
+    mobileNav.classList.toggle('is-open', isOpen);
+    burger.setAttribute('aria-expanded', String(isOpen));
   });
   mobileNav.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       burger.classList.remove('is-active');
       mobileNav.classList.remove('is-open');
+      burger.setAttribute('aria-expanded', 'false');
     });
   });
 }
@@ -92,14 +193,26 @@ function initHeroMock() {
   const card = document.querySelector('.mock-card');
   const chips = document.querySelectorAll('.mock-chip');
   const progressBar = document.querySelector('.mock-progress__bar');
+  const infoBox = document.getElementById('mockInfo');
+  const infoTitle = infoBox ? infoBox.querySelector('.mock-info__title') : null;
+  const infoDesc = infoBox ? infoBox.querySelector('.mock-info__desc') : null;
 
   if (chips.length && progressBar) {
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
+        if (chip.classList.contains('mock-chip--active')) return;
         chips.forEach(c => c.classList.remove('mock-chip--active'));
         chip.classList.add('mock-chip--active');
         const value = chip.dataset.progress || '62';
         progressBar.style.width = value + '%';
+
+        if (infoBox && infoTitle && infoDesc) {
+          infoBox.classList.remove('mock-info--enter');
+          void infoBox.offsetWidth; // перезапуск CSS-анимации
+          infoTitle.textContent = chip.textContent.trim();
+          infoDesc.textContent = chip.dataset.desc || '';
+          infoBox.classList.add('mock-info--enter');
+        }
       });
     });
   }
@@ -121,13 +234,35 @@ function initHeroMock() {
 function initFeedbackForm() {
   const form = document.getElementById('feedbackForm');
   const success = document.getElementById('feedbackSuccess');
+  const emailInput = document.getElementById('fbEmail');
+  const nameInput = document.getElementById('fbName');
+  const messageInput = document.getElementById('fbMessage');
   if (!form) return;
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    form.reset();
-    if (success) {
-      success.classList.add('is-visible');
-      setTimeout(() => success.classList.remove('is-visible'), 4000);
+
+    if (emailInput && !validateEmailField(emailInput)) {
+      emailInput.focus();
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await LexPrepApi.submitHomepageFeedback({
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        message: messageInput.value.trim()
+      });
+      form.reset();
+      if (success) {
+        success.classList.add('is-visible');
+        setTimeout(() => success.classList.remove('is-visible'), 4000);
+      }
+    } catch (err) {
+      alert('Не удалось отправить сообщение: ' + err.message);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
@@ -140,121 +275,6 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-/* ---------------- Demo navigation (Avito-style) ---------------- */
-const DEMO_DATA = {
-  civil: {
-    subjects: [
-      { id: 'obligations', name: 'Обязательственное право' },
-      { id: 'property', name: 'Вещное право' },
-      { id: 'contracts', name: 'Договорное право' },
-    ],
-    topics: {
-      obligations: { title: 'Понятие и виды обязательств', tags: ['Конспект', 'Карточки', 'Тест', 'Практика ВС РФ'] },
-      property: { title: 'Право собственности и его формы', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-      contracts: { title: 'Существенные условия договора', tags: ['Конспект', 'Тест', 'Судебная практика'] },
-    },
-  },
-  ip: {
-    subjects: [
-      { id: 'copyright', name: 'Авторское право' },
-      { id: 'patent', name: 'Патентное право' },
-      { id: 'trademark', name: 'Товарные знаки' },
-    ],
-    topics: {
-      copyright: { title: 'Объекты авторских прав', tags: ['Конспект', 'Карточки', 'Тест'] },
-      patent: { title: 'Условия патентоспособности', tags: ['Конспект', 'Практика Роспатента'] },
-      trademark: { title: 'Регистрация товарного знака', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-    },
-  },
-  constitutional: {
-    subjects: [
-      { id: 'rights', name: 'Права и свободы человека' },
-      { id: 'system', name: 'Система органов власти' },
-      { id: 'amendments', name: 'Порядок изменения Конституции' },
-    ],
-    topics: {
-      rights: { title: 'Классификация конституционных прав', tags: ['Конспект', 'Карточки', 'Практика КС РФ'] },
-      system: { title: 'Разделение властей в РФ', tags: ['Конспект', 'Тест', 'Билеты к экзамену'] },
-      amendments: { title: 'Процедура внесения поправок', tags: ['Конспект', 'Карточки'] },
-    },
-  },
-  criminal: {
-    subjects: [
-      { id: 'proceedings', name: 'Стадии уголовного процесса' },
-      { id: 'evidence', name: 'Доказательства' },
-      { id: 'appeal', name: 'Апелляция и кассация' },
-    ],
-    topics: {
-      proceedings: { title: 'Возбуждение уголовного дела', tags: ['Конспект', 'Карточки', 'Тест'] },
-      evidence: { title: 'Виды и допустимость доказательств', tags: ['Конспект', 'Практика судов', 'Билеты к экзамену'] },
-      appeal: { title: 'Основания для отмены приговора', tags: ['Конспект', 'Карточки'] },
-    },
-  },
-  international: {
-    subjects: [
-      { id: 'treaties', name: 'Международные договоры' },
-      { id: 'jurisdiction', name: 'Юрисдикция государств' },
-      { id: 'humanrights', name: 'Международное право прав человека' },
-    ],
-    topics: {
-      treaties: { title: 'Порядок заключения договоров', tags: ['Конспект', 'Тест'] },
-      jurisdiction: { title: 'Принципы экстерриториальности', tags: ['Конспект', 'Карточки', 'Практика ЕСПЧ'] },
-      humanrights: { title: 'Механизмы защиты прав человека', tags: ['Конспект', 'Карточки', 'Билеты к экзамену'] },
-    },
-  },
-};
-
-function initDemoNavigation() {
-  const categoryButtons = document.querySelectorAll('.demo__category');
-  const subjectsContainer = document.getElementById('demoSubjects');
-  const topicContainer = document.getElementById('demoTopic');
-  if (!categoryButtons.length || !subjectsContainer || !topicContainer) return;
-
-  function renderSubjects(categoryKey) {
-    const category = DEMO_DATA[categoryKey];
-    subjectsContainer.innerHTML = '';
-    category.subjects.forEach((subject, index) => {
-      const btn = document.createElement('button');
-      btn.className = 'demo__subject' + (index === 0 ? ' is-active' : '');
-      btn.textContent = subject.name;
-      btn.dataset.subject = subject.id;
-      btn.addEventListener('click', () => {
-        subjectsContainer.querySelectorAll('.demo__subject').forEach(b => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        renderTopic(categoryKey, subject.id);
-      });
-      subjectsContainer.appendChild(btn);
-    });
-    if (category.subjects.length) {
-      renderTopic(categoryKey, category.subjects[0].id);
-    }
-  }
-
-  function renderTopic(categoryKey, subjectId) {
-    const topic = DEMO_DATA[categoryKey].topics[subjectId];
-    if (!topic) {
-      topicContainer.innerHTML = '<p class="demo__topic-placeholder">Тема не найдена</p>';
-      return;
-    }
-    topicContainer.innerHTML = `
-      <div class="demo__topic-title">${escapeHtml(topic.title)}</div>
-      <div class="demo__topic-tags">
-        ${topic.tags.map(tag => `<span class="demo__topic-tag">${escapeHtml(tag)}</span>`).join('')}
-      </div>
-    `;
-  }
-
-  categoryButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      categoryButtons.forEach(b => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      renderSubjects(btn.dataset.category);
-    });
-  });
-
-  renderSubjects(categoryButtons[0].dataset.category);
 }
 
 /* ---------------- Reveal on scroll ---------------- */
@@ -272,30 +292,43 @@ function initRevealOnScroll() {
   items.forEach(item => observer.observe(item));
 }
 
-function initThemeToggle() {
-  const toggle = document.getElementById('themeToggle');
-  const root = document.documentElement;
-  if (!toggle) return;
-  toggle.setAttribute('aria-pressed', root.getAttribute('data-theme') === 'dark');
-  toggle.addEventListener('click', () => {
-    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    localStorage.setItem('lexprep-theme', next);
-    toggle.setAttribute('aria-pressed', next === 'dark');
-  });
-}
-
-function initAuthState() {
-  const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+function applyAuthUi(user) {
   document.body.classList.toggle('is-authed', !!user);
   document.body.classList.toggle('is-guest', !user);
+  document.body.classList.toggle('is-admin', !!(user && user.isAdmin));
+  document.body.classList.toggle('is-moderator', !!(user && (user.isModerator || user.isAdmin)));
 
   if (user) {
     const nameEl = document.getElementById('profileName');
     const avatarEl = document.getElementById('profileAvatar');
     if (nameEl) nameEl.textContent = user.name || 'Профиль';
-    if (avatarEl) avatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
+    if (avatarEl) {
+      if (user.avatar) {
+        avatarEl.textContent = '';
+        avatarEl.style.backgroundImage = `url(${user.avatar})`;
+        avatarEl.classList.add('has-image');
+      } else {
+        avatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
+        avatarEl.style.backgroundImage = '';
+        avatarEl.classList.remove('has-image');
+      }
+
+      avatarEl.classList.remove('avatar-frame--bronze', 'avatar-frame--gold', 'avatar-frame--platinum', 'avatar-frame--ruby', 'avatar-frame--neon-blue', 'avatar-frame--neon-purple');
+      const equippedFrame = localStorage.getItem('lexprep_shop_equipped');
+      if (equippedFrame && equippedFrame !== 'none') {
+        avatarEl.classList.add(`avatar-frame--${equippedFrame}`);
+      }
+    }
   }
+
+  initCoinBadge();
+}
+
+function initAuthState() {
+  // Синхронный рендер из локального кэша — чтобы не мигать гостевым
+  // состоянием, пока идёт запрос к /api/auth/me.
+  const cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+  applyAuthUi(cachedUser);
 
   const profileBtn = document.getElementById('profileBtn');
   const dropdown = document.getElementById('profileDropdown');
@@ -310,8 +343,43 @@ function initAuthState() {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('lexprep_user');
-      window.location.reload();
+      const finish = () => {
+        localStorage.removeItem('lexprep_user');
+        window.location.reload();
+      };
+      if (typeof LexPrepApi !== 'undefined') {
+        LexPrepApi.logout().then(finish).catch(finish);
+      } else {
+        finish();
+      }
     });
+  }
+
+  // Досверяем сессию у сервера в фоне — если она реально протухла или
+  // была завершена в другой вкладке, локальный кэш это не знает. Если
+  // бэкенд просто недоступен (сеть/офлайн), кэш не трогаем — это не
+  // повод разлогинивать человека.
+  if (typeof LexPrepApi !== 'undefined') {
+    LexPrepApi.me()
+      .then(user => {
+        if (user.isBanned) {
+          LexPrepApi.logout().catch(() => {});
+          localStorage.removeItem('lexprep_user');
+          alert('Аккаунт заблокирован' + (user.banReason ? `: ${user.banReason}` : '.'));
+          window.location.href = 'auth.html';
+          return;
+        }
+        // Мержим, а не заменяем целиком — на фронтенде у user есть поля
+        // (university, course и т.д.), которых бэкенд пока не знает.
+        const merged = { ...cachedUser, ...user };
+        localStorage.setItem('lexprep_user', JSON.stringify(merged));
+        applyAuthUi(merged);
+      })
+      .catch(err => {
+        if (err.status === 401 && cachedUser) {
+          localStorage.removeItem('lexprep_user');
+          applyAuthUi(null);
+        }
+      });
   }
 }

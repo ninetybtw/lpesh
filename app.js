@@ -1,6 +1,227 @@
-document.addEventListener('DOMContentLoaded', () => {
+let publishedUserTests = [];
+let myUserTests = [];
+
+// Пользовательские тесты теперь настоящая таблица с модерацией
+// (public.user_tests) — грузим один раз при старте страницы: все
+// опубликованные (видны всем в теме) плюс свои собственные любого
+// статуса (чтобы автор видел «на модерации»/«отклонено» у своих же
+// тестов). См. renderUserTestsList() ниже и create-test.js/moderator.js.
+async function loadUserTestsCache() {
+  if (typeof LexPrepApi === 'undefined') return;
+  try {
+    const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    const tasks = [LexPrepApi.listPublishedUserTests()];
+    if (user) tasks.push(LexPrepApi.listMyUserTests());
+    const [published, mine] = await Promise.all(tasks);
+    publishedUserTests = published || [];
+    myUserTests = mine || [];
+  } catch (e) {
+    publishedUserTests = [];
+    myUserTests = [];
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await (window.LexPrepContentReady || Promise.resolve());
+  await loadUserTestsCache();
   initApp();
+  initAiChat();
 });
+
+/* ---------------- AI consultant chat widget ----------------
+   Реальные ответы идут через Edge Function ai-consultant (NVIDIA API,
+   ключ только на сервере) — доступ только на тарифах pro/max, лимит в
+   день сервер проверяет сам. Здесь только UI + история для контекста.
+
+   У тех, кто оплатил подписку сразу на год (LexPrepPlan.hasAnnualPlan()),
+   вместо обычного консультанта — "продвинутый" (золотая кнопка, другая
+   модель на сервере — ai-consultant-pro, отдельный дневной лимит) с
+   возможностью прикрепить файл. Реально читаем только текстовые форматы
+   (.txt/.md/.json/.csv) через FileReader — PDF/DOCX не парсим, это
+   отдельная задача на будущее; для них честно показываем, что формат
+   пока не поддерживается, вместо того чтобы притворяться, что консультант
+   их обработал. */
+const AI_ATTACHMENT_TEXT_EXTENSIONS = ['.txt', '.md', '.markdown', '.json', '.csv'];
+const AI_ATTACHMENT_MAX_BYTES = 200 * 1024;
+
+function initAiChat() {
+  const chatRoot = document.getElementById('aiChat');
+  const toggle = document.getElementById('aiChatToggle');
+  const toggleText = document.getElementById('aiChatToggleText');
+  const badge = document.getElementById('aiChatBadge');
+  const title = document.getElementById('aiChatTitle');
+  const panel = document.getElementById('aiChatPanel');
+  const closeBtn = document.getElementById('aiChatClose');
+  const form = document.getElementById('aiChatForm');
+  const input = document.getElementById('aiChatInput');
+  const body = document.getElementById('aiChatBody');
+  const attachBtn = document.getElementById('aiChatAttachBtn');
+  const fileInput = document.getElementById('aiChatFileInput');
+  const attachmentBox = document.getElementById('aiChatAttachment');
+  if (!toggle || !panel || !form || !input || !body) return;
+
+  const history = [];
+  let sending = false;
+  let pendingAttachment = null; // { name, content }
+
+  function currentUser() {
+    try {
+      return JSON.parse(localStorage.getItem('lexprep_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hasPaidPlan(user) {
+    if (!user) return false;
+    if (user.isAdmin) return true;
+    return typeof LexPrepPlan !== 'undefined' && LexPrepPlan.getTier() !== 'basic';
+  }
+
+  function isAdvanced(user) {
+    return !!user && typeof LexPrepPlan !== 'undefined' && LexPrepPlan.hasAnnualPlan();
+  }
+
+  // Внешний вид переключаем один раз при открытии виджета — подписка не
+  // меняется прямо во время диалога, а перепроверять на каждый рендер
+  // сообщения незачем.
+  function applyAdvancedUi(advanced) {
+    if (chatRoot) chatRoot.classList.toggle('ai-chat--advanced', advanced);
+    if (toggleText) toggleText.textContent = advanced ? 'ИИ-консультант Про' : 'ИИ-консультант';
+    if (badge) badge.textContent = advanced ? '★' : 'ИИ';
+    if (title) title.textContent = advanced ? 'Продвинутый ИИ-консультант' : 'ИИ-консультант';
+    if (attachBtn) attachBtn.hidden = !advanced;
+    if (!advanced) clearAttachment();
+  }
+
+  function open() {
+    applyAdvancedUi(isAdvanced(currentUser()));
+    panel.hidden = false;
+    input.focus();
+  }
+
+  function close() {
+    panel.hidden = true;
+  }
+
+  toggle.addEventListener('click', () => {
+    if (panel.hidden) open(); else close();
+  });
+  closeBtn.addEventListener('click', close);
+
+  function addMessage(text, who) {
+    const msg = document.createElement('div');
+    msg.className = `ai-chat__msg ai-chat__msg--${who}`;
+    msg.textContent = text;
+    body.appendChild(msg);
+    body.scrollTop = body.scrollHeight;
+    return msg;
+  }
+
+  function clearAttachment() {
+    pendingAttachment = null;
+    if (fileInput) fileInput.value = '';
+    if (attachmentBox) {
+      attachmentBox.hidden = true;
+      attachmentBox.innerHTML = '';
+    }
+  }
+
+  function renderAttachment() {
+    if (!attachmentBox || !pendingAttachment) return;
+    attachmentBox.hidden = false;
+    attachmentBox.innerHTML = '';
+    const chip = document.createElement('span');
+    chip.className = 'ai-chat__attachment-chip';
+    chip.textContent = pendingAttachment.name;
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'ai-chat__attachment-remove';
+    removeBtn.setAttribute('aria-label', 'Убрать файл');
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', clearAttachment);
+    chip.appendChild(removeBtn);
+    attachmentBox.appendChild(chip);
+  }
+
+  if (attachBtn && fileInput) {
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      const lowerName = file.name.toLowerCase();
+      const isTextFile = AI_ATTACHMENT_TEXT_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+      if (!isTextFile) {
+        addMessage(`Формат файла «${file.name}» пока не поддерживается — сейчас можно прикреплять только текстовые файлы (${AI_ATTACHMENT_TEXT_EXTENSIONS.join(', ')}). Поддержка PDF/DOCX появится позже.`, 'bot');
+        fileInput.value = '';
+        return;
+      }
+      if (file.size > AI_ATTACHMENT_MAX_BYTES) {
+        addMessage(`Файл «${file.name}» слишком большой (максимум ${Math.round(AI_ATTACHMENT_MAX_BYTES / 1024)} КБ).`, 'bot');
+        fileInput.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingAttachment = { name: file.name, content: String(reader.result || '') };
+        renderAttachment();
+      };
+      reader.onerror = () => {
+        addMessage('Не удалось прочитать файл.', 'bot');
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (sending) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (typeof LexPrepApi === 'undefined') {
+      addMessage('Нет соединения с сервером — попробуй обновить страницу.', 'bot');
+      return;
+    }
+
+    const user = currentUser();
+    if (!user) {
+      addMessage('Сначала войди в аккаунт, чтобы пользоваться ИИ-консультантом.', 'bot');
+      return;
+    }
+    if (!hasPaidPlan(user)) {
+      addMessage('ИИ-консультант доступен на тарифах «Про» и «Максимум» — оформи подписку в магазине.', 'bot');
+      return;
+    }
+
+    const advanced = isAdvanced(user);
+    const attachment = advanced ? pendingAttachment : null;
+
+    addMessage(attachment ? `${text} 📎 ${attachment.name}` : text, 'user');
+    input.value = '';
+    clearAttachment();
+    sending = true;
+    const pending = addMessage('Печатает…', 'bot');
+
+    try {
+      const result = advanced
+        ? await LexPrepApi.askAiConsultantPro(text, history, attachment)
+        : await LexPrepApi.askAiConsultant(text, history);
+      pending.textContent = result.reply;
+      history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
+      if (typeof result.remaining === 'number' && result.remaining <= 2) {
+        addMessage(`Осталось запросов сегодня: ${result.remaining} из ${result.limit}.`, 'bot');
+      }
+    } catch (err) {
+      pending.textContent = err.message;
+    } finally {
+      sending = false;
+      body.scrollTop = body.scrollHeight;
+    }
+  });
+}
 
 function escapeHtml(str) {
   return String(str)
@@ -12,207 +233,191 @@ function escapeHtml(str) {
 }
 
 function initApp() {
-  const DATA = [
-    {
-      id: "civil",
-      title: "Гражданское право",
-      topics: [
-        {
-          id: "invalid-deals",
-          title: "Недействительность сделок",
-          description: "Конспект по теме ничтожных и оспоримых сделок, их последствиям и логике применения норм ГК РФ.",
-          theory: `
-            <div class="note-box">
-              <h3>Что важно запомнить</h3>
-              <p>Сделка может быть недействительной либо в силу признания её таковой судом, либо независимо от такого признания. Это базовое различие между оспоримой и ничтожной сделкой.</p>
-            </div>
+  const DATA = LEXPREP_DATA;
 
-            <div class="theory">
-              <h3>1. Общая классификация</h3>
-              <p>По статье 166 ГК РФ недействительные сделки делятся на <strong>оспоримые</strong> и <strong>ничтожные</strong>. Оспоримая сделка становится недействительной после решения суда, а ничтожная считается недействительной независимо от судебного признания.</p>
-
-              <h3>2. Кто может заявлять требования</h3>
-              <p>Требование о признании оспоримой сделки недействительной обычно предъявляет сторона сделки или иное лицо, указанное в законе. Требование о применении последствий недействительности ничтожной сделки вправе предъявить сторона сделки, а в предусмотренных законом случаях — и иное лицо.</p>
-
-              <h3>3. Последствия недействительности</h3>
-              <p>По статье 167 ГК РФ недействительная сделка не влечёт тех правовых последствий, на которые была направлена. Общее последствие — возврат сторонами всего полученного по сделке, то есть реституция.</p>
-
-              <h3>4. Что спрашивают на экзамене</h3>
-              <ul>
-                <li>Чем отличается оспоримая сделка от ничтожной.</li>
-                <li>Когда нужно решение суда, а когда нет.</li>
-                <li>Какие последствия применяются после признания сделки недействительной.</li>
-              </ul>
-            </div>
-          `,
-          test: [
-            {
-              question: "Какая сделка считается недействительной независимо от признания её судом?",
-              options: ["Оспоримая", "Ничтожная", "Возмездная", "Кабальная"],
-              correct: 1,
-              explanation: "Ничтожная сделка недействительна сама по себе, а оспоримая — только после признания её таковой судом."
-            },
-            {
-              question: "Что является общим последствием недействительности сделки?",
-              options: ["Только штраф", "Автоматическое прекращение обязательства без последствий", "Реституция", "Обязательно уголовная ответственность"],
-              correct: 2,
-              explanation: "Общее последствие по статье 167 ГК РФ — возврат сторонами всего полученного по сделке, то есть реституция."
-            },
-            {
-              question: "Кто обычно вправе требовать признания оспоримой сделки недействительной?",
-              options: ["Любое лицо", "Только прокурор", "Сторона сделки или иное указанное в законе лицо", "Только суд по собственной инициативе"],
-              correct: 2,
-              explanation: "Статья 166 ГК РФ прямо связывает такое требование со стороной сделки или иным лицом, названным в законе."
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: "constitutional",
-      title: "Конституционное право",
-      topics: [
-        {
-          id: "federation",
-          title: "Федеративное устройство РФ",
-          description: "Базовый учебный конспект по принципам федерализма, разграничению предметов ведения и статусу субъектов РФ.",
-          theory: `
-            <div class="note-box">
-              <h3>Что важно запомнить</h3>
-              <p>Федеративное устройство России строится на единстве государственной власти, разграничении предметов ведения и равноправии субъектов РФ.</p>
-            </div>
-
-            <div class="theory">
-              <h3>1. Сущность федерализма</h3>
-              <p>Россия — федеративное государство, состоящее из субъектов РФ. Федерализм позволяет сочетать общегосударственное единство и региональное разнообразие.</p>
-
-              <h3>2. Разграничение компетенции</h3>
-              <p>Часть вопросов находится в ведении Российской Федерации, часть — в совместном ведении Федерации и субъектов, а всё остальное относится к компетенции субъектов РФ.</p>
-
-              <h3>3. Практический смысл</h3>
-              <p>На экзамене обычно проверяют понимание различий между предметами ведения, а также статус республики, края, области, города федерального значения, автономной области и автономного округа.</p>
-            </div>
-          `,
-          test: [
-            {
-              question: "Что отражает принцип федерализма?",
-              options: ["Полный отказ от регионов", "Сочетание единства государства и самостоятельности субъектов", "Только местное самоуправление", "Подчинение субъектов муниципалитетам"],
-              correct: 1,
-              explanation: "Федерализм строится на сочетании единства государства и самостоятельности субъектов в пределах их компетенции."
-            },
-            {
-              question: "Какие вопросы могут находиться в совместном ведении?",
-              options: ["Только личные права граждан", "Вопросы, прямо распределённые между Федерацией и субъектами", "Только муниципальные вопросы", "Исключительно вопросы международных договоров субъектов"],
-              correct: 1,
-              explanation: "Совместное ведение — это сфера, где компетенция распределяется между Федерацией и субъектами по Конституции."
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: "criminal-procedure",
-      title: "Уголовный процесс",
-      topics: [
-        {
-          id: "preventive-measures",
-          title: "Меры пресечения",
-          description: "Конспект по основаниям избрания мер пресечения, их видам и процессуальной логике главы 13 УПК РФ.",
-          theory: `
-            <div class="note-box">
-              <h3>Что важно запомнить</h3>
-              <p>Меры пресечения применяются не автоматически, а при наличии процессуальных оснований: риск скрыться, продолжить преступную деятельность, угрожать участникам процесса или иным образом воспрепятствовать производству по делу.</p>
-            </div>
-
-            <div class="theory">
-              <h3>1. Основания применения</h3>
-              <p>Статья 97 УПК РФ связывает избрание меры пресечения с наличием достаточных оснований полагать, что подозреваемый или обвиняемый может скрыться от дознания, следствия или суда, продолжить преступную деятельность, угрожать свидетелям или иным способом помешать производству по делу.</p>
-
-              <h3>2. Виды мер пресечения</h3>
-              <p>Глава 13 УПК РФ включает подписку о невыезде, личное поручительство, наблюдение командования воинской части, присмотр за несовершеннолетним, запрет определённых действий, залог, домашний арест и заключение под стражу.</p>
-
-              <h3>3. Как отвечать на экзамене</h3>
-              <ul>
-                <li>Сначала назови цель меры пресечения.</li>
-                <li>Потом — основания по статье 97 УПК РФ.</li>
-                <li>Далее — перечисли виды мер и покажи, что заключение под стражу не единственный вариант.</li>
-              </ul>
-            </div>
-          `,
-          test: [
-            {
-              question: "Что является основанием для избрания меры пресечения?",
-              options: [
-                "Любое подозрение без процессуального обоснования",
-                "Наличие риска скрыться, продолжить преступную деятельность или воспрепятствовать делу",
-                "Только тяжесть преступления",
-                "Только признание вины"
-              ],
-              correct: 1,
-              explanation: "Статья 97 УПК РФ требует достаточных оснований полагать, что лицо может скрыться, продолжить преступную деятельность или помешать делу."
-            },
-            {
-              question: "Какая из мер относится к мерам пресечения?",
-              options: ["Привод", "Денежное взыскание", "Домашний арест", "Освидетельствование"],
-              correct: 2,
-              explanation: "Домашний арест прямо назван среди мер пресечения в главе 13 УПК РФ."
-            },
-            {
-              question: "Верно ли, что заключение под стражу — единственная возможная мера пресечения?",
-              options: ["Да", "Нет"],
-              correct: 1,
-              explanation: "Нет, закон предусматривает несколько мер пресечения, а заключение под стражу — только одна из них."
-            }
-          ]
-        }
-      ]
-    }
-  ];
-
-  const disciplineList = document.getElementById('disciplineList');
-  const topicList = document.getElementById('topicList');
+  const disciplineSelectBtn = document.getElementById('disciplineSelectBtn');
+  const disciplineSelectValue = document.getElementById('disciplineSelectValue');
+  const disciplineSelectMenu = document.getElementById('disciplineSelectMenu');
+  const topicSelectBtn = document.getElementById('topicSelectBtn');
+  const topicSelectValue = document.getElementById('topicSelectValue');
+  const topicSelectMenu = document.getElementById('topicSelectMenu');
+  const searchResults = document.getElementById('searchResults');
   const contentView = document.getElementById('contentView');
 
-  if (!disciplineList || !topicList || !contentView) return;
+  if (!disciplineSelectBtn || !topicSelectBtn || !contentView) return;
 
-  let activeDiscipline = DATA[0];
-  let activeTopic = DATA[0].topics[0];
+  localStorage.setItem('lexprep_visited_app', '1');
 
-  function renderDisciplines() {
-    disciplineList.innerHTML = DATA.map(d => `
-      <button class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''}" data-discipline="${d.id}">
+  const urlParams = new URLSearchParams(window.location.search);
+  let activeDiscipline = DATA.find(d => d.id === urlParams.get('discipline')) || DATA[0];
+  let activeTopic = activeDiscipline.topics.find(t => t.id === urlParams.get('topic')) || activeDiscipline.topics[0];
+  let activeView = urlParams.get('view') === 'test' ? 'test' : 'notes';
+  const highlightTestId = urlParams.get('highlight');
+  let cardQueue = [];
+  let cardPos = 0;
+  let cardFlipped = false;
+  let cardMode = 'text';
+  let voiceAnswerResult = null;
+  let searchQuery = '';
+
+  const RU_STOPWORDS = new Set(['это', 'что', 'как', 'для', 'при', 'или', 'если', 'его', 'она', 'они', 'все', 'был', 'быть', 'есть', 'так', 'также', 'между', 'может', 'могут', 'который', 'которая', 'которые', 'том', 'том,', 'года', 'году']);
+
+  function extractKeywords(text) {
+    return Array.from(new Set(
+      String(text || '')
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9\s]/gi, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 3 && !RU_STOPWORDS.has(w))
+    ));
+  }
+
+  function checkVoiceAnswer(spokenText, cardBack) {
+    const keywords = extractKeywords(cardBack);
+    if (!keywords.length) return { ratio: 0, matched: [], total: 0 };
+    const spokenLower = String(spokenText || '').toLowerCase();
+    const matched = keywords.filter(k => spokenLower.includes(k));
+    return { ratio: matched.length / keywords.length, matched, total: keywords.length };
+  }
+
+  // Объединяем опубликованные тесты (видны всем) со своими же тестами
+  // любого статуса (чтобы автор видел свои "на модерации"/"отклонено"),
+  // без дублей — если свой тест уже опубликован, берём только одну копию.
+  function getUserTests() {
+    const seen = new Set();
+    const combined = [];
+    myUserTests.forEach(t => { seen.add(t.id); combined.push(t); });
+    publishedUserTests.forEach(t => { if (!seen.has(t.id)) combined.push(t); });
+    return combined;
+  }
+
+  function buildCardQueue(forceAll) {
+    const cards = activeTopic.cards || [];
+    cardQueue = forceAll
+      ? cards.map((_, i) => i)
+      : LexPrepProgress.getDueCardIndexes(activeTopic.id, cards);
+    cardPos = 0;
+    cardFlipped = false;
+    voiceAnswerResult = null;
+  }
+
+  // Единая точка смены темы/дисциплины.
+  function switchTopic(discipline, topic, opts) {
+    opts = opts || {};
+    activeDiscipline = discipline;
+    activeTopic = topic;
+    activeView = 'notes';
+    buildCardQueue(false);
+    if (opts.resetSearch !== false) {
+      searchQuery = '';
+      const searchInput = document.getElementById('topicSearch');
+      if (searchInput) searchInput.value = '';
+      if (searchResults) searchResults.hidden = true;
+    }
+    renderSelectors();
+    renderContent();
+  }
+
+  function closeSelectMenus() {
+    if (disciplineSelectMenu) disciplineSelectMenu.hidden = true;
+    if (topicSelectMenu) topicSelectMenu.hidden = true;
+  }
+
+  // Дисциплина и тема — два выпадающих списка над контентом (а не
+  // постоянные боковые колонки): так контент всегда занимает всё окно,
+  // а переключение темы не сворачивает/разворачивает соседние панели.
+  function renderSelectors() {
+    disciplineSelectValue.textContent = activeDiscipline.title;
+    disciplineSelectMenu.innerHTML = DATA.map(d => {
+      const progress = LexPrepProgress.getDisciplineProgress(d);
+      const locked = LexPrepPlan.isDisciplineLocked(d.id, DATA);
+      return `
+      <button type="button" class="item-btn ${d.id === activeDiscipline.id ? 'is-active' : ''} ${locked ? 'is-locked' : ''}" data-discipline="${d.id}">
         ${escapeHtml(d.title)}
+        ${locked ? '<span class="item-lock-badge">Про</span>' : `
+        <span class="item-progress">
+          <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
+          <span class="item-progress__label">${progress}%</span>
+        </span>
+        `}
       </button>
-    `).join('');
+    `;
+    }).join('');
 
-    disciplineList.querySelectorAll('[data-discipline]').forEach(btn => {
+    disciplineSelectMenu.querySelectorAll('[data-discipline]').forEach(btn => {
       btn.addEventListener('click', () => {
-        activeDiscipline = DATA.find(d => d.id === btn.dataset.discipline);
-        activeTopic = activeDiscipline.topics[0];
-        renderDisciplines();
-        renderTopics();
-        renderContent();
+        const discipline = DATA.find(d => d.id === btn.dataset.discipline);
+        closeSelectMenus();
+        switchTopic(discipline, discipline.topics[0]);
       });
     });
-  }
 
-  function renderTopics() {
-    topicList.innerHTML = activeDiscipline.topics.map(t => `
-      <button class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
+    topicSelectValue.textContent = activeTopic.title;
+    topicSelectMenu.innerHTML = activeDiscipline.topics.map(t => {
+      const progress = LexPrepProgress.getTopicProgress(t.id, t);
+      return `
+      <button type="button" class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
         ${escapeHtml(t.title)}
+        <span class="item-progress">
+          <span class="item-progress__track"><span class="item-progress__fill" style="width: ${progress}%"></span></span>
+          <span class="item-progress__label">${progress}%</span>
+        </span>
       </button>
-    `).join('');
+    `;
+    }).join('');
 
-    topicList.querySelectorAll('[data-topic]').forEach(btn => {
+    topicSelectMenu.querySelectorAll('[data-topic]').forEach(btn => {
       btn.addEventListener('click', () => {
-        activeTopic = activeDiscipline.topics.find(t => t.id === btn.dataset.topic);
-        renderTopics();
-        renderContent();
+        const topic = activeDiscipline.topics.find(t => t.id === btn.dataset.topic);
+        closeSelectMenus();
+        switchTopic(activeDiscipline, topic);
       });
     });
   }
 
-  function renderContent() {
+  function renderSearchResults() {
+    if (!searchResults) return;
+    if (!searchQuery) {
+      searchResults.hidden = true;
+      searchResults.innerHTML = '';
+      return;
+    }
+
+    const q = searchQuery;
+    const matches = [];
+    DATA.forEach(d => {
+      d.topics.forEach(t => {
+        const haystack = `${t.title} ${t.description}`.toLowerCase();
+        if (haystack.includes(q)) matches.push({ discipline: d, topic: t });
+      });
+    });
+
+    searchResults.innerHTML = matches.length
+      ? matches.map(m => `
+          <button type="button" class="item-btn search-result-btn" data-discipline="${m.discipline.id}" data-topic="${m.topic.id}">
+            <span class="search-result-btn__topic">${escapeHtml(m.topic.title)}</span>
+            <span class="search-result-btn__discipline">${escapeHtml(m.discipline.title)}</span>
+          </button>
+        `).join('')
+      : `<p class="topic-desc">Ничего не найдено.</p>`;
+
+    searchResults.querySelectorAll('[data-topic]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const discipline = DATA.find(d => d.id === btn.dataset.discipline);
+        const topic = discipline.topics.find(t => t.id === btn.dataset.topic);
+        switchTopic(discipline, topic);
+      });
+    });
+
+    searchResults.hidden = false;
+  }
+
+  function renderContent(animate) {
+    if (animate === undefined) animate = true;
+    contentView.classList.remove('content-fade-in');
+
+    const locked = LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA);
+
     contentView.innerHTML = `
       <div class="breadcrumbs">
         <span>LexPrep</span>
@@ -225,120 +430,680 @@ function initApp() {
       <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
       <p class="topic-desc">${escapeHtml(activeTopic.description)}</p>
 
+      <div class="content-body ${locked ? 'is-blurred' : ''}">
       <div class="topic-tabs">
-        <span class="topic-tab is-active">Конспект</span>
-        <span class="topic-tab">Карточки</span>
-        <span class="topic-tab">Тест</span>
-        <span class="topic-tab">Практика ВС РФ</span>
+        <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
+        <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
+        <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
+        <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
+        <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
+        ${LexPrepPlan.getLimits().pdfExport ? `
+          <button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>
+        ` : ''}
       </div>
 
-      ${activeTopic.theory}
-
-      <div class="test-launch">
-        <button class="btn btn--primary" id="openTestBtn">Решить тест</button>
+      <div data-view-panel="notes" ${activeView === 'notes' ? '' : 'hidden'}>
+        ${activeTopic.theory}
       </div>
 
-      <div class="test-box" id="testBox">
-        <h2 class="test-box__title">Тест по теме</h2>
-        <div id="questionsWrap">
-          ${activeTopic.test.map((q, qIndex) => `
-            <div class="question" data-question="${qIndex}">
-              <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
-              <div class="answers">
-                ${q.options.map((option, i) => `
-                  <label class="answer">
-                    <input type="radio" name="q-${qIndex}" value="${i}">
-                    <span>${escapeHtml(option)}</span>
-                  </label>
-                `).join('')}
+      <div class="flashcards" data-view-panel="cards" ${activeView === 'cards' ? '' : 'hidden'}>
+        ${activeTopic.cards && activeTopic.cards.length ? `
+          <div class="flashcards__meta">
+            <span class="flashcards__due" id="cardsDueLabel"></span>
+            <div class="flashcards__meta-actions">
+              <div class="mode-toggle" role="tablist" aria-label="Режим тренировки">
+                <button class="mode-toggle__btn ${cardMode === 'text' ? 'is-active' : ''}" type="button" data-mode="text">Текст</button>
+                <button class="mode-toggle__btn ${cardMode === 'voice' ? 'is-active' : ''}" type="button" data-mode="voice">Голос</button>
               </div>
-              <div class="question-result" id="result-${qIndex}"></div>
+              <button class="btn btn--ghost" type="button" id="reviewAllBtn">Повторить всё</button>
             </div>
-          `).join('')}
-        </div>
-
-        <div class="test-actions">
-          <button class="btn btn--primary" id="checkTestBtn">Проверить ответы</button>
-        </div>
-
-        <div class="summary" id="summaryBox"></div>
+          </div>
+          <div id="cardSessionArea"></div>
+        ` : `<p class="topic-desc">Для этой темы карточки пока не добавлены.</p>`}
       </div>
+
+      <div data-view-panel="practice" ${activeView === 'practice' ? '' : 'hidden'}>
+        ${activeTopic.practice ? activeTopic.practice : '<p class="topic-desc">Судебная практика по теме появится позже — раздел в разработке.</p>'}
+      </div>
+
+      <div class="notepad" data-view-panel="notepad" ${activeView === 'notepad' ? '' : 'hidden'}>
+        <p class="topic-desc">Заметки видны только тебе и сохраняются в этом браузере.</p>
+        <textarea class="notepad__textarea" id="notepadArea" placeholder="Запиши здесь свою формулировку, вопрос к семинару или то, что легко забыть..."></textarea>
+        <span class="notepad__status" id="notepadStatus"></span>
+      </div>
+
+      <div class="test-box" data-view-panel="test" ${activeView === 'test' ? '' : 'hidden'}>
+        <div class="tests-toolbar">
+          <h2 class="test-box__title">Тесты по теме</h2>
+          <button class="btn btn--primary" type="button" id="createTestBtn">Создать тест</button>
+        </div>
+
+        <div class="test-card" id="mainTestCard">
+          <button class="test-card__head" type="button" data-test-toggle="main">
+            <span class="test-card__head-info">
+              <span class="test-card__title">Основной тест LexPrep</span>
+              <span class="test-card__meta">${activeTopic.test.length} вопросов</span>
+            </span>
+            <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="test-card__body" id="testBody-main" hidden></div>
+        </div>
+
+        <h3 class="profile-subheading">Пользовательские тесты</h3>
+        <div class="user-tests-list" id="userTestsList"></div>
+      </div>
+      </div>
+
+      ${locked ? `
+        <div class="content-lock-overlay">
+          <div class="content-lock-overlay__card">
+            <div class="paywall__badge">Тариф «Про»</div>
+            <h2 class="paywall__title">Эта дисциплина закрыта без подписки</h2>
+            <p class="paywall__text">
+              На тарифе «Базовый» полностью открыта только одна дисциплина (выбирается в настройках профиля) — конспект, карточки и тесты остальных скрыты.
+              На «Про» открываются все дисциплины и темы без ограничений, тесты — с разбором ответов, до 5 попыток в день и дуэли с турнирами.
+              На «Максимум» — вообще без лимитов, плюс экспорт конспектов в PDF.
+            </p>
+            <a class="btn btn--primary" href="index.html#pricing">Оформить подписку</a>
+          </div>
+        </div>
+      ` : ''}
     `;
 
-    const openBtn = document.getElementById('openTestBtn');
-    const checkBtn = document.getElementById('checkTestBtn');
+    if (animate) {
+      void contentView.offsetWidth;
+      contentView.classList.add('content-fade-in');
+    }
 
-    if (openBtn) {
-      openBtn.addEventListener('click', () => {
-        document.getElementById('testBox').classList.add('is-open');
-        document.getElementById('testBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderUserTestsList();
+
+    const createTestBtn = document.getElementById('createTestBtn');
+    if (createTestBtn) {
+      createTestBtn.addEventListener('click', () => {
+        window.location.href = `create-test.html?discipline=${encodeURIComponent(activeDiscipline.id)}&topic=${encodeURIComponent(activeTopic.id)}`;
       });
     }
 
-    if (checkBtn) {
-      checkBtn.addEventListener('click', () => {
-        let score = 0;
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+      downloadPdfBtn.addEventListener('click', () => downloadTopicPdf(activeTopic));
+    }
 
-        activeTopic.test.forEach((q, qIndex) => {
-          const chosen = document.querySelector(`input[name="q-${qIndex}"]:checked`);
-          const resultBox = document.getElementById(`result-${qIndex}`);
+    contentView.querySelectorAll('[data-view]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeView = tab.dataset.view;
+        renderContent(false);
+      });
+    });
 
-          if (!chosen) {
-            resultBox.className = 'question-result is-wrong';
-            resultBox.innerHTML = `Ответ не выбран.<br>Правильный ответ: <strong>${escapeHtml(q.options[q.correct])}</strong>.<br>${escapeHtml(q.explanation)}`;
-            return;
-          }
+    renderCardSession();
+    initNotepad();
 
-          const chosenIndex = Number(chosen.value);
+    const reviewAllBtn = document.getElementById('reviewAllBtn');
+    if (reviewAllBtn) {
+      reviewAllBtn.addEventListener('click', () => {
+        buildCardQueue(true);
+        renderCardSession();
+      });
+    }
 
-          if (chosenIndex === q.correct) {
-            score++;
-            resultBox.className = 'question-result is-correct';
-            resultBox.innerHTML = `Верно.<br><strong>Почему:</strong> ${escapeHtml(q.explanation)}`;
-          } else {
-            resultBox.className = 'question-result is-wrong';
-            resultBox.innerHTML = `
-              Неверно.<br>
-              <strong>Твой ответ:</strong> ${escapeHtml(q.options[chosenIndex])}<br>
-              <strong>Правильный ответ:</strong> ${escapeHtml(q.options[q.correct])}<br>
-              <strong>Почему не так:</strong> ${escapeHtml(q.explanation)}
-            `;
-          }
-        });
+    const modeToggleBtns = contentView.querySelectorAll('.mode-toggle__btn');
+    modeToggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        cardMode = btn.dataset.mode;
+        voiceAnswerResult = null;
+        cardFlipped = false;
+        modeToggleBtns.forEach(b => b.classList.toggle('is-active', b.dataset.mode === cardMode));
+        renderCardSession();
+      });
+    });
+  }
 
-        const summaryBox = document.getElementById('summaryBox');
-        const total = activeTopic.test.length;
-        const percent = Math.round((score / total) * 100);
+  // PDF-экспорт конспекта — доступен только на тарифе «Максимум»
+  // (LexPrepPlan.getLimits().pdfExport). jsPDF рисует простой текстовый
+  // документ: заголовок темы + текст конспекта построчно с переносом.
+  // Разметка (жирный/списки/таблицы) не переносится — это читаемая
+  // текстовая копия для офлайн-подготовки, не точная копия вёрстки.
+  function downloadTopicPdf(topic) {
+    if (typeof jspdf === 'undefined') {
+      alert('Не удалось загрузить модуль PDF — попробуй обновить страницу.');
+      return;
+    }
+    if (typeof LEXPREP_PDF_FONTS === 'undefined') {
+      alert('Не удалось загрузить шрифт для PDF — попробуй обновить страницу.');
+      return;
+    }
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
+    // Встроенные шрифты jsPDF (helvetica и т.п.) не знают кириллицу —
+    // без своего шрифта конспект превращается в нечитаемую кашу из
+    // символов. Roboto с кириллицей зашит в vendor/roboto-fonts.js.
+    doc.addFileToVFS('Roboto-Regular.ttf', LEXPREP_PDF_FONTS.regular);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFileToVFS('Roboto-Medium.ttf', LEXPREP_PDF_FONTS.medium);
+    doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
+    doc.setFont('Roboto', 'normal');
+
+    const marginX = 52;
+    const marginTop = 56;
+    const marginBottom = 56;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = doc.internal.pageSize.getWidth() - marginX * 2;
+    let y = marginTop;
+
+    function ensureSpace(neededHeight) {
+      if (y + neededHeight > pageHeight - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+      }
+    }
+
+    function addLine(text, fontSize, isBold, indent) {
+      doc.setFontSize(fontSize);
+      doc.setFont('Roboto', isBold ? 'bold' : 'normal');
+      doc.setTextColor(isBold ? 20 : 45);
+      const lines = doc.splitTextToSize(text, maxWidth - (indent || 0));
+      lines.forEach(line => {
+        ensureSpace(fontSize * 1.4);
+        doc.text(line, marginX + (indent || 0), y);
+        y += fontSize * 1.4;
+      });
+    }
+
+    addLine(topic.title, 17, true);
+    doc.setTextColor(150);
+    doc.setFontSize(9.5);
+    doc.setFont('Roboto', 'normal');
+    ensureSpace(14);
+    doc.text('LexPrep — конспект для офлайн-подготовки', marginX, y);
+    y += 8;
+    doc.setDrawColor(220);
+    doc.line(marginX, y, marginX + maxWidth, y);
+    y += 20;
+
+    const container = document.createElement('div');
+    container.innerHTML = topic.theory || '';
+    container.querySelectorAll('h1, h2, h3, h4, p, li').forEach(el => {
+      const text = el.textContent.trim().replace(/\s+/g, ' ');
+      if (!text) return;
+      const isHeading = /^H[1-4]$/.test(el.tagName);
+      const isListItem = el.tagName === 'LI';
+      if (isHeading) {
+        y += 8;
+        addLine(text, 13, true);
+        y += 2;
+      } else if (isListItem) {
+        addLine(`•  ${text}`, 11, false, 12);
+      } else {
+        addLine(text, 11, false);
+        y += 4;
+      }
+    });
+
+    doc.save(`${topic.title.replace(/[\\/:*?"<>|]/g, '')}.pdf`);
+  }
+
+  // Вопрос может иметь один или несколько правильных ответов —
+  // q.correct всегда массив индексов (длина 1 для одиночного выбора).
+  // Рендерим radio, если ответ один, checkbox — если несколько.
+  function renderTestQuestions(container, rawQuestions, progressKey) {
+    // На всякий случай приводим старую форму (q.correct — число, из
+    // пользовательских тестов, сохранённых до перехода на массив) к новой.
+    const questions = rawQuestions.map(q => (
+      Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] }
+    ));
+    container.innerHTML = `
+      <div class="questions-wrap">
+        ${questions.map((q, qIndex) => {
+          const isMulti = q.correct.length > 1;
+          return `
+          <div class="question" data-question="${qIndex}">
+            <h4>${qIndex + 1}. ${escapeHtml(q.question)}</h4>
+            ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
+            <div class="answers">
+              ${q.options.map((option, i) => `
+                <label class="answer">
+                  <input type="${isMulti ? 'checkbox' : 'radio'}" name="q-${qIndex}" value="${i}">
+                  <span>${escapeHtml(option)}</span>
+                </label>
+              `).join('')}
+            </div>
+            <div class="question-result" data-result="${qIndex}"></div>
+          </div>
+        `;
+        }).join('')}
+      </div>
+
+      <div class="test-actions">
+        <button class="btn btn--primary" type="button" data-check-test>Проверить ответы</button>
+      </div>
+
+      <div class="summary" data-summary-box></div>
+    `;
+
+    const checkBtn = container.querySelector('[data-check-test]');
+    checkBtn.addEventListener('click', () => {
+      const summaryBox = container.querySelector('[data-summary-box]');
+      const limits = LexPrepPlan.getLimits();
+      const usedToday = LexPrepProgress.getDailyUsage().testsTaken;
+      if (usedToday >= limits.testsPerDay && !LexPrepProgress.spendInventory('testAttempts')) {
         summaryBox.classList.add('is-visible');
         summaryBox.innerHTML = `
-          <h3>Итог теста</h3>
-          <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
-          <p>Результат: <strong>${percent}%</strong>.</p>
-          <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест.</p>
+          <h3>Дневной лимит тестов исчерпан</h3>
+          <p>На тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» доступно ${limits.testsPerDay} ${limits.testsPerDay === 1 ? 'попытка' : 'попытки'} в день.</p>
+          <p class="summary__note">Оформи более высокий тариф или докупи попытки в <a href="shop.html">магазине</a>.</p>
         `;
-
         summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+
+      let score = 0;
+      const wrongIndexes = [];
+      const showExplanations = limits.testExplanations;
+
+      questions.forEach((q, qIndex) => {
+        const chosen = Array.from(container.querySelectorAll(`input[name="q-${qIndex}"]:checked`)).map(el => Number(el.value)).sort();
+        const correct = [...q.correct].sort();
+        const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
+        const isCorrect = chosen.length > 0 && chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
+        const correctText = correct.map(i => q.options[i]).join('; ');
+        const explanationLine = showExplanations ? `<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}` : '';
+
+        if (isCorrect) {
+          score++;
+          resultBox.className = 'question-result is-correct';
+          resultBox.innerHTML = `Верно.${explanationLine}`;
+        } else {
+          resultBox.className = 'question-result is-wrong';
+          resultBox.innerHTML = `
+            ${chosen.length ? 'Неверно.' : 'Ответ не выбран.'}<br>
+            <strong>Правильный ответ:</strong> ${escapeHtml(correctText)}${explanationLine}
+          `;
+          wrongIndexes.push(qIndex);
+        }
+      });
+
+      const total = questions.length;
+      const percent = Math.round((score / total) * 100);
+
+      LexPrepProgress.recordTestAttempt(progressKey, score, total, wrongIndexes);
+      renderSelectors();
+      renderGamifyBar();
+
+      summaryBox.classList.add('is-visible');
+      summaryBox.innerHTML = `
+        <h3>Итог теста</h3>
+        <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
+        <p>Результат: <strong>${percent}%</strong>.</p>
+        <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест. В вопросах с несколькими вариантами засчитывается только полностью верный набор ответов.</p>
+      `;
+
+      summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function renderUserTestsList() {
+    const listEl = document.getElementById('userTestsList');
+    if (!listEl) return;
+
+    const tests = getUserTests()
+      .filter(t => t.topicId === activeTopic.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (!tests.length) {
+      listEl.innerHTML = '<p class="topic-desc">Пока нет пользовательских тестов по этой теме — стань первым, кто его создаст.</p>';
+      initTestAccordion();
+      return;
+    }
+
+    const statusBadge = {
+      pending: '<span class="item-lock-badge">На модерации</span>',
+      rejected: '<span class="item-lock-badge">Отклонён</span>'
+    };
+
+    listEl.innerHTML = tests.map(test => `
+      <div class="test-card">
+        <button class="test-card__head" type="button" data-test-toggle="${test.id}" ${test.status && test.status !== 'published' ? 'data-test-unplayable' : ''}>
+          <span class="test-card__author">
+            <span class="test-card__avatar">${escapeHtml((test.authorName || 'U').trim().charAt(0).toUpperCase())}</span>
+            <span class="test-card__author-info">
+              <span class="test-card__author-line">${escapeHtml(test.authorName || 'Аноним')} <span class="test-card__level">Ур. ${test.authorLevel || 1}</span></span>
+              <span class="test-card__title">${escapeHtml(test.title)} ${statusBadge[test.status] || ''}</span>
+            </span>
+          </span>
+          <span class="test-card__head-info">
+            <span class="test-card__meta">${test.questions.length} вопросов</span>
+            <svg class="test-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </button>
+        <div class="test-card__body" id="testBody-${test.id}" hidden></div>
+      </div>
+    `).join('');
+
+    initTestAccordion();
+
+    if (highlightTestId && tests.some(t => String(t.id) === highlightTestId)) {
+      const targetToggle = listEl.querySelector(`[data-test-toggle="${highlightTestId}"]`);
+      if (targetToggle) {
+        targetToggle.click();
+        targetToggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
+  function initTestAccordion() {
+    contentView.querySelectorAll('[data-test-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.testToggle;
+        const body = document.getElementById(`testBody-${id}`);
+        if (!body) return;
+
+        const isOpen = !body.hidden;
+
+        contentView.querySelectorAll('.test-card__body').forEach(b => {
+          b.hidden = true;
+          b.innerHTML = '';
+        });
+        contentView.querySelectorAll('.test-card__head').forEach(h => h.classList.remove('is-open'));
+
+        if (isOpen) return;
+
+        body.hidden = false;
+        btn.classList.add('is-open');
+
+        if (id === 'main') {
+          renderTestQuestions(body, activeTopic.test, activeTopic.id);
+        } else {
+          const test = getUserTests().find(t => String(t.id) === id);
+          if (!test) return;
+          if (test.status === 'pending') {
+            body.innerHTML = '<p class="topic-desc">Тест ещё на модерации — станет доступен для прохождения, как только его одобрят.</p>';
+          } else if (test.status === 'rejected') {
+            body.innerHTML = `<p class="topic-desc">Тест отклонён модератором.${test.moderatorComment ? ` Причина: ${escapeHtml(test.moderatorComment)}` : ''}</p>`;
+          } else {
+            renderTestQuestions(body, test.questions, `${test.topicId}::user::${test.id}`);
+          }
+        }
+      });
+    });
+  }
+
+  function getNotes() {
+    return JSON.parse(localStorage.getItem('lexprep_notes') || '{}');
+  }
+
+  function initNotepad() {
+    const textarea = document.getElementById('notepadArea');
+    const status = document.getElementById('notepadStatus');
+    if (!textarea) return;
+
+    const notes = getNotes();
+    textarea.value = notes[activeTopic.id] || '';
+
+    let saveTimer = null;
+    textarea.addEventListener('input', () => {
+      status.innerHTML = '';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const allNotes = getNotes();
+        allNotes[activeTopic.id] = textarea.value;
+        localStorage.setItem('lexprep_notes', JSON.stringify(allNotes));
+        status.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg> Сохранено';
+      }, 500);
+    });
+  }
+
+  function renderCardSession() {
+    const area = document.getElementById('cardSessionArea');
+    const dueLabel = document.getElementById('cardsDueLabel');
+    if (!area) return;
+
+    const cards = activeTopic.cards || [];
+    if (dueLabel) dueLabel.textContent = `К повторению сегодня: ${cardQueue.length} из ${cards.length}`;
+
+    if (!cardQueue.length) {
+      area.innerHTML = `
+        <div class="cards-empty">
+          <p class="topic-desc">Все карточки этой темы повторены. Новые появятся здесь по расписанию интервального повторения — или нажми «Повторить всё» выше, чтобы пройти их ещё раз.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const cardsLimit = LexPrepPlan.getLimits().cardsPerDay;
+    if (LexPrepProgress.getDailyUsage().cardsReviewed >= cardsLimit) {
+      area.innerHTML = `
+        <div class="cards-empty">
+          <p class="topic-desc">Дневной лимит карточек (${cardsLimit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан. Оформи «Про» для безлимитного повторения — <a href="index.html#pricing">смотреть тарифы</a>.</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (cardPos >= cardQueue.length) {
+      area.innerHTML = `
+        <div class="cards-empty">
+          <p class="topic-desc">Готово! Повторено карточек за эту сессию: <strong>${cardQueue.length}</strong>.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const cardIndex = cardQueue[cardPos];
+    const card = cards[cardIndex];
+    const state = LexPrepProgress.getCardState(activeTopic.id, cardIndex);
+
+    area.innerHTML = `
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard__inner ${cardFlipped ? 'is-flipped' : ''}" id="flashcardInner">
+          <div class="flashcard__face flashcard__face--front">
+            <span class="flashcard__label">Вопрос</span>
+            <p>${escapeHtml(card.front)}</p>
+          </div>
+          <div class="flashcard__face flashcard__face--back">
+            <span class="flashcard__label">Ответ</span>
+            <p>${escapeHtml(card.back)}</p>
+          </div>
+        </div>
+      </div>
+      <div class="flashcard-box" aria-label="Уровень запоминания карточки">
+        ${[1, 2, 3, 4, 5].map(n => `<span class="flashcard-box__dot ${n <= state.box ? 'is-filled' : ''}"></span>`).join('')}
+      </div>
+      ${!cardFlipped && cardMode === 'voice' ? `
+        <div class="voice-trainer">
+          <p class="flashcard-hint">Ответь голосом или текстом — черновая проверка подскажет, близко ли ты к ответу</p>
+          <div class="voice-trainer__row">
+            <button class="btn btn--outline voice-mic-btn" type="button" id="voiceMicBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+              <span id="voiceMicLabel">Записать ответ</span>
+            </button>
+            <input type="text" class="form-input voice-trainer__input" id="voiceAnswerInput" placeholder="Или впиши ответ своими словами">
+          </div>
+          <div class="voice-trainer__actions">
+            <button class="btn btn--primary" type="button" id="voiceCheckBtn">Проверить</button>
+          </div>
+          ${voiceAnswerResult ? `
+            <div class="voice-verdict voice-verdict--${voiceAnswerResult.ratio >= 0.5 ? 'good' : voiceAnswerResult.ratio > 0.15 ? 'mid' : 'bad'}">
+              ${voiceAnswerResult.ratio >= 0.5 ? 'Похоже на верный ответ' : voiceAnswerResult.ratio > 0.15 ? 'Есть совпадения, но не всё' : 'Похоже, ответ далёк от правильного'}
+              <span class="voice-verdict__note">Черновая проверка по ключевым словам — это не настоящий ИИ. Окончательную оценку поставь сам(а) после того, как увидишь правильный ответ.</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+      ${!cardFlipped ? `
+        <p class="flashcard-hint">Нажми на карточку, чтобы перевернуть · ${cardPos + 1} из ${cardQueue.length}</p>
+      ` : `
+        <p class="flashcard-hint">Оцени, знал(а) ли ты ответ</p>
+        <div class="flashcard-grade">
+          <button class="btn btn--outline" type="button" id="gradeWrongBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+            Не знал(а)
+          </button>
+          <button class="btn btn--primary" type="button" id="gradeRightBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 5-5"/></svg>
+            Знал(а)
+          </button>
+        </div>
+      `}
+    `;
+
+    const flashcard = document.getElementById('flashcard');
+    flashcard.addEventListener('click', () => {
+      cardFlipped = !cardFlipped;
+      voiceAnswerResult = null;
+      renderCardSession();
+    });
+
+    const voiceAnswerInput = document.getElementById('voiceAnswerInput');
+    const voiceMicBtn = document.getElementById('voiceMicBtn');
+    const voiceMicLabel = document.getElementById('voiceMicLabel');
+    const voiceCheckBtn = document.getElementById('voiceCheckBtn');
+
+    if (voiceMicBtn) {
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognitionCtor) {
+        voiceMicBtn.disabled = true;
+        voiceMicLabel.textContent = 'Голосовой ввод не поддерживается в этом браузере';
+      } else {
+        voiceMicBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const recognition = new SpeechRecognitionCtor();
+          recognition.lang = 'ru-RU';
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+
+          voiceMicBtn.classList.add('is-recording');
+          voiceMicLabel.textContent = 'Слушаю...';
+
+          recognition.addEventListener('result', (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (voiceAnswerInput) voiceAnswerInput.value = transcript;
+          });
+          recognition.addEventListener('end', () => {
+            voiceMicBtn.classList.remove('is-recording');
+            voiceMicLabel.textContent = 'Записать ответ';
+          });
+          recognition.addEventListener('error', () => {
+            voiceMicBtn.classList.remove('is-recording');
+            voiceMicLabel.textContent = 'Записать ответ';
+          });
+
+          recognition.start();
+        });
+      }
+    }
+
+    if (voiceCheckBtn) {
+      voiceCheckBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const answer = voiceAnswerInput ? voiceAnswerInput.value : '';
+        voiceAnswerResult = checkVoiceAnswer(answer, card.back);
+        renderCardSession();
+      });
+    }
+
+    const gradeWrongBtn = document.getElementById('gradeWrongBtn');
+    const gradeRightBtn = document.getElementById('gradeRightBtn');
+
+    function grade(correct) {
+      LexPrepProgress.reviewCard(activeTopic.id, cardIndex, correct);
+      renderGamifyBar();
+      flashcard.classList.add(correct ? 'flashcard--correct' : 'flashcard--wrong');
+      if (gradeWrongBtn) gradeWrongBtn.disabled = true;
+      if (gradeRightBtn) gradeRightBtn.disabled = true;
+      setTimeout(() => {
+        cardPos++;
+        cardFlipped = false;
+        voiceAnswerResult = null;
+        renderCardSession();
+        renderSelectors();
+      }, 260);
+    }
+
+    if (gradeWrongBtn) {
+      gradeWrongBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        grade(false);
+      });
+    }
+    if (gradeRightBtn) {
+      gradeRightBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        grade(true);
       });
     }
   }
 
-    const appLayout = document.getElementById('appLayout');
+  disciplineSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = disciplineSelectMenu.hidden;
+    closeSelectMenus();
+    disciplineSelectMenu.hidden = !willOpen;
+  });
+  disciplineSelectMenu.addEventListener('click', (e) => e.stopPropagation());
 
-  function enableFocusMode() {
-    appLayout?.classList.add('is-focus-mode');
-  }
+  topicSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = topicSelectMenu.hidden;
+    closeSelectMenus();
+    topicSelectMenu.hidden = !willOpen;
+  });
+  topicSelectMenu.addEventListener('click', (e) => e.stopPropagation());
 
-  function disableFocusMode() {
-    appLayout?.classList.remove('is-focus-mode');
-  }
-
-  document.querySelectorAll('[data-toggle-panel]').forEach(button => {
-    button.addEventListener('click', disableFocusMode);
+  document.addEventListener('click', () => {
+    closeSelectMenus();
   });
 
-  renderDisciplines();
-  renderTopics();
+  const searchInput = document.getElementById('topicSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim().toLowerCase();
+      renderSearchResults();
+    });
+    searchInput.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  function renderGamifyBar() {
+    const bar = document.getElementById('gamifyBar');
+    if (!bar || typeof LexPrepProgress.getGamification !== 'function') return;
+
+    const g = LexPrepProgress.getGamification();
+    document.getElementById('gamifyLevel').querySelector('.gamify-bar__level-num').textContent = g.level;
+    document.getElementById('gamifyTitle').textContent = g.rankName;
+    document.getElementById('gamifyXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP`;
+    document.getElementById('gamifyFill').style.width = `${g.progressPercent}%`;
+    const rankIconEl = document.getElementById('gamifyRankIcon');
+    if (rankIconEl) rankIconEl.src = `assets/badges/${g.rankIcon}`;
+
+    const achievements = LexPrepProgress.getAchievements(DATA);
+    document.getElementById('gamifyBadgesCount').textContent = `${achievements.totalEarned}/${achievements.totalCount}`;
+
+    document.getElementById('gamifyBadges').innerHTML = achievements.categories.map(cat => `
+      <div class="gamify-badge ${cat.earnedCount > 0 ? 'is-earned' : ''}">
+        <span class="gamify-badge__title">${escapeHtml(cat.title)}</span>
+        <span class="gamify-badge__desc">${cat.earnedCount} / ${cat.total}</span>
+      </div>
+    `).join('') + '<a href="profile.html#stats" class="gamify-badges__link">Все достижения в профиле →</a>';
+  }
+
+  const gamifyBadgesToggle = document.getElementById('gamifyBadgesToggle');
+  const gamifyBadges = document.getElementById('gamifyBadges');
+  if (gamifyBadgesToggle && gamifyBadges) {
+    gamifyBadgesToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      gamifyBadges.hidden = !gamifyBadges.hidden;
+    });
+    document.addEventListener('click', (e) => {
+      if (!gamifyBadges.hidden && !gamifyBadges.contains(e.target) && e.target !== gamifyBadgesToggle) {
+        gamifyBadges.hidden = true;
+      }
+    });
+  }
+
+  buildCardQueue(false);
+  renderSelectors();
   renderContent();
+  renderGamifyBar();
 }
 

@@ -1,7 +1,19 @@
 <!DOCTYPE html>
 <html lang="ru">
   <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LexPrep — Статьи</title>
     <meta
@@ -14,9 +26,61 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
     <link rel="stylesheet" href="./styles/article.css" />
   </head>
   <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="index.html#features" class="nav__link">Возможности</a></li>
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="index.html#pricing" class="nav__link">Тарифы</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="index.html" class="btn btn--ghost">На главную</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <main class="articles-page">
       <section class="articles-shell">
         <div class="container">
@@ -62,8 +126,7 @@
                   <div class="filter-list" id="statusFilters">
                     <button class="filter-chip is-active" type="button" data-filter="all">Все статьи</button>
                     <button class="filter-chip" type="button" data-filter="liked">Понравившиеся</button>
-                    <button class="filter-chip" type="button" data-filter="read">Прочитанные</button>
-                    <button class="filter-chip" type="button" data-filter="unread">Не прочитанные</button>
+                    <button class="filter-chip" type="button" data-filter="history">История просмотров</button>
                     <button class="filter-chip" type="button" data-filter="saved">Сохранённые</button>
                   </div>
                 </div>
@@ -92,6 +155,13 @@
                   <strong>Подсказка:</strong> понравившиеся и сохранённые подборки удобно использовать как личный список повторения перед экзаменом.
                 </div>
               </div>
+
+              <div class="sidebar-card" id="historyCard" hidden>
+                <div class="sidebar-head">
+                  <h2 class="sidebar-title sidebar-title--sm">Недавно просмотрено</h2>
+                </div>
+                <div class="history-list" id="historyList"></div>
+              </div>
             </aside>
           </div>
         </div>
@@ -104,7 +174,9 @@
         <div class="article-card__body">
           <div class="article-card__top">
             <span class="article-card__tag"></span>
-            <button class="article-card__save" type="button" aria-label="Сохранить статью">★</button>
+            <button class="article-card__save" type="button" aria-label="Сохранить статью">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.9-5.3-2.8-5.3 2.8 1-5.9-4.2-4.1 5.9-.9z"/></svg>
+            </button>
           </div>
           <h3 class="article-card__title"></h3>
           <p class="article-card__text"></p>
@@ -122,7 +194,35 @@
       </article>
     </template>
 
-    <script src="script.js"></script>
-    <script src="article.js" defer></script>
+    <div class="article-modal-overlay" id="articleModalOverlay" hidden>
+      <div class="article-modal" role="dialog" aria-modal="true" aria-labelledby="articleModalTitle">
+        <div class="article-modal__head">
+          <span class="article-card__tag" id="articleModalTag"></span>
+          <button class="article-modal__close" type="button" id="articleModalClose" aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <h2 class="article-modal__title" id="articleModalTitle"></h2>
+        <div class="article-modal__meta">
+          <div class="article-card__author">
+            <span class="article-card__avatar" id="articleModalAvatar"></span>
+            <div class="article-card__author-meta">
+              <span class="article-card__name" id="articleModalAuthor"></span>
+              <span class="article-card__date" id="articleModalDate"></span>
+            </div>
+          </div>
+          <div class="article-card__stats" id="articleModalStats"></div>
+        </div>
+        <div class="article-modal__body" id="articleModalBody"></div>
+      </div>
+    </div>
+
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="article.js?v=20260831160000" defer></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

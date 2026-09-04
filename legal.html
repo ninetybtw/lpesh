@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Документы</title>
+    <meta
+      name="description"
+      content="Пользовательское соглашение, политика конфиденциальности, публичная оферта и правила дуэлей/турниров/рейтингов LexPrep."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <style>
+      .legal-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 24px 0 32px;
+      }
+      .legal-nav a {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(111, 135, 255, 0.12);
+        color: inherit;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .legal-doc {
+        margin-bottom: 56px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid rgba(120, 130, 160, 0.18);
+      }
+      .legal-doc:last-child {
+        border-bottom: none;
+      }
+      .legal-doc h1, .legal-doc h2, .legal-doc h3, .legal-doc h4 {
+        margin-top: 1.4em;
+      }
+      .legal-doc table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+      }
+      .legal-doc th, .legal-doc td {
+        border: 1px solid rgba(120, 130, 160, 0.25);
+        padding: 8px 12px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <div class="header__actions">
+          <a href="auth.html#login" class="btn btn--outline" data-auth="guest">Войти</a>
+          <a href="auth.html#register" class="btn btn--primary" data-auth="guest">Начать бесплатно</a>
+          <a href="app.html" class="btn btn--ghost" data-auth="user">← В тренажёр</a>
+
+          <div class="profile-menu" data-auth="user" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="community-page">
+      <section class="community-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Документы</div>
+          <h1 class="page-title">Документы</h1>
+          <p class="topic-desc">
+            Пользовательское соглашение, политика конфиденциальности, публичная оферта и правила дуэлей/турниров/рейтингов.
+          </p>
+
+          <nav class="legal-nav">
+            <a href="#terms">Пользовательское соглашение</a>
+            <a href="#privacy">Политика конфиденциальности</a>
+            <a href="#offer">Публичная оферта</a>
+            <a href="#rules">Правила дуэлей, турниров и рейтингов</a>
+          </nav>
+
+          <article class="legal-doc" id="terms"></article>
+          <article class="legal-doc" id="privacy"></article>
+          <article class="legal-doc" id="offer"></article>
+          <article class="legal-doc" id="rules"></article>
+        </div>
+      </section>
+    </main>
+
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="legal-docs.js?v=20260901000000"></script>
+    <script>
+      ['terms', 'privacy', 'offer', 'rules'].forEach(key => {
+        const doc = LEXPREP_LEGAL_DOCS[key];
+        const el = document.getElementById(key);
+        if (doc && el) el.innerHTML = marked.parse(doc.markdown);
+      });
+    </script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
+  </body>
+</html>

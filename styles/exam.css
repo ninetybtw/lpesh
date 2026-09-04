@@ -1,0 +1,241 @@
+/* ==========================================================================
+EXAM.CSS — страница пробного экзамена: карточка-контейнер, таймер, разбивка
+по темам. Тёмная палитра в духе app.css.
+========================================================================== */
+
+.exam-page {
+  min-height: 100vh;
+}
+
+.exam-container {
+  max-width: 780px;
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
+.exam-card {
+  padding: 32px;
+  background: linear-gradient(180deg, rgba(10, 19, 42, 0.95), rgba(7, 14, 32, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  box-shadow: 0 24px 60px rgba(2, 8, 24, 0.52);
+}
+
+.exam-title {
+  font-size: 26px;
+  margin: 8px 0 12px;
+}
+
+/* ---------------- Setup ---------------- */
+.exam-setup__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 22px 0 16px;
+}
+
+.exam-setup__grid .form-group label {
+  color: #9ca8cb;
+}
+
+.exam-setup__grid .form-input {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f5f7ff;
+}
+
+.exam-setup__weak-hint {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(111, 135, 255, 0.08);
+  border: 1px solid rgba(111, 135, 255, 0.2);
+  color: #c7d0f5;
+  font-size: 13.5px;
+}
+
+.exam-setup__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 26px;
+  font-size: 14px;
+  color: #d3d8ee;
+}
+
+/* ---------------- Running ---------------- */
+.exam-running__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.exam-running__progress {
+  font-size: 13px;
+  font-weight: 700;
+  color: #9ca8cb;
+}
+
+.exam-timer {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f5f7ff;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-timer.is-low {
+  color: #ff8a8a;
+}
+
+.exam-running__topic {
+  color: #7985ab;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.exam-running__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ---------------- Results ---------------- */
+.profile-subheading {
+  font-size: 16px;
+  margin: 28px 0 14px;
+}
+
+.exam-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.results-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.results-row__topic {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f5f7ff;
+}
+
+.results-row__score {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.results-row__score--good {
+  color: #8ff0c1;
+  background: rgba(31, 183, 116, 0.15);
+}
+
+.results-row__score--mid {
+  color: #ffd28a;
+  background: rgba(183, 121, 31, 0.15);
+}
+
+.results-row__score--bad {
+  color: #ffb3b3;
+  background: rgba(225, 77, 77, 0.15);
+}
+
+#examReview .question {
+  margin-top: 14px;
+}
+
+.exam-results__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.profile-danger-text {
+  color: #ff8a8a;
+}
+
+/* ---------------- Light theme ---------------- */
+[data-theme="light"] .exam-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] .exam-setup__grid .form-input {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  color: #14161f;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5f6d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+[data-theme="light"] .exam-setup__grid .form-group label {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .exam-setup__weak-hint {
+  background: var(--color-primary-light);
+  border: 1px solid rgba(61, 90, 254, 0.2);
+  color: #2a3ecf;
+}
+
+[data-theme="light"] .exam-setup__checkbox {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .exam-running__progress,
+[data-theme="light"] .exam-running__topic {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .exam-timer {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .results-row {
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .results-row__topic {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .profile-danger-text {
+  color: #e5484d;
+}
+
+@media (max-width: 620px) {
+  .exam-setup__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-card {
+    padding: 22px;
+    border-radius: 22px;
+  }
+}
+
+.exam-setup__error {
+  margin: 4px 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(225, 77, 77, 0.12);
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  color: #ffb3b3;
+  font-size: 13px;
+}
+
+[data-theme="light"] .exam-setup__error {
+  color: #c0262a;
+}

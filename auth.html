@@ -9,6 +9,11 @@
   })();
 </script>
 <meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+<link rel="manifest" href="assets/favicon/site.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Вход и регистрация — LexPrep</title>
 <meta name="description" content="Войдите в аккаунт LexPrep или зарегистрируйтесь, чтобы начать подготовку к экзаменам.">
@@ -22,13 +27,13 @@
 <!-- HEADER -->
 <header class="header" id="header">
   <div class="container header__inner">
-    <a href="index.html" class="logo"><span class="logo__icon"></span><span class="logo__text">LexPrep</span></a>
+    <a href="index.html" class="logo"><img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" /><span class="logo__text">LexPrep</span></a>
     <div class="header__actions">
+      <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+        <span class="online-badge__dot"></span>
+        <span id="onlineCount">–</span> онлайн
+      </div>
       <a href="index.html" class="btn btn--ghost">На главную</a>
-      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему" aria-pressed="false">
-        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
     </div>
   </div>
 </header>
@@ -65,8 +70,8 @@
           </ul>
 
           <div class="auth-visual__stats">
-            <div class="auth-stat"><span class="auth-stat__num">12</span><span class="auth-stat__label">отраслей права</span></div>
-            <div class="auth-stat"><span class="auth-stat__num">247</span><span class="auth-stat__label">тем в базе</span></div>
+            <div class="auth-stat"><span class="auth-stat__num" id="statDisciplines">7</span><span class="auth-stat__label">отраслей права</span></div>
+            <div class="auth-stat"><span class="auth-stat__num" id="statTopics">512</span><span class="auth-stat__label">тем в базе</span></div>
           </div>
         </div>
 
@@ -103,6 +108,24 @@
             <div class="form-group">
               <label for="regPassword">Пароль</label>
               <input class="form-input" type="password" id="regPassword" placeholder="Минимум 8 символов" minlength="8" required>
+              <ul class="password-rules" id="passwordRules">
+                <li class="password-rules__item" data-rule="length">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                  Не менее 8 символов
+                </li>
+                <li class="password-rules__item" data-rule="letter">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                  Есть буква
+                </li>
+                <li class="password-rules__item" data-rule="digit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                  Есть цифра
+                </li>
+                <li class="password-rules__item" data-rule="case">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                  Заглавная и строчная буква
+                </li>
+              </ul>
             </div>
             <div class="form-group">
               <label for="regPasswordConfirm">Повторите пароль</label>
@@ -110,14 +133,16 @@
             </div>
             <label class="auth-checkbox">
               <input type="checkbox" required>
-              <span>Согласен с <a href="#">условиями использования</a></span>
+              <span>Согласен с <a href="legal.html#privacy" target="_blank" rel="noopener">Политикой конфиденциальности</a> и <a href="legal.html#terms" target="_blank" rel="noopener">Пользовательским соглашением</a> (офертой)</span>
             </label>
             <button type="submit" class="btn btn--primary btn--block btn--lg">Создать аккаунт</button>
             <p class="auth-switch">Уже есть аккаунт? <button type="button" class="auth-switch__link" data-switch="login">Войти</button></p>
           </form>
 
+          <p class="auth-error" id="authError" hidden></p>
+
           <div class="auth-success" id="authSuccess">
-            <p>✓ Демо-режим: бэкенд ещё не подключён — это визуальный прототип формы.</p>
+            <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-success__icon"><path d="M4 12l5 5L20 6"/></svg><span id="authSuccessText">Готово, входим…</span></p>
           </div>
         </div>
       </div>
@@ -131,7 +156,11 @@
   </div>
 </footer>
 
-<script src="script.js"></script>
-<script src="auth.js"></script>
+<script src="validation.js?v=20260831160000"></script>
+<script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+<script src="script.js?v=20260903180000"></script>
+<script src="auth.js?v=20260831160000"></script>
+<script src="cookie-consent.js?v=20260901000000"></script>
 </body>
 </html>

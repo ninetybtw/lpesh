@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Профиль</title>
+    <meta
+      name="description"
+      content="Личный профиль LexPrep: данные аккаунта, подписка, статистика и настройки."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="index.html#articles" class="nav__link">Статьи</a></li>
+            <li><a href="index.html#pricing" class="nav__link">Тарифы</a></li>
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
+            <li><a href="duel.html" class="nav__link">Дуэли</a></li>
+            <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="index.html" class="btn btn--ghost">На главную</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="profile-page">
+      <section class="profile-shell">
+        <div class="container">
+          <div class="profile-hero">
+            <div class="profile-hero__avatar-wrap">
+              <span class="profile-hero__avatar" id="heroAvatar">U</span>
+            </div>
+            <div>
+              <div class="eyebrow">LexPrep / Личный кабинет</div>
+              <h1 class="profile-hero__name" id="heroName">Профиль</h1>
+              <p class="profile-hero__email" id="heroEmail">you@example.com</p>
+            </div>
+          </div>
+
+          <div class="profile-layout">
+            <aside class="profile-nav" aria-label="Разделы профиля">
+              <button class="profile-nav__item is-active" type="button" data-section="info">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+                </span>
+                Личная информация
+              </button>
+              <button class="profile-nav__item" type="button" data-section="subscription">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+                </span>
+                Подписка
+              </button>
+              <button class="profile-nav__item" type="button" data-section="stats">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+                </span>
+                Статистика
+              </button>
+              <button class="profile-nav__item" type="button" data-section="articles">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h9M8 13h9M8 17h5"/></svg>
+                </span>
+                Мои статьи
+              </button>
+              <button class="profile-nav__item" type="button" data-section="tests">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10l2 2 4-4"/><path d="M8 16h8"/></svg>
+                </span>
+                Мои тесты
+              </button>
+              <button class="profile-nav__item" type="button" data-section="referral">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 11l2 2 4-4"/></svg>
+                </span>
+                Реферальная программа
+              </button>
+              <button class="profile-nav__item" type="button" data-section="settings">
+                <span class="profile-nav__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg>
+                </span>
+                Настройки
+              </button>
+            </aside>
+
+            <div class="profile-content">
+              <!-- ЛИЧНАЯ ИНФОРМАЦИЯ + ПЛАТЁЖНЫЕ РЕКВИЗИТЫ -->
+              <section class="profile-section is-active" id="section-info" data-section-panel="info">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Личная информация</h2>
+                  <p class="profile-card__subtitle">Эти данные видны только тебе.</p>
+
+                  <div class="profile-avatar-editor">
+                    <span class="profile-avatar-editor__preview" id="avatarPreview">U</span>
+                    <div class="profile-avatar-editor__actions">
+                      <button class="btn btn--outline" type="button" id="changeAvatarBtn">Изменить фото</button>
+                      <button class="btn btn--ghost" type="button" id="removeAvatarBtn">Удалить фото</button>
+                      <input type="file" id="avatarInput" accept="image/*" hidden />
+                    </div>
+                  </div>
+
+                  <form class="profile-form" id="infoForm">
+                    <div class="form-group">
+                      <label for="fieldName">Имя</label>
+                      <input class="form-input" type="text" id="fieldName" name="name" placeholder="Как к тебе обращаться" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="fieldEmail">Email</label>
+                      <input class="form-input" type="email" id="fieldEmail" name="email" placeholder="you@example.com" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="fieldUniversity">Учебное заведение</label>
+                      <input class="form-input" type="text" id="fieldUniversity" name="university" placeholder="Например, МГЮА" />
+                    </div>
+                    <div class="form-group">
+                      <label for="fieldCourse">Курс</label>
+                      <input class="form-input" type="text" id="fieldCourse" name="course" placeholder="Например, 3 курс" />
+                    </div>
+                    <div class="profile-form__submit-row form-group--full">
+                      <button type="submit" class="btn btn--primary">Сохранить изменения</button>
+                      <span class="profile-form__success" id="infoSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                        Сохранено
+                      </span>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Платёжные реквизиты</h2>
+                  <p class="profile-card__subtitle">
+                    Демо-режим: данные не передаются платёжному провайдеру и хранятся только локально в браузере.
+                  </p>
+
+                  <div class="payment-card" id="paymentDisplay">
+                    <div class="payment-card__row">
+                      <span class="payment-card__label">Способ оплаты</span>
+                      <span class="payment-card__value" id="paymentSummary">Карта не привязана</span>
+                    </div>
+                    <button class="btn btn--outline" type="button" id="editPaymentBtn">Изменить способ оплаты</button>
+                  </div>
+
+                  <form class="profile-form" id="paymentForm" hidden>
+                    <div class="form-group form-group--full">
+                      <label for="fieldCardNumber">Номер карты</label>
+                      <input class="form-input" type="text" id="fieldCardNumber" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" />
+                    </div>
+                    <div class="form-group">
+                      <label for="fieldCardExpiry">Срок действия</label>
+                      <input class="form-input" type="text" id="fieldCardExpiry" placeholder="ММ/ГГ" maxlength="5" />
+                    </div>
+                    <div class="form-group">
+                      <label for="fieldCardCvc">CVC</label>
+                      <input class="form-input" type="text" id="fieldCardCvc" inputmode="numeric" maxlength="3" placeholder="123" />
+                    </div>
+                    <div class="profile-form__submit-row form-group--full">
+                      <button type="submit" class="btn btn--primary">Сохранить карту</button>
+                      <button type="button" class="btn btn--ghost" id="cancelPaymentBtn">Отмена</button>
+                    </div>
+                  </form>
+                </div>
+              </section>
+
+              <!-- ПОДПИСКА -->
+              <section class="profile-section" id="section-subscription" data-section-panel="subscription">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Подписка</h2>
+                  <p class="profile-card__subtitle">Управляй тарифом и датой продления.</p>
+
+                  <div class="plan-box" id="planBox">
+                    <div class="plan-box__head">
+                      <span class="plan-box__badge" id="planBadge">Тариф «Базовый»</span>
+                      <span class="plan-box__price" id="planPrice">500 ₽ / мес</span>
+                    </div>
+                    <p class="plan-box__renewal" id="planRenewal"></p>
+                    <ul class="plan-box__list"></ul>
+                    <div class="plan-box__actions">
+                      <a href="index.html#pricing" class="btn btn--outline">Сменить тариф</a>
+                      <button class="btn btn--ghost profile-danger-text" type="button" id="cancelSubBtn" hidden>Отменить подписку</button>
+                    </div>
+                    <p class="plan-box__note" id="planNote" hidden></p>
+                  </div>
+                </div>
+              </section>
+
+              <!-- СТАТИСТИКА -->
+              <section class="profile-section" id="section-stats" data-section-panel="stats">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Статистика</h2>
+                  <p class="profile-card__subtitle">Реальный прогресс из тренажёра и пробных экзаменов — хранится в этом браузере, пока нет бэкенда.</p>
+
+                  <div class="rank-showcase" id="rankShowcase">
+                    <img class="rank-showcase__icon" id="rankIcon" src="assets/badges/themis-standard.svg" alt="Значок ранга" />
+                    <div class="rank-showcase__info">
+                      <div class="rank-showcase__top">
+                        <span class="rank-showcase__level">Уровень <span id="rankLevelNum">1</span></span>
+                        <span class="rank-showcase__name" id="rankName">Новичок</span>
+                      </div>
+                      <div class="rank-showcase__track">
+                        <div class="rank-showcase__fill" id="rankFill" style="width: 0%"></div>
+                      </div>
+                      <span class="rank-showcase__xp" id="rankXp">0 / 100 XP до следующего уровня</span>
+                    </div>
+                    <a href="rating.html" class="btn btn--outline rank-showcase__cta">Рейтинг</a>
+                  </div>
+
+                  <div class="stats-grid" id="statsGrid">
+                    <div class="stat-tile">
+                      <span class="stat-tile__num" id="statTopics">0</span>
+                      <span class="stat-tile__label">тем затронуто</span>
+                    </div>
+                    <div class="stat-tile">
+                      <span class="stat-tile__num" id="statTests">0</span>
+                      <span class="stat-tile__label">тестов решено</span>
+                    </div>
+                    <div class="stat-tile">
+                      <span class="stat-tile__num" id="statAvg">—</span>
+                      <span class="stat-tile__label">средний результат</span>
+                    </div>
+                    <div class="stat-tile">
+                      <span class="stat-tile__num" id="statStreak">0</span>
+                      <span class="stat-tile__label">дней подряд</span>
+                    </div>
+                    <div class="stat-tile">
+                      <span class="stat-tile__num" id="statCards">0</span>
+                      <span class="stat-tile__label">карточек повторено</span>
+                    </div>
+                  </div>
+
+                  <h3 class="profile-subheading">Достижения</h3>
+                  <p class="topic-desc achv-intro">Витрина значков Фемиды по категориям — открывай новые условия, чтобы получить редкие версии.</p>
+                  <div class="achv-grid" id="achvGrid"></div>
+
+                  <h3 class="profile-subheading">Последние тесты</h3>
+                  <div class="results-list" id="recentResultsList">
+                    <p class="topic-desc">Пока нет ни одной попытки — пройди тест в тренажёре или пробный экзамен.</p>
+                  </div>
+
+                  <h3 class="profile-subheading">Слабые места</h3>
+                  <div class="results-list" id="weakSpotsList">
+                    <p class="topic-desc">Слабые места пока не отмечены.</p>
+                  </div>
+                  <a href="exam.html" class="btn btn--outline profile-weak-cta" id="reviewWeakLink" hidden>Повторить слабые места на экзамене</a>
+                </div>
+              </section>
+
+              <!-- МОИ СТАТЬИ -->
+              <section class="profile-section" id="section-articles" data-section-panel="articles">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Мои статьи</h2>
+                  <p class="profile-card__subtitle">Статьи, опубликованные тобой в каталоге. Здесь можно их удалить — изменение так же в разработке.</p>
+
+                  <div class="my-articles-list" id="myArticlesList"></div>
+
+                  <a href="write-article.html" class="btn btn--primary" id="myArticlesWriteBtn" style="margin-top: 16px;">Написать статью</a>
+                </div>
+              </section>
+
+              <!-- МОИ ТЕСТЫ -->
+              <section class="profile-section" id="section-tests" data-section-panel="tests">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Мои тесты</h2>
+                  <p class="profile-card__subtitle">Тесты, которые ты отправил(а) на модерацию. После одобрения модератором тест увидят все в этой теме.</p>
+
+                  <div class="my-tests-list" id="myTestsList"></div>
+
+                  <a href="app.html" class="btn btn--primary" id="myTestsCreateBtn" style="margin-top: 16px;">Создать тест</a>
+                </div>
+              </section>
+
+              <!-- РЕФЕРАЛЬНАЯ ПРОГРАММА -->
+              <section class="profile-section" id="section-referral" data-section-panel="referral">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Реферальная программа</h2>
+                  <p class="profile-card__subtitle">
+                    Приглашай друзей по личной ссылке или промокоду. Свой код можно поменять на удобный.
+                    Что именно они и ты получите за приглашение, решим отдельно — начисление наград появится позже.
+                  </p>
+
+                  <div class="referral-block">
+                    <div class="referral-row">
+                      <div class="referral-row__info">
+                        <div class="referral-row__label">Реферальная ссылка</div>
+                        <div class="referral-row__value" id="referralLink">—</div>
+                      </div>
+                      <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralLink">Скопировать</button>
+                    </div>
+
+                    <div class="referral-row">
+                      <div class="referral-row__info">
+                        <div class="referral-row__label">Личный промокод</div>
+                        <div class="referral-row__value" id="referralCode">—</div>
+                      </div>
+                      <div class="referral-row__actions">
+                        <button class="btn btn--outline referral-row__copy" type="button" data-copy-target="referralCode">Скопировать</button>
+                        <button class="btn btn--outline" type="button" id="referralEditBtn">Изменить</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p class="referral-note" id="referralCopyStatus"></p>
+                </div>
+              </section>
+
+              <!-- НАСТРОЙКИ -->
+              <section class="profile-section" id="section-settings" data-section-panel="settings">
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Настройки</h2>
+                  <p class="profile-card__subtitle">Тема оформления применяется сразу и сохраняется для всех страниц сайта.</p>
+
+                  <div class="setting-row">
+                    <div>
+                      <div class="setting-row__title">Тёмная тема</div>
+                      <div class="setting-row__desc">Переключает оформление на всех страницах LexPrep.</div>
+                    </div>
+                    <button class="switch" id="themeSwitch" type="button" role="switch" aria-checked="false" aria-label="Переключить тёмную тему">
+                      <span class="switch__thumb"></span>
+                    </button>
+                  </div>
+
+                  <div class="setting-row">
+                    <div>
+                      <div class="setting-row__title">Уведомления на email</div>
+                      <div class="setting-row__desc">Напоминания о новых темах и результатах тестов.</div>
+                    </div>
+                    <button class="switch" id="notificationsSwitch" type="button" role="switch" aria-checked="true" aria-label="Переключить уведомления на email">
+                      <span class="switch__thumb"></span>
+                    </button>
+                  </div>
+
+                  <div class="setting-row">
+                    <div>
+                      <div class="setting-row__title">Язык интерфейса</div>
+                      <div class="setting-row__desc">Другие языки появятся позже.</div>
+                    </div>
+                    <select class="form-input setting-row__select" disabled>
+                      <option>Русский</option>
+                    </select>
+                  </div>
+
+                  <div class="setting-row">
+                    <div>
+                      <div class="setting-row__title">Основная дисциплина (тариф «Базовый»)</div>
+                      <div class="setting-row__desc">На тарифе «Базовый» полностью открыта только эта дисциплина — у остальных виден только список тем. На «Про» и «Максимум» это не ограничивает доступ.</div>
+                    </div>
+                    <select class="form-input setting-row__select" id="basicDisciplineSelect"></select>
+                  </div>
+                </div>
+
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Смена пароля</h2>
+                  <p class="profile-card__subtitle">
+                    Демо-режим: пароль не хранится на сервере, форма только проверяет требования ниже. Реальное сохранение появится вместе с бэкендом.
+                  </p>
+
+                  <form class="profile-form" id="passwordForm">
+                    <div class="form-group form-group--full">
+                      <label for="currentPassword">Текущий пароль</label>
+                      <input class="form-input" type="password" id="currentPassword" placeholder="Введи текущий пароль" required />
+                    </div>
+                    <div class="form-group form-group--full">
+                      <label for="newPassword">Новый пароль</label>
+                      <input class="form-input" type="password" id="newPassword" placeholder="Минимум 8 символов" minlength="8" required />
+                      <ul class="password-rules" id="newPasswordRules">
+                        <li class="password-rules__item" data-rule="length">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                          Не менее 8 символов
+                        </li>
+                        <li class="password-rules__item" data-rule="letter">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                          Есть буква
+                        </li>
+                        <li class="password-rules__item" data-rule="digit">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                          Есть цифра
+                        </li>
+                        <li class="password-rules__item" data-rule="case">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                          Заглавная и строчная буква
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="form-group form-group--full">
+                      <label for="newPasswordConfirm">Повтори новый пароль</label>
+                      <input class="form-input" type="password" id="newPasswordConfirm" placeholder="Повтори новый пароль" required />
+                    </div>
+                    <div class="profile-form__submit-row form-group--full">
+                      <button type="submit" class="btn btn--primary">Сохранить новый пароль</button>
+                      <span class="profile-form__success" id="passwordSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                        Пароль обновлён
+                      </span>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="profile-card">
+                  <h2 class="profile-card__title">Приватность и документы</h2>
+                  <p class="profile-card__subtitle">
+                    Документы, регулирующие использование LexPrep.
+                  </p>
+
+                  <div class="privacy-links">
+                    <button class="privacy-link" type="button" data-doc="privacy">
+                      <span>Политика конфиденциальности</span>
+                      <span class="privacy-link__arrow">→</span>
+                    </button>
+                    <button class="privacy-link" type="button" data-doc="terms">
+                      <span>Пользовательское соглашение</span>
+                      <span class="privacy-link__arrow">→</span>
+                    </button>
+                    <button class="privacy-link" type="button" data-doc="offer">
+                      <span>Публичная оферта</span>
+                      <span class="privacy-link__arrow">→</span>
+                    </button>
+                    <button class="privacy-link" type="button" data-doc="rules">
+                      <span>Правила дуэлей, турниров и рейтингов</span>
+                      <span class="privacy-link__arrow">→</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="profile-card profile-card--danger">
+                  <h2 class="profile-card__title">Опасная зона</h2>
+                  <p class="profile-card__subtitle">Выход сотрёт локальный прогресс в этом браузере. Полное удаление аккаунта на сервере — в разработке.</p>
+                  <button class="btn btn--outline profile-danger-text" type="button" id="deleteAccountBtn">Выйти и стереть локальные данные</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__col">
+          <a href="index.html" class="logo logo--footer"
+            ><img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep"
+            /><span class="logo__text">LexPrep</span></a
+          >
+          <p class="footer__text">
+            Платформа подготовки к семинарам и экзаменам для студентов юрфака.
+          </p>
+          <div class="footer__socials">
+            <a class="footer__social" href="https://t.me/lex_prep" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+              <svg viewBox="0 0 448 512" fill="currentColor"><path d="M446.7 98.6l-67.6 318.8c-5.1 22.5-18.4 28.1-37.3 17.5l-103-75.9-49.7 47.8c-5.5 5.5-10.1 10.1-20.7 10.1l7.4-104.9 190.9-172.5c8.3-7.4-1.8-11.5-12.9-4.1L117.8 284 16.2 252.2c-22.1-6.9-22.5-22.1 4.6-32.7L418.2 66.4c18.4-6.9 34.5 4.1 28.5 32.2z"/></svg>
+            </a>
+            <a class="footer__social" href="https://vk.ru/club241215610" target="_blank" rel="noopener noreferrer" aria-label="ВКонтакте">
+              <svg viewBox="0 0 576 512" fill="currentColor"><path d="M545 117.7c3.7-12.5 0-21.7-17.8-21.7h-58.9c-15 0-21.9 7.9-25.6 16.7 0 0-30 73.1-72.4 120.5-13.7 13.7-20 18.1-27.5 18.1-3.7 0-9.4-4.4-9.4-16.9V117.7c0-15-4.2-21.7-16.6-21.7h-92.6c-9.4 0-15 7-15 13.5 0 14.2 21.2 17.5 23.4 57.5v86.8c0 19-3.4 22.5-10.9 22.5-20 0-68.6-73.4-97.4-157.4-5.8-16.3-11.5-22.9-26.6-22.9H38.8c-16.8 0-20.2 7.9-20.2 16.7 0 15.6 20 93.1 93.1 195.5C160.4 378.1 229 416 291.4 416c37.5 0 42.1-8.4 42.1-22.9 0-66.8-3.4-73.1 15.4-73.1 8.7 0 23.7 4.4 58.7 38.1 40 40 46.6 57.9 69 57.9h58.9c16.8 0 25.3-8.4 20.4-25-11.2-34.9-86.9-106.7-90.3-111.5-8.7-11.2-6.2-16.2 0-26.2.1-.1 72-101.3 79.4-135.6z"/></svg>
+            </a>
+            <a class="footer__social" href="https://www.tiktok.com/@lex_prep5" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer__col">
+          <h4>Навигация</h4>
+          <a href="app.html">Тренажёр</a>
+          <a href="index.html#articles">Статьи</a>
+          <a href="index.html#pricing">Тарифы</a>
+          <a href="support.html">Поддержка</a>
+        </div>
+        <div class="footer__col">
+          <h4>Контакты</h4>
+          <a href="index.html#feedback">Обратная связь</a>
+          <a href="mailto:hello@lexprep.ru">hello@lexprep.ru</a>
+        </div>
+        <div class="footer__col">
+          <h4>Документы</h4>
+          <a href="legal.html#terms">Пользовательское соглашение</a>
+          <a href="legal.html#privacy">Политика конфиденциальности</a>
+          <a href="legal.html#offer">Публичная оферта</a>
+          <a href="legal.html#rules">Правила дуэлей и турниров</a>
+        </div>
+      </div>
+      <div class="container footer__bottom">
+        <p>© 2026 LexPrep. Все права защищены.</p>
+      </div>
+    </footer>
+
+    <div class="modal-overlay" id="docModalOverlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="docModalTitle">
+        <div class="modal__head">
+          <h3 class="modal__title" id="docModalTitle">Документ</h3>
+          <button class="modal__close" type="button" id="docModalClose" aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="modal__body" id="docModalBody"></div>
+      </div>
+    </div>
+
+    <script src="validation.js?v=20260831160000"></script>
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="plan.js?v=20260903180000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="content-loader.js?v=20260831160000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="legal-docs.js?v=20260901000000"></script>
+    <script src="profile.js?v=20260903180000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
+  </body>
+</html>
