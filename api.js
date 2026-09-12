@@ -7,8 +7,8 @@ supabase/profiles.sql — этот скрипт нужно один раз вы�
 по-прежнему живут в localStorage и сюда пока не переехали.
 ========================================================================== */
 
-const SUPABASE_URL = 'https://yupoqkkxedkmhkpqivwa.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_nAk1Res337ENtZ8FRSTELQ__uUDY31o';
+const SUPABASE_URL = 'https://api.lexprep.ru';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg5MDYxNTk5LCJleHAiOjIxMDQ0MjE1OTl9.G72bJtIoEejCMnqrSZQHTKy74AcCBekpfIMLw3vuRC0';
 
 const DUEL_ERROR_MESSAGES = {
   challenge_not_found: 'Этот вызов уже недоступен — возможно, его отменили.',
