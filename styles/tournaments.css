@@ -1,0 +1,167 @@
+/* ==========================================================================
+TOURNAMENTS.CSS — список турниров и сетка раундов. Строится поверх exam.css
+и duel.css (переиспользует .duel-vs, .question/.answers, .duel-round-result).
+========================================================================== */
+
+.tourney-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.tourney-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tourney-card__title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f5f7ff;
+}
+
+.tourney-card__desc {
+  font-size: 13px;
+  color: #9ca8cb;
+  line-height: 1.5;
+}
+
+.tourney-card__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #c7d0f5;
+}
+
+.tourney-card__btn {
+  margin-top: 6px;
+}
+
+/* ---------------- Bracket ---------------- */
+.tourney-bracket {
+  margin-bottom: 22px;
+}
+
+.tourney-bracket__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #9ca8cb;
+  margin-bottom: 10px;
+}
+
+.tourney-bracket__rounds {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tourney-round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 110px;
+}
+
+.tourney-round__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5c6486;
+}
+
+.tourney-round__label {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #d3d8ee;
+}
+
+.tourney-round__bot {
+  font-size: 11px;
+  color: #7985ab;
+}
+
+.tourney-round__arrow {
+  color: #5c6486;
+  font-size: 14px;
+}
+
+.tourney-round--current {
+  border-color: rgba(111, 135, 255, 0.4);
+  background: rgba(111, 135, 255, 0.1);
+}
+
+.tourney-round--current .tourney-round__dot {
+  background: #6f87ff;
+}
+
+.tourney-round--win .tourney-round__dot {
+  background: #33c17a;
+}
+
+.tourney-round--loss .tourney-round__dot {
+  background: #e14d4d;
+}
+
+/* ---------------- Light theme ---------------- */
+[data-theme="light"] .tourney-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .tourney-card__title {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .tourney-card__desc {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .tourney-card__meta {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .tourney-bracket__title {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .tourney-round {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .tourney-round__label {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .tourney-round__bot {
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .tourney-round--current {
+  background: var(--color-primary-light);
+  border-color: rgba(61, 90, 254, 0.3);
+}
+
+@media (max-width: 620px) {
+  .tourney-bracket__rounds {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tourney-round__arrow {
+    display: none;
+  }
+}

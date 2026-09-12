@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Поддержка</title>
+    <meta
+      name="description"
+      content="Поддержка LexPrep: напиши в свободной форме, если что-то не работает или остались вопросы."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/community.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
+            <li><a href="duel.html" class="nav__link">Дуэли</a></li>
+            <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="community-page">
+      <section class="community-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Поддержка</div>
+          <h1 class="page-title">Поддержка</h1>
+          <p class="topic-desc">
+            Напиши, если что-то не работает, не грузится или есть вопрос по аккаунту, подписке, монетам — ответим здесь же,
+            в этой странице появится ответ рядом с обращением.
+          </p>
+
+          <div class="community-guest" data-auth="guest">
+            <p>Чтобы написать в поддержку, сначала войди в аккаунт.</p>
+            <a href="auth.html#login" class="btn btn--primary">Войти</a>
+          </div>
+
+          <div data-auth="user">
+            <form class="community-form" id="ticketForm">
+              <label class="community-form__field">
+                <span>Тема</span>
+                <input type="text" id="ticketSubject" maxlength="120" placeholder="Коротко, о чём вопрос" required />
+              </label>
+              <label class="community-form__field">
+                <span>Сообщение</span>
+                <textarea id="ticketMessage" rows="5" maxlength="4000" placeholder="Опиши подробнее, что случилось" required></textarea>
+              </label>
+              <div class="community-form__row">
+                <button type="submit" class="btn btn--primary" id="ticketSubmit">Отправить</button>
+                <span class="community-form__status" id="ticketFormStatus"></span>
+              </div>
+            </form>
+
+            <h2 class="community-subtitle">Мои обращения</h2>
+            <div class="community-list" id="ticketList">
+              <p class="community-empty">Загрузка…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="support.js?v=20260831160000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
+  </body>
+</html>

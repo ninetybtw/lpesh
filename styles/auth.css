@@ -159,7 +159,7 @@ AUTH.CSS — страница входа/регистрации (положит�
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
-  background: var(--color-white);
+  background-color: var(--color-white);
   font-family: inherit;
   font-size: 14.5px;
   color: var(--color-text);
@@ -227,6 +227,62 @@ AUTH.CSS — страница входа/регистрации (положит�
 }
 .auth-success.is-visible {
   display: flex;
+}
+
+.auth-success p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-success__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.auth-error {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(225, 77, 77, 0.1);
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  color: #e5484d;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.password-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+
+.password-rules__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: color var(--transition);
+}
+
+.password-rules__item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity var(--transition), color var(--transition);
+}
+
+.password-rules__item.is-met {
+  color: var(--color-success);
+}
+
+.password-rules__item.is-met svg {
+  opacity: 1;
 }
 
 @media (max-width: 860px) {

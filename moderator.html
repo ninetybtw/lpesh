@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Модерация</title>
+    <meta name="description" content="Панель модератора LexPrep: модерация тестов и статей, поддержка пользователей." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/admin.css" />
+    <link rel="stylesheet" href="./styles/community.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="profile.html" class="nav__link">Профиль</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-page">
+      <section class="admin-shell">
+        <div class="container">
+          <div class="eyebrow">LexPrep / Модерация</div>
+          <h1 class="page-title">Панель модератора</h1>
+          <p class="topic-desc">
+            Модерация пользовательских тестов и статей, поддержка пользователей и предложения.
+            Тарифы подписки и удаление аккаунтов модератору недоступны — этим занимается администратор.
+          </p>
+
+          <div id="modGuard" hidden>
+            <p class="admin-denied">Эта страница только для модераторов и администраторов.</p>
+          </div>
+
+          <div id="modContent" hidden>
+            <div class="admin-tabs">
+              <button type="button" class="admin-tab is-active" data-mod-tab="tests">Тесты <span id="modTestsPendingCount"></span></button>
+              <button type="button" class="admin-tab" data-mod-tab="articles">Статьи <span id="modArticlesPendingCount"></span></button>
+              <button type="button" class="admin-tab" data-mod-tab="users">Пользователи</button>
+              <button type="button" class="admin-tab" data-mod-tab="support">Поддержка <span id="modTicketsOpenCount"></span></button>
+              <button type="button" class="admin-tab" data-mod-tab="feedback">Обратная связь <span id="modFeedbackNewCount"></span></button>
+              <button type="button" class="admin-tab" data-mod-tab="suggestions">Предложения</button>
+            </div>
+
+            <div class="admin-tab-panel is-active" data-mod-panel="tests">
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="modTestsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="modTestsList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-mod-panel="articles" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="modArticlesRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="modArticlesList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-mod-panel="users" hidden>
+              <div class="admin-toolbar">
+                <input type="search" id="modUserSearch" class="form-input admin-search" placeholder="Поиск по имени или email..." />
+                <button class="btn btn--outline" type="button" id="modUsersRefreshBtn">Обновить</button>
+                <span class="admin-toolbar__count" id="modUserCount"></span>
+              </div>
+
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Пользователь</th>
+                      <th title="Только сумма, начисленная админом/модератором вручную — не путать с полным балансом монет пользователя в магазине, который также учитывает заработанные в тренажёре и уже потраченные">Начислено вручную ⓘ</th>
+                      <th>Статус</th>
+                      <th>Регистрация</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modUsersBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="admin-tab-panel" data-mod-panel="support" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="modTicketsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="modTicketsList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-mod-panel="feedback" hidden>
+              <p class="admin-scope-note">
+                Обращения из формы «Обратная связь» на главной странице — их оставляют в том числе гости без аккаунта.
+              </p>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="modFeedbackRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="modFeedbackList"></div>
+            </div>
+
+            <div class="admin-tab-panel" data-mod-panel="suggestions" hidden>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="modSuggestionsRefreshBtn">Обновить</button>
+              </div>
+              <div class="community-list" id="modSuggestionsList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="content-loader.js?v=20260831160000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="moderator.js?v=20260903120000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
+  </body>
+</html>

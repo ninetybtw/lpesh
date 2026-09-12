@@ -27,6 +27,8 @@
 
   --container-width: 1160px;
   --transition: 0.25s ease;
+
+  color-scheme: light;
 }
 
 [data-theme="dark"] {
@@ -41,6 +43,8 @@
   --color-border: #2a2e3d;
   --color-white: #1b1e29;
   --color-success: #2fd98a;
+
+  color-scheme: dark;
 }
 
 body,

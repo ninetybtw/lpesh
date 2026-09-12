@@ -2,6 +2,11 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (function () {
@@ -31,16 +36,15 @@
   <body>
     <!-- HEADER -->
     <header class="header" id="header">
-      <div class="container header__inner">
+      <div class="container header__inner header__inner--centered">
         <a href="#" class="logo">
-          <span class="logo__icon"></span>
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
           <span class="logo__text">LexPrep</span>
         </a>
 
         <nav class="nav" id="nav">
           <ul class="nav__list">
             <li><a href="#features" class="nav__link">Возможности</a></li>
-            <li><a href="#demo" class="nav__link">Демо</a></li>
             <li><a href="#how" class="nav__link">Как это работает</a></li>
             <li><a href="#articles" class="nav__link">Статьи</a></li>
             <li><a href="#pricing" class="nav__link">Тарифы</a></li>
@@ -49,7 +53,10 @@
         </nav>
 
         <div class="header__actions">
-          <a href="#pricing" class="btn btn--ghost" data-auth="guest">Тарифы</a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
           <a href="auth.html#login" class="btn btn--outline" data-auth="guest"
             >Войти</a
           >
@@ -67,51 +74,25 @@
             </button>
 
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="#" class="profile-dropdown__item">Мой профиль</a>
-              <a href="#" class="profile-dropdown__item">Мои тесты</a>
-              <a href="#" class="profile-dropdown__item">Прогресс</a>
-              <a href="#" class="profile-dropdown__item">Настройки</a>
-              <button
-                type="button"
-                class="profile-dropdown__item profile-dropdown__item--danger"
-                id="logoutBtn"
-              >
-                Выйти
-              </button>
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
           </div>
 
-          <button
-            class="theme-toggle"
-            id="themeToggle"
-            aria-label="Переключить тему"
-            aria-pressed="false"
-          >
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--sun"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path
-                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
-              />
-            </svg>
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--moon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
+          <button class="burger" id="burger" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileNav">
+            <span></span>
+            <span></span>
+            <span></span>
           </button>
         </div>
       </div>
@@ -121,16 +102,19 @@
     <div class="mobile-nav" id="mobileNav">
       <ul class="mobile-nav__list">
         <li><a href="#features" class="mobile-nav__link">Возможности</a></li>
-        <li><a href="#demo" class="mobile-nav__link">Демо</a></li>
         <li><a href="#how" class="mobile-nav__link">Как это работает</a></li>
         <li><a href="#articles" class="mobile-nav__link">Статьи</a></li>
         <li><a href="#pricing" class="mobile-nav__link">Тарифы</a></li>
         <li><a href="#faq" class="mobile-nav__link">FAQ</a></li>
         <!--  -->
       </ul>
-      <a href="auth.html#register" class="btn btn--primary btn--block"
-        >Начать бесплатно</a
-      >
+      <div class="mobile-nav__actions">
+        <a href="auth.html#login" class="btn btn--outline btn--block" data-auth="guest">Войти</a>
+        <a href="auth.html#register" class="btn btn--primary btn--block" data-auth="guest"
+          >Начать бесплатно</a
+        >
+        <a href="profile.html" class="btn btn--outline btn--block" data-auth="user">Мой профиль</a>
+      </div>
     </div>
 
     <main>
@@ -138,13 +122,13 @@
       <section class="hero">
         <div class="container hero__inner">
           <div class="hero__content reveal">
-            <span class="badge">ИИ, который знает право</span>
+            <span class="badge">Приложение, которое готовит к экзамену по-настоящему</span>
             <h1 class="hero__title">
               Готовься к экзаменам так,<br />как удобно
               <span class="accent">именно тебе</span>
             </h1>
             <p class="hero__text">
-              Конспекты, судебная практика, ИИ-карточки и тесты — всё в одной
+              Конспекты, судебная практика, карточки и тесты — всё в одной
               навигации, похожей на привычные маркетплейсы. Выбираешь отрасль
               права → предмет → тему.
             </p>
@@ -159,7 +143,7 @@
             </div>
             <div class="hero__stats">
               <div class="stat">
-                <span class="stat__num">12</span
+                <span class="stat__num" id="statDisciplines">7</span
                 ><span class="stat__label">отраслей права</span>
               </div>
               <div class="stat">
@@ -167,7 +151,7 @@
                 ><span class="stat__label">тарифа</span>
               </div>
               <div class="stat">
-                <span class="stat__num">247</span
+                <span class="stat__num" id="statTopics">512</span
                 ><span class="stat__label">тем в базе</span>
               </div>
             </div>
@@ -180,16 +164,38 @@
                 ><span class="dot dot--green"></span>
               </div>
               <div class="mock-card__body">
-                <div class="mock-line mock-line--title"></div>
-                <div class="mock-line"></div>
-                <div class="mock-line mock-line--short"></div>
+                <div class="mock-info mock-info--enter" id="mockInfo">
+                  <div class="mock-info__title">Конспект</div>
+                  <p class="mock-info__desc">
+                    Разбор темы простым языком с примерами и судебной практикой —
+                    быстро войти в тему перед семинаром.
+                  </p>
+                </div>
                 <div class="mock-chip-row">
-                  <span class="mock-chip mock-chip--active" data-progress="62"
+                  <span
+                    class="mock-chip mock-chip--active"
+                    data-progress="62"
+                    data-desc="Разбор темы простым языком с примерами и судебной практикой — быстро войти в тему перед семинаром."
                     >Конспект</span
                   >
-                  <span class="mock-chip" data-progress="35">Карточки</span>
-                  <span class="mock-chip" data-progress="90">Тест</span>
-                  <span class="mock-chip" data-progress="48">Практика</span>
+                  <span
+                    class="mock-chip"
+                    data-progress="35"
+                    data-desc="ИИ подбирает карточки под твой уровень и повторяет их по интервалам — сложное не забывается, а простое не отнимает время."
+                    >Карточки</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="90"
+                    data-desc="Проверка знаний с разбором каждого ответа — сразу видно, что подтянуть перед семинаром или экзаменом."
+                    >Тест</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="48"
+                    data-desc="Судебные кейсы и практические задачи по теме — учишься применять норму, а не только запоминать её."
+                    >Практика</span
+                  >
                 </div>
                 <div class="mock-progress">
                   <div class="mock-progress__bar"></div>
@@ -277,47 +283,6 @@
         </div>
       </section>
 
-      <!-- DEMO NAVIGATION -->
-      <section class="section section--alt" id="demo">
-        <div class="container">
-          <div class="section__head reveal">
-            <span class="eyebrow">Демо</span>
-            <h2 class="section__title">Попробуй навигацию прямо здесь</h2>
-            <p class="section__subtitle">
-              Выбери отрасль права слева, затем предмет — так же, как в
-              приложении.
-            </p>
-          </div>
-          <div class="demo reveal">
-            <aside class="demo__categories" id="demoCategories">
-              <button class="demo__category is-active" data-category="civil">
-                Гражданское право
-              </button>
-              <button class="demo__category" data-category="ip">
-                Интеллектуальная собственность
-              </button>
-              <button class="demo__category" data-category="constitutional">
-                Конституционное право
-              </button>
-              <button class="demo__category" data-category="criminal">
-                Уголовный процесс
-              </button>
-              <button class="demo__category" data-category="international">
-                Международное право
-              </button>
-            </aside>
-            <div class="demo__subjects" id="demoSubjects">
-              <!-- script.js -->
-            </div>
-            <div class="demo__topic" id="demoTopic">
-              <p class="demo__topic-placeholder">
-                Выберите предмет, чтобы увидеть темы и наполнение
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- HOW IT WORKS -->
       <section class="section" id="how">
         <div class="container">
@@ -377,7 +342,7 @@
             </div>
             <div class="articles__head-actions">
               <a href="article.html" class="btn btn--outline">Все статьи</a>
-              <a href="#cta" class="btn btn--primary">Написать статью</a>
+              <a href="write-article.html" class="btn btn--primary">Написать статью</a>
             </div>
           </div>
           <div class="grid grid--3">
@@ -448,7 +413,7 @@
           </div>
           <div class="articles__cta reveal">
             <p>Есть чем поделиться с другими студентами?</p>
-            <a href="#cta" class="btn btn--primary">Опубликовать свою статью</a>
+            <a href="write-article.html" class="btn btn--primary">Опубликовать свою статью</a>
           </div>
         </div>
       </section>
@@ -466,35 +431,46 @@
           <div class="grid grid--3 pricing">
             <div class="price-card reveal">
               <h3 class="price-card__name">Базовый</h3>
-              <div class="price-card__price">500 ₽<span>/мес</span></div>
+              <div class="price-card__price">Бесплатно</div>
               <ul class="price-card__list">
-                <li>Конспекты по всем предметам</li>
-                <li>Ограниченные тесты редакции</li>
-                <li>Навигация по темам</li>
-                <li>Поддержка по email</li>
+                <li>Конспект — 1 предмет полностью, у остальных только оглавление</li>
+                <li>Карточки — 10–15 повторений в день</li>
+                <li>Тесты — 1 попытка в день, без разбора ответов</li>
+                <li>Без ИИ-консультанта, дуэлей и турниров, с рекламой партнёров</li>
+                <li>Нельзя публиковать свои тесты и статьи</li>
               </ul>
-              <a href="#cta" class="btn btn--outline btn--block">Выбрать</a>
+              <p class="price-card__note">Доступен сразу после регистрации — оформлять ничего не нужно</p>
             </div>
             <div class="price-card price-card--featured reveal">
               <span class="price-card__badge">Популярный</span>
               <h3 class="price-card__name">Про</h3>
-              <div class="price-card__price">700 ₽<span>/мес</span></div>
+              <div class="price-card__price">600 ₽<span>/мес</span></div>
+              <p class="price-card__annual">При оплате за 12 месяцев — 5040 ₽/год (420 ₽/мес)</p>
               <ul class="price-card__list">
-                <li>Всё из Базового</li>
-                <li>Безлимитные ИИ-карточки</li>
-                <li>Офлайн-режим</li>
+                <li>Все конспекты и карточки без ограничений</li>
+                <li>Карточки — полная колода, интервальное повторение</li>
+                <li>Тесты — 3–5 попыток в день с разбором ответов</li>
+                <li>Пробный экзамен — 3 попытки в месяц</li>
+                <li>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
+                <li>Дуэли — 3 в день, турниры — 1 открытый в месяц, без взноса</li>
                 <li>Без рекламы</li>
+                <li>При оплате за 12 месяцев — продвинутый ИИ-консультант с загрузкой файлов</li>
               </ul>
               <a href="#cta" class="btn btn--primary btn--block">Выбрать</a>
             </div>
             <div class="price-card reveal">
               <h3 class="price-card__name">Максимум</h3>
-              <div class="price-card__price">1500 ₽<span>/мес</span></div>
+              <div class="price-card__price">1000 ₽<span>/мес</span></div>
+              <p class="price-card__annual">При оплате за 12 месяцев — 9600 ₽/год (800 ₽/мес)</p>
               <ul class="price-card__list">
                 <li>Всё из Про</li>
-                <li>Персональный ИИ-тьютор</li>
-                <li>Приоритетная поддержка</li>
-                <li>Экспорт в Word/PDF</li>
+                <li>ИИ-консультант — 25–40 запросов в день</li>
+                <li>Проверка эссе — 20 в месяц</li>
+                <li>Офлайн-режим для всех материалов</li>
+                <li>Возможность скачивания PDF-конспектов</li>
+                <li>Безлимит: пробные экзамены, дуэли</li>
+                <li>Турниры — до 5 участий в месяц, без взноса</li>
+                <li>При оплате за 12 месяцев — продвинутый ИИ-консультант с загрузкой файлов</li>
               </ul>
               <a href="#cta" class="btn btn--outline btn--block">Выбрать</a>
             </div>
@@ -512,41 +488,89 @@
           <div class="accordion reveal" id="accordion">
             <div class="accordion__item">
               <button class="accordion__trigger">
-                Можно ли заниматься офлайн?<span class="accordion__icon"
+                Какие дисциплины сейчас доступны?<span class="accordion__icon"
                   >+</span
                 >
               </button>
               <div class="accordion__panel">
                 <p>
-                  Да, в тарифах Про и Максимум доступно скачивание материалов
-                  для работы без интернета.
+                  Сейчас в базе полностью — гражданское, уголовное и
+                  конституционное право: конспекты, тесты, карточки и разбор
+                  судебной практики по каждой теме. Остальные предметы
+                  добавляются постепенно.
                 </p>
               </div>
             </div>
             <div class="accordion__item">
               <button class="accordion__trigger">
-                Кто проверяет пользовательские тесты и карточки?<span
+                Чем отличаются тарифы?<span class="accordion__icon"
+                  >+</span
+                >
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Базовый даёт доступ к одному предмету и ограниченному числу
+                  попыток в тестах. Про открывает все предметы без
+                  ограничений, дуэли, турниры и ИИ-консультанта. Максимум
+                  добавляет офлайн-режим, безлимитные экзамены и расширенные
+                  лимиты на ИИ-консультанта. Подробное сравнение — в разделе
+                  «Тарифы» выше.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
+                Как работают дуэли и турниры?<span class="accordion__icon"
+                  >+</span
+                >
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Дуэль — это тест один на один с другим пользователем в
+                  реальном времени на одинаковых вопросах, турнир — та же
+                  механика, но сеткой на несколько участников. Число
+                  доступных дуэлей и турниров в день зависит от тарифа.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
+                Как работает ИИ-консультант?<span class="accordion__icon"
+                  >+</span
+                >
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Задаёшь вопрос по теме прямо на странице конспекта — ответ
+                  строится с опорой на материалы LexPrep. Число запросов в
+                  день ограничено тарифом.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
+                Кто проверяет пользовательские тесты и статьи?<span
                   class="accordion__icon"
                   >+</span
                 >
               </button>
               <div class="accordion__panel">
                 <p>
-                  Все пользовательские материалы проходят модерацию редакции
-                  перед публикацией в общей базе.
+                  Все пользовательские тесты и статьи блога проходят проверку
+                  редакции перед публикацией в общей базе.
                 </p>
               </div>
             </div>
             <div class="accordion__item">
               <button class="accordion__trigger">
-                Как получить бонусы за вклад?<span class="accordion__icon"
+                Можно ли заниматься офлайн?<span class="accordion__icon"
                   >+</span
                 >
               </button>
               <div class="accordion__panel">
                 <p>
-                  Отправь идею через форму на карточке темы. Если редакция
-                  одобрит правку, ты получишь бонусные дни подписки.
+                  Да, в тарифе Максимум доступно скачивание материалов для
+                  работы без интернета.
                 </p>
               </div>
             </div>
@@ -634,7 +658,7 @@
                   Отправить
                 </button>
                 <span class="feedback__success" id="feedbackSuccess"
-                  >✓ Спасибо, сообщение отправлено</span
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Спасибо, сообщение отправлено</span
                 >
               </div>
             </form>
@@ -648,17 +672,27 @@
       <div class="container footer__inner">
         <div class="footer__col">
           <a href="#" class="logo logo--footer"
-            ><span class="logo__icon"></span
-            ><span class="logo__text">LexPrep</span></a
+            ><img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep"
+            /><span class="logo__text">LexPrep</span></a
           >
           <p class="footer__text">
             Платформа подготовки к семинарам и экзаменам для студентов юрфака.
           </p>
+          <div class="footer__socials">
+            <a class="footer__social" href="https://t.me/lex_prep" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+              <svg viewBox="0 0 448 512" fill="currentColor"><path d="M446.7 98.6l-67.6 318.8c-5.1 22.5-18.4 28.1-37.3 17.5l-103-75.9-49.7 47.8c-5.5 5.5-10.1 10.1-20.7 10.1l7.4-104.9 190.9-172.5c8.3-7.4-1.8-11.5-12.9-4.1L117.8 284 16.2 252.2c-22.1-6.9-22.5-22.1 4.6-32.7L418.2 66.4c18.4-6.9 34.5 4.1 28.5 32.2z"/></svg>
+            </a>
+            <a class="footer__social" href="https://vk.ru/club241215610" target="_blank" rel="noopener noreferrer" aria-label="ВКонтакте">
+              <svg viewBox="0 0 576 512" fill="currentColor"><path d="M545 117.7c3.7-12.5 0-21.7-17.8-21.7h-58.9c-15 0-21.9 7.9-25.6 16.7 0 0-30 73.1-72.4 120.5-13.7 13.7-20 18.1-27.5 18.1-3.7 0-9.4-4.4-9.4-16.9V117.7c0-15-4.2-21.7-16.6-21.7h-92.6c-9.4 0-15 7-15 13.5 0 14.2 21.2 17.5 23.4 57.5v86.8c0 19-3.4 22.5-10.9 22.5-20 0-68.6-73.4-97.4-157.4-5.8-16.3-11.5-22.9-26.6-22.9H38.8c-16.8 0-20.2 7.9-20.2 16.7 0 15.6 20 93.1 93.1 195.5C160.4 378.1 229 416 291.4 416c37.5 0 42.1-8.4 42.1-22.9 0-66.8-3.4-73.1 15.4-73.1 8.7 0 23.7 4.4 58.7 38.1 40 40 46.6 57.9 69 57.9h58.9c16.8 0 25.3-8.4 20.4-25-11.2-34.9-86.9-106.7-90.3-111.5-8.7-11.2-6.2-16.2 0-26.2.1-.1 72-101.3 79.4-135.6z"/></svg>
+            </a>
+            <a class="footer__social" href="https://www.tiktok.com/@lex_prep5" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+            </a>
+          </div>
         </div>
         <div class="footer__col">
           <h4>Навигация</h4>
           <a href="#features">Возможности</a>
-          <a href="#demo">Демо</a>
           <a href="#articles">Статьи</a>
           <a href="#pricing">Тарифы</a>
           <a href="#faq">Вопросы</a>
@@ -668,12 +702,23 @@
           <a href="#feedback">Обратная связь</a>
           <a href="mailto:hello@lexprep.ru">hello@lexprep.ru</a>
         </div>
+        <div class="footer__col">
+          <h4>Документы</h4>
+          <a href="legal.html#terms">Пользовательское соглашение</a>
+          <a href="legal.html#privacy">Политика конфиденциальности</a>
+          <a href="legal.html#offer">Публичная оферта</a>
+          <a href="legal.html#rules">Правила дуэлей и турниров</a>
+        </div>
       </div>
       <div class="container footer__bottom">
         <p>© 2026 LexPrep. Все права защищены.</p>
       </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="validation.js?v=20260831160000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

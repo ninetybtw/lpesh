@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('.auth-tab');
   const panels = document.querySelectorAll('.auth-panel');
   const success = document.getElementById('authSuccess');
+  const successText = document.getElementById('authSuccessText');
 
   if (!tabs.length || !panels.length) return;
 
@@ -24,26 +25,93 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => switchTo(btn.dataset.switch));
   });
 
-  panels.forEach(panel => {
-    panel.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const isRegister = panel.dataset.panel === 'register';
+  const regPasswordInput = document.getElementById('regPassword');
+  const passwordRules = document.getElementById('passwordRules');
+  if (regPasswordInput && passwordRules) {
+    regPasswordInput.addEventListener('input', () => {
+      const status = getPasswordRuleStatus(regPasswordInput.value);
+      passwordRules.querySelectorAll('[data-rule]').forEach(item => {
+        item.classList.toggle('is-met', !!status[item.dataset.rule]);
+      });
+    });
+  }
 
-      if (isRegister) {
-        const password = document.getElementById('regPassword').value;
-        const passwordConfirm = document.getElementById('regPasswordConfirm').value;
-        if (password !== passwordConfirm) {
-          alert('Пароли не совпадают');
-          return;
-        }
+  const authError = document.getElementById('authError');
+  function showAuthError(message) {
+    if (!authError) { alert(message); return; }
+    authError.textContent = message;
+    authError.hidden = false;
+  }
+  function hideAuthError() {
+    if (authError) authError.hidden = true;
+  }
+
+  panels.forEach(panel => {
+    panel.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthError();
+      const isRegister = panel.dataset.panel === 'register';
+      const emailInput = document.getElementById(isRegister ? 'regEmail' : 'loginEmail');
+
+      if (!validateEmailField(emailInput)) {
+        emailInput.focus();
+        return;
       }
 
-      const name = isRegister
-        ? document.getElementById('regName').value
-        : document.getElementById('loginEmail').value.split('@')[0];
-      localStorage.setItem('lexprep_user', JSON.stringify({ name }));
-      if (success) success.classList.add('is-visible');
-      setTimeout(() => { window.location.href = 'index.html'; }, 900);
+      const email = emailInput.value.trim();
+      const submitBtn = panel.querySelector('button[type="submit"]');
+
+      if (isRegister) {
+        const passwordInput = document.getElementById('regPassword');
+        const password = passwordInput.value;
+        const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+
+        if (!isPasswordValid(password)) {
+          markFieldInvalid(passwordInput, 'Пароль не соответствует требованиям ниже.');
+          passwordInput.focus();
+          return;
+        }
+        clearFieldInvalid(passwordInput);
+
+        if (password !== passwordConfirm) {
+          showAuthError('Пароли не совпадают.');
+          return;
+        }
+
+        const name = document.getElementById('regName').value;
+        submitBtn.disabled = true;
+        try {
+          const result = await LexPrepApi.register({ name, email, password });
+          if (result.pendingConfirmation) {
+            if (successText) successText.textContent = `Осталось подтвердить email — мы отправили ссылку на ${result.email}.`;
+            if (success) success.classList.add('is-visible');
+            panel.reset();
+          } else {
+            localStorage.setItem('lexprep_user', JSON.stringify(result.user));
+            if (successText) successText.textContent = 'Готово, входим…';
+            if (success) success.classList.add('is-visible');
+            setTimeout(() => { window.location.href = 'index.html'; }, 900);
+          }
+        } catch (err) {
+          showAuthError(err.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      } else {
+        const password = document.getElementById('loginPassword').value;
+        submitBtn.disabled = true;
+        try {
+          const user = await LexPrepApi.login({ email, password });
+          localStorage.setItem('lexprep_user', JSON.stringify(user));
+          if (successText) successText.textContent = 'Готово, входим…';
+          if (success) success.classList.add('is-visible');
+          setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        } catch (err) {
+          showAuthError(err.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
     });
   });
 

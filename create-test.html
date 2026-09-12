@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Создать тест</title>
+    <meta
+      name="description"
+      content="Собери собственный тест по теме и опубликуй его для других студентов LexPrep."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/global.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/write-article.css" />
+    <link rel="stylesheet" href="./styles/create-test.css" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__name" id="profileName">Профиль</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="write-page">
+      <section class="write-shell">
+        <div class="container container--narrow">
+          <div class="eyebrow">LexPrep / Новый тест</div>
+          <h1 class="write-title">Создать тест</h1>
+          <p class="topic-desc">
+            Выбери дисциплину и тему, добавь минимум 3 вопроса — после отправки тест уйдёт на проверку модератору
+            и появится во вкладке «Тесты» этой темы у всех, как только будет одобрен.
+          </p>
+
+          <div id="ctBasicGuard" class="tier-guard-notice" hidden>
+            Создание тестов доступно с тарифа «Про» — на «Базовом» можно решать тесты, но не публиковать свои.
+            <a href="index.html#pricing" class="btn btn--primary" style="margin-top:12px">Оформить подписку</a>
+          </div>
+
+          <div id="ctFormWrap">
+          <div class="write-author">
+            <span class="write-author__avatar" id="authorAvatar">U</span>
+            <div>
+              <div class="write-author__name" id="authorName">Профиль</div>
+              <div class="write-author__hint">Тест будет опубликован от твоего имени, с указанием текущего уровня, после проверки модератором</div>
+            </div>
+          </div>
+
+          <form class="profile-card profile-form" id="ctForm">
+            <div class="form-group">
+              <label for="ctDiscipline">Дисциплина</label>
+              <select class="form-input" id="ctDiscipline" required></select>
+            </div>
+            <div class="form-group">
+              <label for="ctTopic">Тема</label>
+              <select class="form-input" id="ctTopic" required></select>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="ctTitle">Название теста</label>
+              <input class="form-input" type="text" id="ctTitle" placeholder="Например: Проверь себя перед семинаром" required />
+            </div>
+
+            <div class="form-group form-group--full">
+              <div class="qb-head">
+                <label>Вопросы</label>
+                <button type="button" class="btn btn--outline" id="ctAddQuestion">+ Добавить вопрос</button>
+              </div>
+              <div id="ctQuestions"></div>
+            </div>
+
+            <div class="profile-form__submit-row form-group--full">
+              <button type="submit" class="btn btn--primary btn--lg">Отправить на модерацию</button>
+              <a href="app.html" class="btn btn--ghost">Отмена</a>
+            </div>
+          </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="validation.js?v=20260831160000"></script>
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="plan.js?v=20260903180000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="content-loader.js?v=20260831160000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="create-test.js?v=20260831160000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
+  </body>
+</html>

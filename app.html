@@ -1,7 +1,19 @@
 <!doctype html>
 <html lang="ru">
   <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LexPrep — Учебная программа</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,28 +27,29 @@
   </head>
   <body>
     <header class="header" id="header">
-      <div class="container header__inner">
+      <div class="container header__inner header__inner--centered">
         <a href="index.html" class="logo">
-          <span class="logo__icon"></span>
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
           <span class="logo__text">LexPrep</span>
         </a>
 
         <nav class="nav" id="nav">
           <ul class="nav__list">
-            <li>
-              <a href="index.html#features" class="nav__link">Возможности</a>
-            </li>
-            <li><a href="index.html#demo" class="nav__link">Демо</a></li>
-            <li>
-              <a href="index.html#how" class="nav__link">Как это работает</a>
-            </li>
+            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
             <li><a href="index.html#articles" class="nav__link">Статьи</a></li>
-            <li><a href="index.html#pricing" class="nav__link">Тарифы</a></li>
             <li><a href="index.html#faq" class="nav__link">FAQ</a></li>
           </ul>
         </nav>
 
         <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
           <a href="index.html" class="btn btn--ghost">На главную</a>
 
           <div class="profile-menu" id="profileMenu">
@@ -45,50 +58,20 @@
               <span class="profile-btn__name" id="profileName">Профиль</span>
             </button>
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="#" class="profile-dropdown__item">Мой профиль</a>
-              <a href="#" class="profile-dropdown__item">Мои тесты</a>
-              <button
-                type="button"
-                class="profile-dropdown__item profile-dropdown__item--danger"
-                id="logoutBtn"
-              >
-                Выйти
-              </button>
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
           </div>
-
-          <button
-            class="theme-toggle"
-            id="themeToggle"
-            aria-label="Переключить тему"
-            aria-pressed="false"
-          >
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--sun"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path
-                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
-              />
-            </svg>
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--moon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          </button>
         </div>
       </div>
     </header>
@@ -96,28 +79,71 @@
     <main class="app-page">
       <section class="app-shell">
         <div class="container">
-          <div class="app">
-            <aside class="panel">
-              <div class="panel__head">
-                <div class="panel__title">Дисциплины</div>
-                <div class="panel__subtitle">
-                  Выбери предмет и тему для подготовки
-                </div>
-              </div>
-              <div class="catalog" id="disciplineList"></div>
-            </aside>
+          <div class="app-toolbar">
+            <div class="app-search">
+              <span class="app-search__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.35-4.35"/></svg>
+              </span>
+              <input type="search" id="topicSearch" class="app-search__input" placeholder="Найти тему по всем дисциплинам..." autocomplete="off" />
+              <div class="app-search__results" id="searchResults" hidden></div>
+            </div>
+            <a href="exam.html" class="btn btn--primary app-toolbar__exam">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
+              Пробный экзамен
+            </a>
+            <a href="duel.html" class="btn btn--outline app-toolbar__exam">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/></svg>
+              Дуэли
+            </a>
+            <a href="tournaments.html" class="btn btn--outline app-toolbar__exam">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>
+              Турниры
+            </a>
+          </div>
 
-            <aside class="panel">
-              <div class="panel__head">
-                <div class="panel__title">Темы</div>
-                <div class="panel__subtitle">
-                  Структура внутри выбранной дисциплины
-                </div>
+          <div class="gamify-bar" id="gamifyBar">
+            <div class="gamify-bar__level" id="gamifyLevel">
+              <img class="gamify-bar__rank-icon" id="gamifyRankIcon" src="assets/badges/themis-standard.svg" alt="Значок ранга" />
+              <span class="gamify-bar__level-num">1</span>
+            </div>
+            <div class="gamify-bar__main">
+              <div class="gamify-bar__top">
+                <span class="gamify-bar__title" id="gamifyTitle">Новичок</span>
+                <span class="gamify-bar__xp" id="gamifyXp">0 XP</span>
               </div>
-              <div class="topics" id="topicList"></div>
-            </aside>
+              <div class="gamify-bar__track">
+                <div class="gamify-bar__fill" id="gamifyFill" style="width: 0%"></div>
+              </div>
+            </div>
+            <button class="gamify-bar__badges-toggle" type="button" id="gamifyBadgesToggle">
+              Достижения
+              <span class="gamify-bar__badges-count" id="gamifyBadgesCount">0/40</span>
+            </button>
+            <div class="gamify-badges" id="gamifyBadges" hidden></div>
+          </div>
 
-            <section class="panel content">
+          <div class="app" id="appLayout">
+            <div class="app-selectors">
+              <div class="app-select" data-app-select="discipline">
+                <span class="app-select__label">Дисциплина</span>
+                <button type="button" class="app-select__btn" id="disciplineSelectBtn">
+                  <span class="app-select__value" id="disciplineSelectValue">—</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="app-select__menu" id="disciplineSelectMenu" hidden></div>
+              </div>
+
+              <div class="app-select" data-app-select="topic">
+                <span class="app-select__label">Тема</span>
+                <button type="button" class="app-select__btn" id="topicSelectBtn">
+                  <span class="app-select__value" id="topicSelectValue">—</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="app-select__menu" id="topicSelectMenu" hidden></div>
+              </div>
+            </div>
+
+            <section class="panel content" id="contentPanel">
               <div class="content__scroll" id="contentView"></div>
             </section>
           </div>
@@ -125,7 +151,51 @@
       </section>
     </main>
 
-    <script src="script.js"></script>
-    <script src="app.js"></script>
+    <div class="ai-chat" id="aiChat">
+      <div class="ai-chat__panel" id="aiChatPanel" hidden>
+        <div class="ai-chat__head">
+          <div class="ai-chat__head-title">
+            <span class="ai-chat__badge" id="aiChatBadge">ИИ</span>
+            <span id="aiChatTitle">ИИ-консультант</span>
+          </div>
+          <button class="ai-chat__close" type="button" id="aiChatClose" aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="ai-chat__body" id="aiChatBody">
+          <div class="ai-chat__msg ai-chat__msg--bot">
+            Привет! Спроси что-нибудь по теме подготовки. Доступно на тарифах «Про» и «Максимум», с дневным лимитом запросов.
+          </div>
+        </div>
+        <form class="ai-chat__form" id="aiChatForm">
+          <button class="ai-chat__attach" type="button" id="aiChatAttachBtn" title="Прикрепить файл" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a1.5 1.5 0 0 1-2.12-2.12l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="aiChatFileInput" hidden />
+          <input class="ai-chat__input" id="aiChatInput" type="text" placeholder="Спроси что-нибудь по теме..." autocomplete="off" />
+          <button class="ai-chat__send" type="submit" aria-label="Отправить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </form>
+        <div class="ai-chat__attachment" id="aiChatAttachment" hidden></div>
+      </div>
+      <button class="ai-chat__toggle" type="button" id="aiChatToggle" aria-label="Открыть ИИ-консультанта">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span id="aiChatToggleText">ИИ-консультант</span>
+      </button>
+    </div>
+
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260831160000"></script>
+    <script src="plan.js?v=20260903180000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260903180000"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="vendor/roboto-fonts.js"></script>
+    <script src="content-loader.js?v=20260831160000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="app.js?v=20260903180000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>
