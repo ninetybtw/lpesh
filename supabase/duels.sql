@@ -41,6 +41,18 @@ create table if not exists public.pvp_duels (
   constraint pvp_duels_opponent_not_challenger check (opponent_id is distinct from challenger_id)
 );
 
+-- Синхронный старт: оба игрока жмут "Готов", и как только готовы оба —
+-- started_at фиксируется один раз (см. duel_accept_challenge ниже) — от
+-- него оба клиента независимо считают текущий вопрос и обратный отсчёт
+-- (elapsed = now() - started_at; questionIndex = floor(elapsed /
+-- seconds_per_question)), поэтому обоим показывается один и тот же
+-- вопрос в одно и то же время без отдельного realtime-канала.
+alter table public.pvp_duels
+  add column if not exists challenger_ready boolean not null default false,
+  add column if not exists opponent_ready boolean not null default false,
+  add column if not exists started_at timestamptz,
+  add column if not exists seconds_per_question integer not null default 20;
+
 alter table public.pvp_duels enable row level security;
 
 drop policy if exists "View own or open duels" on public.pvp_duels;
@@ -96,6 +108,10 @@ begin
     new.opponent_rating_before := old.opponent_rating_before;
     new.challenger_rating_delta := old.challenger_rating_delta;
     new.opponent_rating_delta := old.opponent_rating_delta;
+    new.challenger_ready := old.challenger_ready;
+    new.opponent_ready := old.opponent_ready;
+    new.started_at := old.started_at;
+    new.seconds_per_question := old.seconds_per_question;
     new.created_at := old.created_at;
     new.completed_at := old.completed_at;
     return new;
@@ -190,6 +206,50 @@ begin
       opponent_rating_before = coalesce(v_opponent_rating, 1000)
   where id = p_challenge_id
   returning * into v_row;
+
+  return v_row;
+end;
+$$;
+
+-- ---------------------------------------------------------------------
+-- Отметиться готовым к синхронному старту. Как только готовы оба —
+-- фиксирует started_at ровно один раз (проверка "started_at is null"
+-- защищает от повторной установки, если оба вызовут RPC почти
+-- одновременно).
+
+create or replace function public.duel_mark_ready(p_challenge_id uuid)
+returns public.pvp_duels
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_row public.pvp_duels;
+begin
+  if auth.uid() is null then
+    raise exception 'not_authenticated';
+  end if;
+
+  select * into v_row from public.pvp_duels where id = p_challenge_id for update;
+  if not found then
+    raise exception 'challenge_not_found';
+  end if;
+  if v_row.status <> 'accepted' then
+    raise exception 'challenge_not_active';
+  end if;
+
+  perform set_config('lexprep.trusted_rpc', 'true', true);
+  if auth.uid() = v_row.challenger_id then
+    update public.pvp_duels set challenger_ready = true where id = p_challenge_id returning * into v_row;
+  elsif auth.uid() = v_row.opponent_id then
+    update public.pvp_duels set opponent_ready = true where id = p_challenge_id returning * into v_row;
+  else
+    raise exception 'not_a_participant';
+  end if;
+
+  if v_row.challenger_ready and v_row.opponent_ready and v_row.started_at is null then
+    perform set_config('lexprep.trusted_rpc', 'true', true);
+    update public.pvp_duels set started_at = now() where id = p_challenge_id returning * into v_row;
+  end if;
 
   return v_row;
 end;

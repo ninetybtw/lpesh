@@ -262,7 +262,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    /* ---------------- Battle (соло-прохождение) ---------------- */
+    /* ---------------- Battle (синхронный старт, общий таймер на вопрос) ----------------
+       Оба игрока жмут "Готов" (duel_mark_ready) — как только готовы оба,
+       сервер фиксирует started_at один раз для обоих. Дальше каждый
+       клиент независимо считает текущий вопрос и остаток времени по
+       формуле elapsed = Date.now() - startedAt — без обмена сообщениями
+       оба видят один и тот же вопрос в одно и то же время. Вопрос
+       переключается по истечении времени НЕЗАВИСИМО от того, ответил
+       игрок или нет (как в Kahoot) — если не успел, засчитывается как
+       неверный. */
     const pvpViews = document.querySelectorAll('[data-pvp-view]');
     function showPvpView(name) {
       pvpViews.forEach(v => { v.hidden = v.dataset.pvpView !== name; });
@@ -270,37 +278,145 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let battleDuel = null;
     let battleQuestions = [];
-    let battleIndex = 0;
     let battleScore = 0;
-    let battleAnswered = false;
+    let battleFinished = false;
+    let renderedIndex = -1;
+    let lockedIndex = -1;
     let battleChosen = [];
+    let readyPollTimer = null;
+    let battleTickTimer = null;
 
     const progressEl = document.getElementById('pvpProgress');
     const topicLabelEl = document.getElementById('pvpTopicLabel');
     const questionBox = document.getElementById('pvpQuestionBox');
     const roundResultEl = document.getElementById('pvpRoundResult');
     const answerBtn = document.getElementById('pvpAnswerBtn');
+    const readyBtn = document.getElementById('pvpReadyBtn');
+    const readyStatusEl = document.getElementById('pvpReadyStatus');
 
-    function playDuel(duel) {
-      LexPrepProgress.incrementDailyUsage('duelsPlayed');
-      battleDuel = duel;
-      battleQuestions = resolveQuestions(duel.questionIds);
-      battleIndex = 0;
-      battleScore = 0;
-      showPvpView('battle');
-      renderBattleQuestion();
+    function stopTimers() {
+      if (readyPollTimer) { clearInterval(readyPollTimer); readyPollTimer = null; }
+      if (battleTickTimer) { clearInterval(battleTickTimer); battleTickTimer = null; }
     }
 
-    function renderBattleQuestion() {
-      battleAnswered = false;
+    function playDuel(duel) {
+      battleDuel = duel;
+      battleQuestions = resolveQuestions(duel.questionIds);
+      battleScore = 0;
+      battleFinished = false;
+      renderedIndex = -1;
+      lockedIndex = -1;
+      showPvpView('ready');
+      readyBtn.disabled = false;
+      readyBtn.textContent = 'Готов';
+      updateReadyStatus(duel);
+
+      readyBtn.onclick = async () => {
+        readyBtn.disabled = true;
+        try {
+          const updated = await LexPrepApi.markDuelReady(duel.id);
+          battleDuel = updated;
+          if (updated.startedAt) {
+            LexPrepProgress.incrementDailyUsage('duelsPlayed');
+            showPvpView('battle');
+            startBattleClock();
+          } else {
+            updateReadyStatus(updated);
+            waitForStart();
+          }
+        } catch (err) {
+          alert(err.message);
+          readyBtn.disabled = false;
+        }
+      };
+
+      waitForStart();
+    }
+
+    function amChallenger() {
+      return battleDuel.challengerId === user.id;
+    }
+
+    function updateReadyStatus(duel) {
+      const iAmReady = amChallenger() ? duel.challengerReady : duel.opponentReady;
+      const oppReady = amChallenger() ? duel.opponentReady : duel.challengerReady;
+      if (iAmReady) readyBtn.textContent = 'Ты готов — ждём соперника';
+      readyStatusEl.textContent = oppReady
+        ? 'Соперник готов — начинаем, как только нажмёшь «Готов».'
+        : iAmReady
+          ? 'Ты готов, ждём соперника…'
+          : 'Нажми «Готов», когда будешь готов начать одновременно с соперником.';
+    }
+
+    function waitForStart() {
+      stopTimers();
+      readyPollTimer = setInterval(async () => {
+        try {
+          const duel = await LexPrepApi.getDuel(battleDuel.id);
+          battleDuel = duel;
+          if (duel.startedAt) {
+            stopTimers();
+            LexPrepProgress.incrementDailyUsage('duelsPlayed');
+            showPvpView('battle');
+            startBattleClock();
+          } else {
+            updateReadyStatus(duel);
+          }
+        } catch (e) { /* временная сетевая ошибка — просто попробуем ещё раз */ }
+      }, 1500);
+    }
+
+    function startBattleClock() {
+      const startedAtMs = new Date(battleDuel.startedAt).getTime();
+      const durationMs = battleDuel.secondsPerQuestion * 1000;
+
+      function tick() {
+        const elapsed = Date.now() - startedAtMs;
+        const index = Math.floor(elapsed / durationMs);
+
+        if (index >= battleQuestions.length) {
+          finishBattleClock();
+          return;
+        }
+
+        if (index !== renderedIndex) {
+          renderBattleQuestion(index);
+        }
+
+        const remainingSec = Math.max(0, Math.ceil((durationMs - (elapsed % durationMs)) / 1000));
+        progressEl.textContent = `Вопрос ${index + 1} из ${battleQuestions.length} · осталось ${remainingSec}с`;
+      }
+
+      tick();
+      battleTickTimer = setInterval(tick, 250);
+    }
+
+    function lockCurrentAnswer(index) {
+      if (lockedIndex === index) return;
+      lockedIndex = index;
+      const item = battleQuestions[index];
+      const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
+      if (correct) battleScore++;
+
+      questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => { input.disabled = true; });
+      answerBtn.disabled = true;
+
+      roundResultEl.hidden = false;
+      roundResultEl.innerHTML = `
+        <span class="${correct ? 'duel-round-result__ok' : 'duel-round-result__bad'}">${battleChosen.length ? (correct ? 'Верно' : 'Неверно') : 'Время вышло'}</span>
+        <p class="duel-round-result__explain">${escapeHtml(item.question.explanation)}</p>
+      `;
+    }
+
+    function renderBattleQuestion(index) {
+      renderedIndex = index;
       battleChosen = [];
       roundResultEl.hidden = true;
       answerBtn.textContent = 'Ответить';
       answerBtn.disabled = true;
 
-      const item = battleQuestions[battleIndex];
+      const item = battleQuestions[index];
       const isMulti = item.question.correct.length > 1;
-      progressEl.textContent = `Вопрос ${battleIndex + 1} из ${battleQuestions.length}`;
       topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
 
       questionBox.innerHTML = `
@@ -324,40 +440,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    answerBtn.addEventListener('click', async () => {
-      if (!battleAnswered) {
-        battleAnswered = true;
-        const item = battleQuestions[battleIndex];
-        const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
-        if (correct) battleScore++;
-
-        questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => { input.disabled = true; });
-
-        roundResultEl.hidden = false;
-        roundResultEl.innerHTML = `
-          <span class="${correct ? 'duel-round-result__ok' : 'duel-round-result__bad'}">${correct ? 'Верно' : 'Неверно'}</span>
-          <p class="duel-round-result__explain">${escapeHtml(item.question.explanation)}</p>
-        `;
-
-        answerBtn.textContent = battleIndex === battleQuestions.length - 1 ? 'Завершить' : 'Следующий вопрос →';
-        return;
-      }
-
-      if (battleIndex < battleQuestions.length - 1) {
-        battleIndex++;
-        renderBattleQuestion();
-      } else {
-        answerBtn.disabled = true;
-        try {
-          const result = await LexPrepApi.submitDuelScore(battleDuel.id, battleScore);
-          finishBattle(result);
-        } catch (err) {
-          alert(err.message);
-          showPvpView('lobby');
-          await refreshLists();
-        }
-      }
+    answerBtn.addEventListener('click', () => {
+      lockCurrentAnswer(renderedIndex);
     });
+
+    async function finishBattleClock() {
+      if (battleFinished) return;
+      battleFinished = true;
+      stopTimers();
+      // Вопросы, которые игрок не успел явно "ответить" до истечения
+      // общего времени, уже не засчитаны в battleScore (lockCurrentAnswer
+      // на них не вызывался) — они корректно идут как неверные.
+      try {
+        const result = await LexPrepApi.submitDuelScore(battleDuel.id, battleScore);
+        finishBattle(result);
+      } catch (err) {
+        alert(err.message);
+        showPvpView('lobby');
+        await refreshLists();
+      }
+    }
 
     function finishBattle(result) {
       const titleEl = document.getElementById('pvpResultTitle');
@@ -382,6 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     document.getElementById('pvpBackToLobbyBtn').addEventListener('click', () => {
+      stopTimers();
       showPvpView('lobby');
     });
 

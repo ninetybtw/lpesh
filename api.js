@@ -738,6 +738,10 @@ const LexPrepApi = (function () {
       winnerId: d.winner_id,
       challengerRatingDelta: d.challenger_rating_delta,
       opponentRatingDelta: d.opponent_rating_delta,
+      challengerReady: d.challenger_ready,
+      opponentReady: d.opponent_ready,
+      startedAt: d.started_at,
+      secondsPerQuestion: d.seconds_per_question,
       createdAt: d.created_at,
       completedAt: d.completed_at
     };
@@ -784,6 +788,24 @@ const LexPrepApi = (function () {
   async function acceptDuelChallenge(challengeId) {
     await requireSession();
     const { data, error } = await client.rpc('duel_accept_challenge', { p_challenge_id: challengeId });
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function getDuel(challengeId) {
+    await requireSession();
+    const { data, error } = await client
+      .from('pvp_duels')
+      .select('*')
+      .eq('id', challengeId)
+      .single();
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function markDuelReady(challengeId) {
+    await requireSession();
+    const { data, error } = await client.rpc('duel_mark_ready', { p_challenge_id: challengeId });
     if (error) throw friendlyError(error);
     return toFrontendDuel(data);
   }
@@ -892,6 +914,7 @@ const LexPrepApi = (function () {
     createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,
     createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
+    getDuel, markDuelReady,
     askAiConsultant, askAiConsultantPro,
     getClient: () => client
   };

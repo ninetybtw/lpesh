@@ -236,7 +236,19 @@
             <div class="community-list" id="pvpMyList"><p class="community-empty">Загрузка…</p></div>
           </section>
 
-          <!-- PVP: BATTLE (соло-прохождение фиксированного набора вопросов) -->
+          <!-- PVP: READY (ожидание готовности обоих перед синхронным стартом) -->
+          <section class="exam-card" data-pvp-view="ready" hidden>
+            <div class="exam-results__summary">
+              <div class="eyebrow">Перед стартом</div>
+              <h1 class="exam-title">Дуэль начнётся, когда оба будут готовы</h1>
+              <p class="topic-desc" id="pvpReadyStatus">Нажми «Готов», когда будешь готов начать одновременно с соперником.</p>
+            </div>
+            <div class="exam-results__actions">
+              <button class="btn btn--primary" type="button" id="pvpReadyBtn">Готов</button>
+            </div>
+          </section>
+
+          <!-- PVP: BATTLE (синхронное прохождение — общий таймер на вопрос) -->
           <section class="exam-card" data-pvp-view="battle" hidden>
             <div class="exam-running__topic" id="pvpTopicLabel"></div>
             <span class="exam-running__progress" id="pvpProgress"></span>
@@ -274,7 +286,7 @@
     <script src="script.js?v=20260903180000"></script>
     <script src="duel-engine.js?v=20260831160000"></script>
     <script src="duel.js?v=20260831160000"></script>
-    <script src="duel-pvp.js?v=20260831160000"></script>
+    <script src="duel-pvp.js?v=20260913000000"></script>
     <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>
