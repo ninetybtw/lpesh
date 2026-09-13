@@ -109,12 +109,14 @@
           <nav class="legal-nav">
             <a href="#terms">Пользовательское соглашение</a>
             <a href="#privacy">Политика конфиденциальности</a>
+            <a href="#consent">Согласие на обработку персональных данных</a>
             <a href="#offer">Публичная оферта</a>
             <a href="#rules">Правила дуэлей, турниров и рейтингов</a>
           </nav>
 
           <article class="legal-doc" id="terms"></article>
           <article class="legal-doc" id="privacy"></article>
+          <article class="legal-doc" id="consent"></article>
           <article class="legal-doc" id="offer"></article>
           <article class="legal-doc" id="rules"></article>
         </div>
@@ -125,9 +127,9 @@
     <script src="api.js?v=20260903180000"></script>
     <script src="script.js?v=20260903180000"></script>
     <script src="vendor/marked.min.js"></script>
-    <script src="legal-docs.js?v=20260901000000"></script>
+    <script src="legal-docs.js?v=20260913000000"></script>
     <script>
-      ['terms', 'privacy', 'offer', 'rules'].forEach(key => {
+      ['terms', 'privacy', 'consent', 'offer', 'rules'].forEach(key => {
         const doc = LEXPREP_LEGAL_DOCS[key];
         const el = document.getElementById(key);
         if (doc && el) el.innerHTML = marked.parse(doc.markdown);
