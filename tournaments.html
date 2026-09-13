@@ -18,7 +18,7 @@
     <title>LexPrep — Турниры</title>
     <meta
       name="description"
-      content="Турниры LexPrep: пройди сетку из трёх раундов на выбывание против ботов-соперников и стань чемпионом."
+      content="Турниры LexPrep: пройди сетку на выбывание против реальных соперников и стань чемпионом."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -91,24 +91,28 @@
           <div class="eyebrow">LexPrep / Турниры</div>
           <h1 class="exam-title">Турниры на выбывание</h1>
           <p class="topic-desc">
-            Сетка из трёх раундов против ботов-соперников с растущей сложностью. Проиграл раунд — выбыл из турнира.
-            Дошёл до финала и победил — чемпион.
+            Реальные соперники, сетка на выбывание. Проиграл матч раунда — выбыл из турнира. Дошёл до финала и
+            победил — чемпион. Как только лобби набирает нужное число игроков, сетка стартует автоматически.
           </p>
-          <p class="duel-demo-note">
-            Пока здесь только турниры против ботов — быстрый режим без ожидания соперников. Дуэли против реальных
-            людей уже доступны на странице «Дуэли», турниры с реальными участниками — следующий шаг (нужны подбор
-            участников по сетке и синхронизация раундов между ними).
-          </p>
-
-          <div class="duel-stats" id="tourneyStats"></div>
 
           <div class="tourney-list" id="tourneyList"></div>
         </section>
 
+        <!-- WAITING (лобби набирается / ждём готовности соперника / ждём следующий матч) -->
+        <section class="exam-card" data-tourney-view="waiting" hidden>
+          <div class="exam-results__summary">
+            <div class="eyebrow">Турнир</div>
+            <h1 class="exam-title" id="tourneyWaitingTitle">Ждём...</h1>
+            <p class="topic-desc" id="tourneyWaitingMsg"></p>
+          </div>
+          <div class="exam-results__actions">
+            <button class="btn btn--primary" type="button" id="tourneyReadyBtn" hidden>Готов</button>
+            <button class="btn btn--outline" type="button" id="tourneyWaitingBackBtn">К списку турниров</button>
+          </div>
+        </section>
+
         <!-- BRACKET / BATTLE -->
         <section class="exam-card" data-tourney-view="battle" hidden>
-          <div class="tourney-bracket" id="tourneyBracket"></div>
-
           <div class="duel-vs">
             <div class="duel-vs__side">
               <span class="duel-vs__avatar" id="tourneyPlayerAvatar">U</span>
@@ -120,9 +124,9 @@
               <span class="exam-running__progress" id="tourneyProgress"></span>
             </div>
             <div class="duel-vs__side">
-              <span class="duel-vs__avatar duel-vs__avatar--bot">🤖</span>
-              <span class="duel-vs__name" id="tourneyBotName">Бот</span>
-              <span class="duel-vs__score" id="tourneyBotScore">0</span>
+              <span class="duel-vs__avatar">🧑</span>
+              <span class="duel-vs__name" id="tourneyOpponentName">Соперник</span>
+              <span class="duel-vs__score" id="tourneyOpponentScore">?</span>
             </div>
           </div>
 
@@ -144,8 +148,6 @@
             <p class="topic-desc" id="tourneyResultMsg"></p>
           </div>
 
-          <div class="tourney-bracket" id="tourneyResultBracket"></div>
-
           <div class="exam-results__actions">
             <button class="btn btn--primary" type="button" id="tourneyBackBtn">К списку турниров</button>
             <a href="app.html" class="btn btn--outline">Вернуться в тренажёр</a>
@@ -162,8 +164,8 @@
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260831160000"></script>
     <script src="script.js?v=20260903180000"></script>
-    <script src="duel-engine.js?v=20260831160000"></script>
-    <script src="tournaments.js?v=20260903000000"></script>
+    <script src="duel-engine.js?v=20260913000000"></script>
+    <script src="tournaments.js?v=20260913000000"></script>
     <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

@@ -1,203 +1,276 @@
 /* ==========================================================================
-TOURNAMENTS.JS — турнир на выбывание: три раунда против ботов растущей
-сложности. Проигрыш раунда — выбывание. Победа в финале — чемпион. Соперники
-всегда боты (демо), реальные турниры с участниками появятся с бэкендом.
+TOURNAMENTS.JS — турнир на выбывание против РЕАЛЬНЫХ соперников.
+Бэкенд: public.tournaments/tournament_participants/tournament_matches (см.
+supabase/tournaments.sql). Игрок вступает в лобби одного из двух фиксированных
+типов ('quick'/'weekly'); как только лобби набирает нужное число участников,
+сервер сам перемешивает их и формирует пары первого раунда. Каждый матч —
+синхронный старт с общим таймером на вопрос, тот же приём, что и в дуэлях
+(duel-pvp.js): started_at фиксируется один раз, когда оба игрока матча готовы,
+и оба клиента независимо считают текущий вопрос от этой метки времени.
 ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
-  if (!user) {
-    window.location.href = 'auth.html';
-    return;
-  }
+  if (!user || typeof LexPrepApi === 'undefined') return;
   await (window.LexPrepContentReady || Promise.resolve());
 
   const DATA = LEXPREP_DATA;
   const views = document.querySelectorAll('[data-tourney-view]');
-
   function showView(name) {
     views.forEach(v => { v.hidden = v.dataset.tourneyView !== name; });
   }
 
-  const TOURNAMENTS = [
-    {
-      id: 'quick',
-      title: 'Быстрый турнир',
-      desc: '3 раунда по 5 вопросов из всех тем. Без взноса, приз чемпиону — 150 монет.',
-      questionsPerRound: 5,
-      prize: 150,
-      rounds: ['easy', 'medium', 'hard']
-    },
-    {
-      id: 'weekly',
-      title: 'Турнир недели',
-      desc: '3 раунда по 10 вопросов из всех тем. Без взноса, приз чемпиону — 320 монет.',
-      questionsPerRound: 10,
-      prize: 320,
-      rounds: ['easy', 'medium', 'hard']
-    }
+  const TOURNAMENT_TYPES = [
+    { id: 'quick', title: 'Быстрый турнир', desc: '4 игрока, сетка на выбывание, 5 вопросов на матч. Приз чемпиону — 150 монет.' },
+    { id: 'weekly', title: 'Турнир недели', desc: '8 игроков, сетка на выбывание, 10 вопросов на матч. Приз чемпиону — 320 монет.' }
   ];
 
-  const ROUND_LABELS = ['Раунд 1', 'Раунд 2', 'Финал'];
+  function escapeHtml(str) { return DuelEngine.escapeHtml(str); }
 
   /* ---------------- List screen ---------------- */
   const listEl = document.getElementById('tourneyList');
-  const statsEl = document.getElementById('tourneyStats');
 
-  function renderStats() {
-    const duel = LexPrepProgress.getDuelStats();
-    const tourney = LexPrepProgress.getTournamentStats();
-    statsEl.innerHTML = `
-      <div class="duel-stats__item"><span class="duel-stats__num">${tourney.played}</span><span class="duel-stats__label">турниров сыграно</span></div>
-      <div class="duel-stats__item"><span class="duel-stats__num">${tourney.champions}</span><span class="duel-stats__label">раз чемпион</span></div>
-      <div class="duel-stats__item duel-stats__item--rating"><span class="duel-stats__num">${duel.rating}</span><span class="duel-stats__label">дуэльный рейтинг</span></div>
-    `;
-  }
-
-  // Участие в турнирах бесплатное (без взноса монетами) — ограничение
-  // только по числу турниров в месяц согласно тарифу. Купленный в
-  // магазине "билет" (LexPrepProgress inventory.tourneyTickets) даёт один
-  // турнир сверх этого месячного лимита.
   function tournamentAllowance() {
     const limit = LexPrepPlan.getLimits().tourneysPerMonth;
-    if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»', usesTicket: false };
+    if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»' };
     if (LexPrepProgress.getMonthlyUsage().tourneysPlayed >= limit) {
       const tickets = LexPrepProgress.getInventory().tourneyTickets || 0;
       if (tickets > 0) return { allowed: true, label: null, usesTicket: true };
-      return { allowed: false, label: `Лимит ${limit}/мес исчерпан`, usesTicket: false };
+      return { allowed: false, label: `Лимит ${limit}/мес исчерпан` };
     }
-    return { allowed: true, label: null, usesTicket: false };
+    return { allowed: true, label: null };
   }
 
-  function renderList() {
-    const allowance = tournamentAllowance();
-    listEl.innerHTML = TOURNAMENTS.map(t => {
-      const label = !allowance.allowed
+  async function renderList() {
+    listEl.innerHTML = TOURNAMENT_TYPES.map(t => `
+      <div class="tourney-card" data-tourney-card="${t.id}">
+        <div class="tourney-card__title">${escapeHtml(t.title)}</div>
+        <div class="tourney-card__desc">${escapeHtml(t.desc)}</div>
+        <button class="btn btn--primary tourney-card__btn" type="button" disabled>Загрузка…</button>
+      </div>
+    `).join('');
+
+    for (const t of TOURNAMENT_TYPES) {
+      const card = listEl.querySelector(`[data-tourney-card="${t.id}"]`);
+      const btn = card.querySelector('button');
+      let state = null;
+      try {
+        state = await LexPrepApi.getMyTournamentState(t.id);
+      } catch (e) { /* гость/ошибка сети — считаем, что не участвует */ }
+
+      if (state && state.tournament.status !== 'completed') {
+        btn.disabled = false;
+        btn.textContent = 'Продолжить';
+        btn.addEventListener('click', () => enterTournamentFlow(t.id));
+        continue;
+      }
+
+      const allowance = tournamentAllowance();
+      btn.disabled = !allowance.allowed;
+      btn.textContent = !allowance.allowed
         ? allowance.label
         : (allowance.usesTicket ? 'Участвовать (билет сверх лимита)' : 'Участвовать');
-      return `
-      <div class="tourney-card">
-        <div class="tourney-card__title">${DuelEngine.escapeHtml(t.title)}</div>
-        <div class="tourney-card__desc">${DuelEngine.escapeHtml(t.desc)}</div>
-        <div class="tourney-card__meta">
-          <span>Приз: ${t.prize} монет</span>
-        </div>
-        <button class="btn btn--primary tourney-card__btn" type="button" data-join="${t.id}" ${!allowance.allowed ? 'disabled' : ''}>
-          ${label}
-        </button>
-      </div>
-    `;
-    }).join('');
-
-    listEl.querySelectorAll('[data-join]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tourney = TOURNAMENTS.find(t => t.id === btn.dataset.join);
-        if (!tourney) return;
-        const currentAllowance = tournamentAllowance();
-        if (!currentAllowance.allowed) return;
-        if (currentAllowance.usesTicket) LexPrepProgress.spendInventory('tourneyTickets');
-        LexPrepProgress.incrementMonthlyUsage('tourneysPlayed');
-        startTournament(tourney);
+      btn.addEventListener('click', async () => {
+        const current = tournamentAllowance();
+        if (!current.allowed) return;
+        btn.disabled = true;
+        try {
+          if (current.usesTicket) LexPrepProgress.spendInventory('tourneyTickets');
+          LexPrepProgress.incrementMonthlyUsage('tourneysPlayed');
+          await LexPrepApi.joinTournament(t.id);
+          enterTournamentFlow(t.id);
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+        }
       });
-    });
+    }
   }
 
-  renderStats();
   renderList();
 
-  /* ---------------- Bracket / battle screen ---------------- */
-  let activeTourney = null;
-  let roundIndex = 0;
-  let roundStatus = []; // 'pending' | 'current' | 'win' | 'loss'
-  let botNames = [];
-  let duelQuestions = [];
-  let currentIndex = 0;
-  let playerScore = 0;
-  let botScore = 0;
-  let answered = false;
-  let chosen = [];
+  /* ---------------- Waiting screen (лобби / готовность / между раундами) ---------------- */
+  const waitingTitleEl = document.getElementById('tourneyWaitingTitle');
+  const waitingMsgEl = document.getElementById('tourneyWaitingMsg');
+  const readyBtn = document.getElementById('tourneyReadyBtn');
 
-  const bracketEl = document.getElementById('tourneyBracket');
-  const resultBracketEl = document.getElementById('tourneyResultBracket');
-  const playerAvatarEl = document.getElementById('tourneyPlayerAvatar');
-  const playerNameEl = document.getElementById('tourneyPlayerName');
-  const playerScoreEl = document.getElementById('tourneyPlayerScore');
-  const botNameEl = document.getElementById('tourneyBotName');
-  const botScoreEl = document.getElementById('tourneyBotScore');
+  let pollTimer = null;
+  let battleTickTimer = null;
+  let currentTypeId = null;
+  let currentMatch = null;
+  let battleQuestions = [];
+  let battleScore = 0;
+  let battleFinished = false;
+  let renderedIndex = -1;
+  let lockedIndex = -1;
+  let battleChosen = [];
+
+  function stopTimers() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (battleTickTimer) { clearInterval(battleTickTimer); battleTickTimer = null; }
+  }
+
+  async function enterTournamentFlow(typeId) {
+    currentTypeId = typeId;
+    stopTimers();
+    await refreshTournamentFlow();
+    pollTimer = setInterval(refreshTournamentFlow, 2000);
+  }
+
+  async function refreshTournamentFlow() {
+    let state;
+    try {
+      state = await LexPrepApi.getMyTournamentState(currentTypeId);
+    } catch (e) { return; }
+
+    if (!state) {
+      stopTimers();
+      showView('list');
+      renderList();
+      return;
+    }
+
+    const { tournament, eliminatedRound, match, lobbyCount } = state;
+
+    if (tournament.status === 'completed') {
+      stopTimers();
+      showFinalResult(tournament, eliminatedRound);
+      return;
+    }
+
+    if (eliminatedRound) {
+      stopTimers();
+      showView('results');
+      document.getElementById('tourneyResultTitle').textContent = `Выбывание — раунд ${eliminatedRound}`;
+      document.getElementById('tourneyResultMsg').textContent = 'В этом матче победил соперник. Спасибо за игру!';
+      return;
+    }
+
+    if (tournament.status === 'open') {
+      showView('waiting');
+      readyBtn.hidden = true;
+      waitingTitleEl.textContent = 'Собираем участников…';
+      waitingMsgEl.textContent = `В лобби ${lobbyCount} из ${tournament.size} игроков — турнир начнётся автоматически, как только наберётся нужное число участников.`;
+      return;
+    }
+
+    // status === 'active'
+    if (!match) {
+      showView('waiting');
+      readyBtn.hidden = true;
+      waitingTitleEl.textContent = `Раунд ${tournament.currentRound}`;
+      waitingMsgEl.textContent = 'Ждём формирования следующего матча…';
+      return;
+    }
+
+    currentMatch = match;
+
+    if (match.status === 'pending') {
+      stopTimers();
+      pollTimer = setInterval(refreshTournamentFlow, 1500);
+      showView('waiting');
+      const iAmP1 = match.player1Id === user.id;
+      const iAmReady = iAmP1 ? match.player1Ready : match.player2Ready;
+      const oppReady = iAmP1 ? match.player2Ready : match.player1Ready;
+      waitingTitleEl.textContent = `Раунд ${tournament.currentRound} — твой матч`;
+      waitingMsgEl.textContent = oppReady
+        ? 'Соперник готов — начинайте, как только нажмёшь «Готов».'
+        : (iAmReady ? 'Ты готов, ждём соперника…' : 'Нажми «Готов», когда будешь готов начать одновременно с соперником.');
+      readyBtn.hidden = false;
+      readyBtn.disabled = iAmReady;
+      readyBtn.textContent = iAmReady ? 'Ты готов' : 'Готов';
+      readyBtn.onclick = async () => {
+        readyBtn.disabled = true;
+        try {
+          const updated = await LexPrepApi.markTournamentMatchReady(match.id);
+          currentMatch = updated;
+          if (updated.startedAt) {
+            stopTimers();
+            beginBattle(tournament, updated);
+          }
+        } catch (err) {
+          alert(err.message);
+          readyBtn.disabled = false;
+        }
+      };
+      return;
+    }
+
+    if (match.status === 'active' && !battleTickTimer) {
+      stopTimers();
+      beginBattle(tournament, match);
+    }
+  }
+
+  /* ---------------- Battle (общий таймер на вопрос) ---------------- */
   const progressEl = document.getElementById('tourneyProgress');
   const topicLabelEl = document.getElementById('tourneyTopicLabel');
   const questionBox = document.getElementById('tourneyQuestionBox');
   const roundResultEl = document.getElementById('tourneyRoundResult');
   const answerBtn = document.getElementById('tourneyAnswerBtn');
+  const playerAvatarEl = document.getElementById('tourneyPlayerAvatar');
+  const playerNameEl = document.getElementById('tourneyPlayerName');
+  const playerScoreEl = document.getElementById('tourneyPlayerScore');
+  const opponentNameEl = document.getElementById('tourneyOpponentName');
+  const opponentScoreEl = document.getElementById('tourneyOpponentScore');
 
-  function renderBracket(target) {
-    target.innerHTML = `
-      <div class="tourney-bracket__title">${DuelEngine.escapeHtml(activeTourney.title)}</div>
-      <div class="tourney-bracket__rounds">
-        ${ROUND_LABELS.map((label, i) => `
-          <div class="tourney-round tourney-round--${roundStatus[i]}">
-            <span class="tourney-round__dot"></span>
-            <span class="tourney-round__label">${label}</span>
-            <span class="tourney-round__bot">${DuelEngine.escapeHtml(botNames[i] || '')}</span>
-          </div>
-        `).join('<span class="tourney-round__arrow">→</span>')}
-      </div>
-    `;
-  }
-
-  function startTournament(tourney) {
-    activeTourney = tourney;
-    roundIndex = 0;
-    roundStatus = ['current', 'pending', 'pending'];
-    botNames = tourney.rounds.map(() => DuelEngine.pickBotName());
+  function beginBattle(tournament, match) {
+    battleQuestions = DuelEngine.resolveQuestions(DATA, match.questionIds);
+    battleScore = 0;
+    battleFinished = false;
+    renderedIndex = -1;
+    lockedIndex = -1;
 
     playerNameEl.textContent = (user.name || 'Ты').trim();
-    if (user.avatar) {
-      playerAvatarEl.textContent = '';
-      playerAvatarEl.style.backgroundImage = `url(${user.avatar})`;
-    } else {
-      playerAvatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
-      playerAvatarEl.style.backgroundImage = '';
-    }
+    playerAvatarEl.textContent = (user.name || 'U').trim().charAt(0).toUpperCase();
+    if (user.avatar) playerAvatarEl.style.backgroundImage = `url(${user.avatar})`;
+    opponentNameEl.textContent = 'Соперник';
+    opponentScoreEl.textContent = '?';
+    playerScoreEl.textContent = '0';
 
     showView('battle');
-    startRound();
+
+    const startedAtMs = new Date(match.startedAt).getTime();
+    const durationMs = tournament.secondsPerQuestion * 1000;
+
+    function tick() {
+      const elapsed = Date.now() - startedAtMs;
+      const index = Math.floor(elapsed / durationMs);
+
+      if (index >= battleQuestions.length) {
+        finishBattle(match);
+        return;
+      }
+
+      if (index !== renderedIndex) renderQuestion(index);
+
+      const remainingSec = Math.max(0, Math.ceil((durationMs - (elapsed % durationMs)) / 1000));
+      progressEl.textContent = `Вопрос ${index + 1} из ${battleQuestions.length} · осталось ${remainingSec}с`;
+    }
+
+    tick();
+    battleTickTimer = setInterval(tick, 250);
   }
 
-  function startRound() {
-    const difficulty = activeTourney.rounds[roundIndex];
-    duelQuestions = DuelEngine.pickQuestions(DATA, activeTourney.questionsPerRound, 'all', 'all');
-    currentIndex = 0;
-    playerScore = 0;
-    botScore = 0;
-
-    botNameEl.textContent = `${botNames[roundIndex]} (${DuelEngine.DIFFICULTIES[difficulty].label.toLowerCase()})`;
-    renderBracket(bracketEl);
-    renderQuestion();
-  }
-
-  function renderQuestion() {
-    answered = false;
-    chosen = [];
+  function renderQuestion(index) {
+    renderedIndex = index;
+    battleChosen = [];
     roundResultEl.hidden = true;
     answerBtn.textContent = 'Ответить';
     answerBtn.disabled = true;
 
-    const item = duelQuestions[currentIndex];
+    const item = battleQuestions[index];
     const isMulti = item.question.correct.length > 1;
-    progressEl.textContent = `${ROUND_LABELS[roundIndex]} — вопрос ${currentIndex + 1} из ${duelQuestions.length}`;
     topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
-    playerScoreEl.textContent = playerScore;
-    botScoreEl.textContent = botScore;
 
     questionBox.innerHTML = `
-      <h4>${DuelEngine.escapeHtml(item.question.question)}</h4>
+      <h4>${escapeHtml(item.question.question)}</h4>
       ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
       <div class="answers">
         ${item.question.options.map((option, i) => `
           <label class="answer">
             <input type="${isMulti ? 'checkbox' : 'radio'}" name="tourney-answer" value="${i}">
-            <span>${DuelEngine.escapeHtml(option)}</span>
+            <span>${escapeHtml(option)}</span>
           </label>
         `).join('')}
       </div>
@@ -205,93 +278,79 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     questionBox.querySelectorAll('input[name="tourney-answer"]').forEach(input => {
       input.addEventListener('change', () => {
-        chosen = Array.from(questionBox.querySelectorAll('input[name="tourney-answer"]:checked')).map(el => Number(el.value));
-        answerBtn.disabled = chosen.length === 0;
+        battleChosen = Array.from(questionBox.querySelectorAll('input[name="tourney-answer"]:checked')).map(el => Number(el.value));
+        answerBtn.disabled = battleChosen.length === 0;
       });
     });
   }
 
-  answerBtn.addEventListener('click', () => {
-    const difficulty = activeTourney.rounds[roundIndex];
+  function lockCurrentAnswer(index) {
+    if (lockedIndex === index) return;
+    lockedIndex = index;
+    const item = battleQuestions[index];
+    const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
+    if (correct) battleScore++;
+    playerScoreEl.textContent = String(battleScore);
 
-    if (!answered) {
-      answered = true;
-      const item = duelQuestions[currentIndex];
-      const playerCorrect = DuelEngine.sameAnswerSet(chosen, item.question.correct);
-      const botCorrect = DuelEngine.botAnswerCorrect(difficulty);
-      if (playerCorrect) playerScore++;
-      if (botCorrect) botScore++;
+    questionBox.querySelectorAll('input[name="tourney-answer"]').forEach(input => { input.disabled = true; });
+    answerBtn.disabled = true;
 
-      playerScoreEl.textContent = playerScore;
-      botScoreEl.textContent = botScore;
-      questionBox.querySelectorAll('input[name="tourney-answer"]').forEach(input => { input.disabled = true; });
-
-      roundResultEl.hidden = false;
-      roundResultEl.innerHTML = `
-        <span class="${playerCorrect ? 'duel-round-result__ok' : 'duel-round-result__bad'}">Ты: ${playerCorrect ? 'верно' : 'неверно'}</span>
-        <span class="${botCorrect ? 'duel-round-result__ok' : 'duel-round-result__bad'}">${DuelEngine.escapeHtml(botNames[roundIndex])}: ${botCorrect ? 'верно' : 'неверно'}</span>
-        <p class="duel-round-result__explain">${DuelEngine.escapeHtml(item.question.explanation)}</p>
-      `;
-
-      answerBtn.textContent = currentIndex === duelQuestions.length - 1 ? 'Итог раунда' : 'Следующий вопрос →';
-      return;
-    }
-
-    if (currentIndex < duelQuestions.length - 1) {
-      currentIndex++;
-      renderQuestion();
-    } else {
-      finishRound();
-    }
-  });
-
-  function finishRound() {
-    const won = playerScore > botScore;
-    LexPrepProgress.recordDuelResult(won ? 'win' : (playerScore === botScore ? 'draw' : 'loss'));
-    roundStatus[roundIndex] = won ? 'win' : 'loss';
-
-    if (!won) {
-      finishTournament(false);
-      return;
-    }
-
-    if (roundIndex === activeTourney.rounds.length - 1) {
-      finishTournament(true);
-      return;
-    }
-
-    roundIndex++;
-    roundStatus[roundIndex] = 'current';
-    startRound();
+    roundResultEl.hidden = false;
+    roundResultEl.innerHTML = `
+      <span class="${correct ? 'duel-round-result__ok' : 'duel-round-result__bad'}">${battleChosen.length ? (correct ? 'Верно' : 'Неверно') : 'Время вышло'}</span>
+      <p class="duel-round-result__explain">${escapeHtml(item.question.explanation)}</p>
+    `;
   }
 
-  /* ---------------- Results screen ---------------- */
-  function finishTournament(isChampion) {
-    const tourneyStats = LexPrepProgress.recordTournamentResult(isChampion);
-    renderBracket(resultBracketEl);
+  answerBtn.addEventListener('click', () => lockCurrentAnswer(renderedIndex));
 
+  async function finishBattle(match) {
+    if (battleFinished) return;
+    battleFinished = true;
+    stopTimers();
+    showView('waiting');
+    waitingTitleEl.textContent = 'Матч завершён';
+    waitingMsgEl.textContent = 'Отправляем результат…';
+    readyBtn.hidden = true;
+
+    try {
+      await LexPrepApi.submitTournamentScore(match.id, battleScore);
+    } catch (err) {
+      alert(err.message);
+    }
+    pollTimer = setInterval(refreshTournamentFlow, 1500);
+    refreshTournamentFlow();
+  }
+
+  /* ---------------- Final results ---------------- */
+  function showFinalResult(tournament, eliminatedRound) {
+    showView('results');
     const titleEl = document.getElementById('tourneyResultTitle');
     const msgEl = document.getElementById('tourneyResultMsg');
+    const isChampion = tournament.winnerId === user.id;
 
     if (isChampion) {
-      LexPrepProgress.addCoins(activeTourney.prize);
-      titleEl.textContent = `Чемпион турнира «${activeTourney.title}»!`;
-      msgEl.textContent = `Все три раунда пройдены. Приз: +${activeTourney.prize} монет. Всего турниров с титулом чемпиона: ${tourneyStats.champions}.`;
+      titleEl.textContent = 'Чемпион турнира!';
+      msgEl.textContent = `Вся сетка пройдена. Приз: +${tournament.prizeCoins} монет уже начислены на баланс.`;
+      LexPrepApi.me().then(fresh => {
+        localStorage.setItem('lexprep_user', JSON.stringify(fresh));
+        if (typeof initCoinBadge === 'function') initCoinBadge();
+      }).catch(() => {});
     } else {
-      titleEl.textContent = `Выбывание — ${ROUND_LABELS[roundIndex]}`;
-      msgEl.textContent = 'Раунд проигран. Дуэльный рейтинг обновлён за пройденные раунды.';
+      titleEl.textContent = `Турнир завершён — выбывание в раунде ${eliminatedRound || '?'}`;
+      msgEl.textContent = 'В этот раз не получилось дойти до финала — попробуй в следующем турнире.';
     }
-
-    showView('results');
-    renderStats();
-    renderList();
-    if (typeof initCoinBadge === 'function') initCoinBadge();
   }
 
   document.getElementById('tourneyBackBtn').addEventListener('click', () => {
-    renderStats();
-    renderList();
+    stopTimers();
     showView('list');
+    renderList();
+  });
+  document.getElementById('tourneyWaitingBackBtn').addEventListener('click', () => {
+    stopTimers();
+    showView('list');
+    renderList();
   });
 
   showView('list');

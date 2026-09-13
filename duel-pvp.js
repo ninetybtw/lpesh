@@ -49,17 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function resolveQuestions(questionIds) {
-    return questionIds.map(({ topicId, qIndex }) => {
-      for (const d of DATA) {
-        const t = d.topics.find(t => t.id === topicId);
-        if (t && t.test[qIndex]) {
-          const q = t.test[qIndex];
-          const question = Array.isArray(q.correct) ? q : { ...q, correct: [q.correct] };
-          return { topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question };
-        }
-      }
-      return null;
-    }).filter(Boolean);
+    return DuelEngine.resolveQuestions(DATA, questionIds);
   }
 
   function initPvp() {

@@ -830,6 +830,131 @@ const LexPrepApi = (function () {
     return toFrontendDuel(data);
   }
 
+  /* ---------------- Турниры против реальных игроков ----------------
+     public.tournaments/tournament_participants/tournament_matches (см.
+     supabase/tournaments.sql) — сетка на выбывание, синхронный старт
+     каждого матча тем же приёмом, что и в pvp_duels (started_at,
+     клиенты сами считают текущий вопрос по общим часам). Все переходы —
+     через security definer RPC, прямых insert/update-политик для
+     обычных пользователей нет вообще. */
+
+  function toFrontendTournament(t) {
+    return {
+      id: t.id,
+      typeId: t.type_id,
+      size: t.size,
+      questionsPerMatch: t.questions_per_match,
+      prizeCoins: t.prize_coins,
+      secondsPerQuestion: t.seconds_per_question,
+      status: t.status,
+      currentRound: t.current_round,
+      winnerId: t.winner_id,
+      createdAt: t.created_at,
+      startedAt: t.started_at,
+      completedAt: t.completed_at
+    };
+  }
+
+  function toFrontendTournamentMatch(m) {
+    return {
+      id: m.id,
+      tournamentId: m.tournament_id,
+      round: m.round,
+      slot: m.slot,
+      player1Id: m.player1_id,
+      player2Id: m.player2_id,
+      questionIds: m.question_ids,
+      player1Ready: m.player1_ready,
+      player2Ready: m.player2_ready,
+      startedAt: m.started_at,
+      player1Score: m.player1_score,
+      player2Score: m.player2_score,
+      player1PlayedAt: m.player1_played_at,
+      player2PlayedAt: m.player2_played_at,
+      winnerId: m.winner_id,
+      status: m.status
+    };
+  }
+
+  async function joinTournament(typeId) {
+    await requireSession();
+    const { data, error } = await client.rpc('tournament_join', { p_type_id: typeId });
+    if (error) throw friendlyError(error);
+    return toFrontendTournament(data);
+  }
+
+  // Возвращает моё текущее незавершённое участие в турнире данного типа
+  // (лобби/идёт), с моим текущим матчем, если сетка уже стартовала, или
+  // null, если сейчас не в лобби и не в игре.
+  async function getMyTournamentState(typeId) {
+    const session = await requireSession();
+    const { data: mine, error } = await client
+      .from('tournament_participants')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .eq('type_id', typeId)
+      .order('joined_at', { ascending: false })
+      .limit(1);
+    if (error) throw friendlyError(error);
+    if (!mine.length) return null;
+    const participant = mine[0];
+
+    const { data: t, error: tErr } = await client
+      .from('tournaments').select('*').eq('id', participant.tournament_id).single();
+    if (tErr) throw friendlyError(tErr);
+    const tournament = toFrontendTournament(t);
+
+    if (tournament.status === 'completed') {
+      return { tournament, eliminatedRound: participant.eliminated_round, match: null, lobbyCount: null };
+    }
+
+    let lobbyCount = null;
+    if (tournament.status === 'open') {
+      const { count, error: cErr } = await client
+        .from('tournament_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('tournament_id', tournament.id);
+      if (cErr) throw friendlyError(cErr);
+      lobbyCount = count;
+    }
+
+    let match = null;
+    if (tournament.status === 'active' && !participant.eliminated_round) {
+      const { data: matches, error: mErr } = await client
+        .from('tournament_matches')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .eq('round', tournament.currentRound)
+        .or(`player1_id.eq.${session.user.id},player2_id.eq.${session.user.id}`)
+        .limit(1);
+      if (mErr) throw friendlyError(mErr);
+      if (matches.length) match = toFrontendTournamentMatch(matches[0]);
+    }
+
+    return { tournament, eliminatedRound: participant.eliminated_round, match, lobbyCount };
+  }
+
+  async function getTournamentMatch(matchId) {
+    await requireSession();
+    const { data, error } = await client.from('tournament_matches').select('*').eq('id', matchId).single();
+    if (error) throw friendlyError(error);
+    return toFrontendTournamentMatch(data);
+  }
+
+  async function markTournamentMatchReady(matchId) {
+    await requireSession();
+    const { data, error } = await client.rpc('tournament_match_ready', { p_match_id: matchId });
+    if (error) throw friendlyError(error);
+    return toFrontendTournamentMatch(data);
+  }
+
+  async function submitTournamentScore(matchId, score) {
+    await requireSession();
+    const { data, error } = await client.rpc('tournament_submit_score', { p_match_id: matchId, p_score: score });
+    if (error) throw friendlyError(error);
+    return toFrontendTournamentMatch(data);
+  }
+
   /* ---------------- ИИ-консультант ----------------
      Сам вызов NVIDIA API живёт в Edge Function ai-consultant — ключ
      там, во фронтенде его нет и быть не должно. Функция сама же
@@ -915,6 +1040,7 @@ const LexPrepApi = (function () {
     createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
     getDuel, markDuelReady,
+    joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore,
     askAiConsultant, askAiConsultantPro,
     getClient: () => client
   };

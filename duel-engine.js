@@ -57,6 +57,21 @@ const DuelEngine = (function () {
     return pool.slice(0, count);
   }
 
+  // Раскрывает [{topicId, qIndex}, ...] (как хранится в pvp_duels.question_ids
+  // и tournament_matches.question_ids) обратно в полные вопросы из уже
+  // загруженного каталога — используется и дуэлями, и турнирами.
+  function resolveQuestions(allData, questionIds) {
+    return questionIds.map(({ topicId, qIndex }) => {
+      for (const d of allData) {
+        const t = d.topics.find(t => t.id === topicId);
+        if (t && t.test[qIndex]) {
+          return { topicId: t.id, topicTitle: t.title, disciplineTitle: d.title, qIndex, question: normalizeQuestion(t.test[qIndex]) };
+        }
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
   function pickBotName() {
     return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
   }
@@ -76,5 +91,5 @@ const DuelEngine = (function () {
     return a.every((v, i) => v === b[i]);
   }
 
-  return { DIFFICULTIES, escapeHtml, shuffle, buildPool, pickQuestions, pickBotName, botAnswerCorrect, sameAnswerSet };
+  return { DIFFICULTIES, escapeHtml, shuffle, buildPool, pickQuestions, resolveQuestions, pickBotName, botAnswerCorrect, sameAnswerSet };
 })();
