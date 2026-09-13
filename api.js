@@ -663,7 +663,6 @@ const LexPrepApi = (function () {
   }
 
   async function listPublishedUserArticles() {
-    await requireSession();
     const { data, error } = await client
       .from('user_articles')
       .select('*')
@@ -858,8 +857,32 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  /* ---------------- Рейтинг ----------------
+     Реальный глобальный рейтинг: XP синхронизируется в profiles.xp (см.
+     progress.js:checkLevelUp), а сам список читается из public
+     leaderboard_view (см. supabase/leaderboard.sql) — обычная таблица
+     profiles закрыта RLS для чужих строк, view отдаёт только безопасные
+     публичные поля в обход этого ограничения. */
+
+  async function syncXp(xp) {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) return;
+    await client.from('profiles').update({ xp }).eq('id', session.user.id);
+  }
+
+  async function fetchLeaderboard(limit = 50) {
+    const { data, error } = await client
+      .from('leaderboard_view')
+      .select('*')
+      .order('xp', { ascending: false })
+      .limit(limit);
+    if (error) throw friendlyError(error);
+    return data.map(row => ({ id: row.id, name: row.name, avatar: row.avatar_url, xp: row.xp }));
+  }
+
   return {
     register, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
+    syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     logAdminAction, adminListAuditLog,
     moderatorGrantCoins,

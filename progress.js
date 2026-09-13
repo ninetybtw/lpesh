@@ -472,6 +472,14 @@ const LexPrepProgress = (function () {
 
   function checkLevelUp() {
     const info = getGamification();
+
+    // Лучшая попытка: подтягиваем актуальный XP в profiles.xp, чтобы он
+    // попал в реальный глобальный рейтинг (см. rating.html/leaderboard.js).
+    // Гость или временная ошибка сети — не критично, просто пропускаем.
+    if (typeof LexPrepApi !== 'undefined' && typeof LexPrepApi.syncXp === 'function') {
+      LexPrepApi.syncXp(info.xp).catch(() => {});
+    }
+
     const storedLevel = localStorage.getItem(LAST_SEEN_LEVEL_KEY);
     const lastLevel = storedLevel === null ? info.level : Number(storedLevel);
     localStorage.setItem(LAST_SEEN_LEVEL_KEY, String(info.level));
@@ -493,7 +501,7 @@ const LexPrepProgress = (function () {
     return null;
   }
 
-  function getAchievements(allData) {
+  function getAchievements(allData, overrides = {}) {
     const data = load();
     const baseStats = getStats(allData);
 
@@ -524,7 +532,10 @@ const LexPrepProgress = (function () {
     const examAvgPercent = examScoreTotal ? Math.round((examScoreSum / examScoreTotal) * 100) : 0;
 
     const appVisited = localStorage.getItem('lexprep_visited_app') === '1';
-    const articlesPublished = JSON.parse(localStorage.getItem('lexprep_user_articles') || '[]').length;
+    // Статьи теперь настоящая таблица public.user_articles (см. api.js),
+    // а не localStorage — количество опубликованных передаёт вызывающий
+    // код (profile.js), который уже отдельно запрашивает "Мои статьи".
+    const articlesPublished = overrides.articlesPublished || 0;
     const notesData = JSON.parse(localStorage.getItem('lexprep_notes') || '{}');
     const notesCount = Object.keys(notesData).filter(k => notesData[k] && notesData[k].trim().length > 0).length;
 

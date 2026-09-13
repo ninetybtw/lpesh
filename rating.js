@@ -11,7 +11,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
     window.location.href = 'auth.html';
@@ -32,7 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const equippedFrame = localStorage.getItem('lexprep_shop_equipped');
 
-  const entries = fetchLeaderboard();
+  listEl.innerHTML = '<p class="topic-desc">Загружаем рейтинг…</p>';
+  let entries;
+  try {
+    entries = await fetchLeaderboard();
+  } catch (e) {
+    listEl.innerHTML = '<p class="topic-desc">Не удалось загрузить рейтинг.</p>';
+    return;
+  }
+
+  if (!entries.length) {
+    listEl.innerHTML = '<p class="topic-desc">Рейтинг пока пуст — пройди тесты и карточки, чтобы стать первым.</p>';
+    return;
+  }
 
   listEl.innerHTML = entries.map(entry => {
     const initial = (entry.name || 'U').trim().charAt(0).toUpperCase();
@@ -45,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="rating-row__avatar ${frameClass}" ${avatarStyle}>${entry.avatar ? '' : escapeHtml(initial)}</span>
         <div class="rating-row__info">
           <div class="rating-row__name">${escapeHtml(entry.name)}${entry.isCurrentUser ? ' <span class="rating-row__you-tag">это ты</span>' : ''}</div>
-          <div class="rating-row__university">${escapeHtml(entry.university || 'Вуз не указан')}</div>
         </div>
         <div class="rating-row__league">
           <img src="assets/badges/${entry.rankIcon}" alt="${escapeHtml(entry.rankName)}" class="rating-row__badge" />

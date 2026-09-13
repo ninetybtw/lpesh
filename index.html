@@ -345,71 +345,8 @@
               <a href="write-article.html" class="btn btn--primary">Написать статью</a>
             </div>
           </div>
-          <div class="grid grid--3">
-            <article class="article-card reveal">
-              <div class="article-card__cover">
-                <img src="./images/images article-cover-1.svg" alt="" />
-              </div>
-              <div class="article-card__body">
-                <span class="article-card__tag">Гражданское право</span>
-                <h3>Как разобрать любой казус по обязательствам за 15 минут</h3>
-                <p>
-                  Пошаговый алгоритм разбора задач для семинара с примерами из
-                  практики ВС РФ.
-                </p>
-                <div class="article-card__meta">
-                  <span class="article-card__avatar">МК</span>
-                  <div class="article-card__meta-text">
-                    <span>Мария Ковалёва</span>
-                    <span>4 мин чтения · 3 курс</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-            <article class="article-card reveal">
-              <div class="article-card__cover">
-                <img src="./images/images article-cover-2.svg" alt="" />
-              </div>
-              <div class="article-card__body">
-                <span class="article-card__tag">Экзамен</span>
-                <h3>
-                  5 ошибок при подготовке к устному экзамену по теории права
-                </h3>
-                <p>
-                  Личный опыт и советы, как не растеряться на дополнительных
-                  вопросах комиссии.
-                </p>
-                <div class="article-card__meta">
-                  <span class="article-card__avatar">АС</span>
-                  <div class="article-card__meta-text">
-                    <span>Артём Соколов</span>
-                    <span>6 мин чтения · выпускник</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-            <article class="article-card reveal">
-              <div class="article-card__cover">
-                <img src="./images/images article-cover-3.svg" alt="" />
-              </div>
-              <div class="article-card__body">
-                <span class="article-card__tag">Судебная практика</span>
-                <h3>
-                  Разбор ключевого пленума по интеллектуальной собственности
-                </h3>
-                <p>
-                  Что изменилось в позиции судов и как это использовать в
-                  курсовой работе.
-                </p>
-                <div class="article-card__meta">
-                  <span class="article-card__avatar">ДН</span>
-                  <div class="article-card__meta-text">
-                    <span>Дарья Никитина</span>
-                    <span>7 мин чтения · магистратура</span>
-                  </div>
-                </div>
-              </div>
-            </article>
+          <div class="grid grid--3" id="homeArticlesGrid">
+            <p class="topic-desc">Загружаем статьи…</p>
           </div>
           <div class="articles__cta reveal">
             <p>Есть чем поделиться с другими студентами?</p>
@@ -717,8 +654,40 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260903180000"></script>
+    <script src="api.js?v=20260913000000"></script>
     <script src="script.js?v=20260903180000"></script>
+    <script>
+      (async function loadHomeArticles() {
+        const grid = document.getElementById('homeArticlesGrid');
+        if (!grid || typeof LexPrepApi === 'undefined') return;
+        try {
+          const articles = await LexPrepApi.listPublishedUserArticles();
+          const latest = articles.slice(0, 3);
+          if (!latest.length) {
+            grid.innerHTML = '<p class="topic-desc">Пока нет опубликованных статей — стань первым автором!</p>';
+            return;
+          }
+          grid.innerHTML = latest.map(a => `
+            <article class="article-card reveal">
+              <div class="article-card__body">
+                <span class="article-card__tag">${escapeHtml(a.topic || 'Статья')}</span>
+                <h3>${escapeHtml(a.title)}</h3>
+                <p>${escapeHtml(a.excerpt || '')}</p>
+                <div class="article-card__meta">
+                  <span class="article-card__avatar">${escapeHtml((a.authorName || 'A').trim().charAt(0).toUpperCase())}</span>
+                  <div class="article-card__meta-text">
+                    <span>${escapeHtml(a.authorName || 'Аноним')}</span>
+                    <span>${a.readTime || 1} мин чтения</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          `).join('');
+        } catch (e) {
+          grid.innerHTML = '<p class="topic-desc">Не удалось загрузить статьи.</p>';
+        }
+      })();
+    </script>
     <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

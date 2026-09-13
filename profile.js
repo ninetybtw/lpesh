@@ -322,7 +322,7 @@ function initStats() {
 }
 
 /* ---------------- Level, rank and achievements ---------------- */
-function initGamification() {
+async function initGamification() {
   if (typeof LexPrepProgress === 'undefined' || typeof LEXPREP_DATA === 'undefined') return;
   if (typeof LexPrepProgress.getGamification !== 'function') return;
 
@@ -336,7 +336,13 @@ function initGamification() {
   const grid = document.getElementById('achvGrid');
   if (!grid) return;
 
-  const achievements = LexPrepProgress.getAchievements(LEXPREP_DATA);
+  let articlesPublished = 0;
+  try {
+    const mine = await LexPrepApi.listMyUserArticles();
+    articlesPublished = mine.filter(a => a.status === 'published').length;
+  } catch (e) { /* гость/не залогинен — считаем 0 */ }
+
+  const achievements = LexPrepProgress.getAchievements(LEXPREP_DATA, { articlesPublished });
 
   grid.innerHTML = achievements.categories.map(cat => `
     <div class="achv-category">

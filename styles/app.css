@@ -1558,6 +1558,34 @@ body {
   }
 }
 
+@media (max-width: 600px) {
+  .app-shell .container {
+    padding: 0 10px;
+  }
+
+  .panel {
+    border-radius: 18px;
+  }
+
+  .content__scroll {
+    padding: 16px 12px;
+  }
+
+  .question {
+    padding: 14px 12px;
+    border-radius: 14px;
+  }
+
+  .answer {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .app-select {
+    min-width: 0;
+  }
+}
+
 /* ---------------- AI consultant chat widget (demo, no real AI wired yet) ---------------- */
 .ai-chat {
   position: fixed;
