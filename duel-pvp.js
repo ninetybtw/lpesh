@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="community-badge community-badge--open">${STATUS_LABEL[d.status]}</span>
           </div>
           <div class="community-item__meta">
-            <span>${formatDateTime(d.createdAt)}</span>
+            <span>Создал: ${escapeHtml(d.challengerName || 'Игрок')} · ${formatDateTime(d.createdAt)}</span>
             <button type="button" class="admin-action-btn" data-accept="${d.id}">Принять</button>
           </div>
         </div>
@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function checkDuelAllowance() {
+      if (user.isAdmin || user.isModerator) return true;
       const limit = LexPrepPlan.getLimits().duelsPerDay;
       if (limit === 0) {
         errorEl.textContent = 'Дуэли доступны с тарифа «Про» — оформи подписку в магазине.';
@@ -241,7 +242,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           discipline: disciplineId,
           topic: topicId,
           questionIds: picked.map(p => ({ topicId: p.topicId, qIndex: p.qIndex })),
-          questionCount: count
+          questionCount: count,
+          challengerName: (user.name || 'Игрок').trim()
         });
         await refreshLists();
       } catch (err) {
@@ -287,6 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function stopTimers() {
       if (readyPollTimer) { clearInterval(readyPollTimer); readyPollTimer = null; }
       if (battleTickTimer) { clearInterval(battleTickTimer); battleTickTimer = null; }
+      if (progressPollTimer) { clearInterval(progressPollTimer); progressPollTimer = null; }
     }
 
     function playDuel(duel) {
@@ -356,13 +359,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 1500);
     }
 
+    let myProgress = 0;
+    let oppProgress = 0;
+    let progressPollTimer = null;
+
     function startBattleClock() {
       const startedAtMs = new Date(battleDuel.startedAt).getTime();
       const durationMs = battleDuel.secondsPerQuestion * 1000;
+      myProgress = 0;
+      oppProgress = 0;
+
+      // Отдельный, более редкий опрос сервера за прогрессом соперника —
+      // сама перерисовка вопроса идёт от локального tick() каждые 250мс,
+      // не дожидаясь сети.
+      progressPollTimer = setInterval(async () => {
+        try {
+          const fresh = await LexPrepApi.getDuel(battleDuel.id);
+          oppProgress = amChallenger() ? fresh.opponentProgress : fresh.challengerProgress;
+        } catch (e) { /* пропустим один опрос — не критично */ }
+      }, 800);
 
       function tick() {
         const elapsed = Date.now() - startedAtMs;
-        const index = Math.floor(elapsed / durationMs);
+        const timeIndex = Math.floor(elapsed / durationMs);
+        // Если оба уже ответили на текущий вопрос — не ждём остаток
+        // времени, сразу переходим дальше.
+        const bothAnsweredIndex = Math.min(myProgress, oppProgress);
+        const index = Math.max(timeIndex, bothAnsweredIndex);
 
         if (index >= battleQuestions.length) {
           finishBattleClock();
@@ -387,6 +410,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const item = battleQuestions[index];
       const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
       if (correct) battleScore++;
+
+      myProgress = index + 1;
+      LexPrepApi.advanceDuelProgress(battleDuel.id, myProgress).catch(() => {});
 
       questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => { input.disabled = true; });
       answerBtn.disabled = true;

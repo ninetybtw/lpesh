@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <button type="button" class="admin-action-btn" data-action="edit-name" title="Изменить имя">Имя</button>
               <button type="button" class="admin-action-btn" data-action="edit-avatar" title="Изменить аватар (URL)">Аватар</button>
               <button type="button" class="admin-action-btn" data-action="grant-coins" title="Начислить монеты">+Монеты</button>
+              <button type="button" class="admin-action-btn" data-action="grant-xp" title="Начислить опыт (влияет на уровень и рейтинг)">+Опыт</button>
               <button type="button" class="admin-action-btn" data-action="grant-plan" title="Выдать подписку (месяц или год — год открывает продвинутого ИИ-консультанта)">Тариф</button>
               <button type="button" class="admin-action-btn" data-action="toggle-moderator" ${u.id === me.id ? 'disabled' : ''}>${u.isModerator ? 'Снять модератора' : 'Сделать модератором'}</button>
               <button type="button" class="admin-action-btn ${u.isBanned ? '' : 'admin-action-btn--warn'}" data-action="toggle-ban" ${u.id === me.id ? 'disabled' : ''}>${u.isBanned ? 'Разбанить' : 'Забанить'}</button>
@@ -153,6 +154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (Math.abs(amount) >= 100000 && !confirm(`Подтверди: начислить ${amount} монет — похоже на опечатку в количестве нулей.`)) return;
         await LexPrepApi.adminGrantCoins(userId, amount, user.bonusCoins);
         await LexPrepApi.logAdminAction('grant-coins', { targetUserId: userId, targetLabel: user.email, details: `${amount > 0 ? '+' : ''}${amount} (было ${user.bonusCoins})` });
+      } else if (action === 'grant-xp') {
+        const amountStr = prompt(`Сколько опыта (XP) начислить сверх текущих ${user.xp || 0}? Это напрямую влияет на уровень и место в рейтинге. Можно отрицательное число, чтобы списать.`, '100');
+        if (amountStr === null) return;
+        const amount = Number(amountStr);
+        if (!Number.isFinite(amount) || amount === 0) return;
+        await LexPrepApi.adminGrantXp(userId, amount, user.xp);
+        await LexPrepApi.logAdminAction('grant-xp', { targetUserId: userId, targetLabel: user.email, details: `${amount > 0 ? '+' : ''}${amount} XP (было ${user.xp || 0})` });
       } else if (action === 'grant-plan') {
         const tier = prompt('Тариф: basic, pro или max', user.planTier === 'basic' ? 'pro' : user.planTier);
         if (tier === null) return;
@@ -247,6 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'edit-name': 'изменил(а) имя',
     'edit-avatar': 'изменил(а) аватар',
     'grant-coins': 'начислил(а) монеты',
+    'grant-xp': 'начислил(а) опыт',
     'grant-plan': 'выдал(а) тариф',
     'toggle-moderator': 'изменил(а) роль модератора',
     'ban': 'заблокировал(а)',

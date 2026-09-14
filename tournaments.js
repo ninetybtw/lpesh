@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const listEl = document.getElementById('tourneyList');
 
   function tournamentAllowance() {
+    if (user.isAdmin || user.isModerator) return { allowed: true, label: null };
     const limit = LexPrepPlan.getLimits().tourneysPerMonth;
     if (limit === 0) return { allowed: false, label: 'Доступно с тарифа «Про»' };
     if (LexPrepProgress.getMonthlyUsage().tourneysPlayed >= limit) {
@@ -105,9 +106,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   let lockedIndex = -1;
   let battleChosen = [];
 
+  let progressPollTimer = null;
+  let myProgress = 0;
+  let oppProgress = 0;
+
   function stopTimers() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     if (battleTickTimer) { clearInterval(battleTickTimer); battleTickTimer = null; }
+    if (progressPollTimer) { clearInterval(progressPollTimer); progressPollTimer = null; }
   }
 
   async function enterTournamentFlow(typeId) {
@@ -230,12 +236,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     showView('battle');
 
+    const iAmP1 = match.player1Id === user.id;
     const startedAtMs = new Date(match.startedAt).getTime();
     const durationMs = tournament.secondsPerQuestion * 1000;
+    myProgress = 0;
+    oppProgress = 0;
+
+    progressPollTimer = setInterval(async () => {
+      try {
+        const fresh = await LexPrepApi.getTournamentMatch(match.id);
+        oppProgress = iAmP1 ? fresh.player2Progress : fresh.player1Progress;
+      } catch (e) { /* пропустим один опрос */ }
+    }, 800);
 
     function tick() {
       const elapsed = Date.now() - startedAtMs;
-      const index = Math.floor(elapsed / durationMs);
+      const timeIndex = Math.floor(elapsed / durationMs);
+      const bothAnsweredIndex = Math.min(myProgress, oppProgress);
+      const index = Math.max(timeIndex, bothAnsweredIndex);
 
       if (index >= battleQuestions.length) {
         finishBattle(match);
@@ -291,6 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
     if (correct) battleScore++;
     playerScoreEl.textContent = String(battleScore);
+
+    myProgress = index + 1;
+    if (currentMatch) LexPrepApi.advanceTournamentMatchProgress(currentMatch.id, myProgress).catch(() => {});
 
     questionBox.querySelectorAll('input[name="tourney-answer"]').forEach(input => { input.disabled = true; });
     answerBtn.disabled = true;

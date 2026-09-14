@@ -221,11 +221,18 @@ const LexPrepApi = (function () {
       isBanned: !!p.is_banned,
       banReason: p.ban_reason,
       bonusCoins: p.bonus_coins || 0,
+      xp: p.xp || 0,
       planTier: p.plan_tier || 'basic',
       planExpiresAt: p.plan_expires_at,
       planBillingPeriod: p.plan_billing_period || 'monthly',
       createdAt: p.created_at
     }));
+  }
+
+  async function adminGrantXp(userId, amount, currentXp) {
+    await requireSession();
+    const newXp = Math.max(0, (currentXp || 0) + amount);
+    return adminUpdateUser(userId, { xp: newXp });
   }
 
   async function adminUpdateUser(userId, patch) {
@@ -240,6 +247,7 @@ const LexPrepApi = (function () {
     if (patch.planExpiresAt !== undefined) row.plan_expires_at = patch.planExpiresAt;
     if (patch.planBillingPeriod !== undefined) row.plan_billing_period = patch.planBillingPeriod;
     if (patch.isModerator !== undefined) row.is_moderator = patch.isModerator;
+    if (patch.xp !== undefined) row.xp = patch.xp;
 
     const { data, error } = await client
       .from('profiles')
@@ -754,17 +762,21 @@ const LexPrepApi = (function () {
       opponentReady: d.opponent_ready,
       startedAt: d.started_at,
       secondsPerQuestion: d.seconds_per_question,
+      challengerName: d.challenger_name,
+      challengerProgress: d.challenger_progress || 0,
+      opponentProgress: d.opponent_progress || 0,
       createdAt: d.created_at,
       completedAt: d.completed_at
     };
   }
 
-  async function createDuelChallenge({ discipline, topic, questionIds, questionCount }) {
+  async function createDuelChallenge({ discipline, topic, questionIds, questionCount, challengerName }) {
     const session = await requireSession();
     const { data, error } = await client
       .from('pvp_duels')
       .insert({
         challenger_id: session.user.id,
+        challenger_name: challengerName || null,
         discipline, topic,
         question_ids: questionIds,
         question_count: questionCount
@@ -818,6 +830,13 @@ const LexPrepApi = (function () {
   async function markDuelReady(challengeId) {
     await requireSession();
     const { data, error } = await client.rpc('duel_mark_ready', { p_challenge_id: challengeId });
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  async function advanceDuelProgress(challengeId, progress) {
+    await requireSession();
+    const { data, error } = await client.rpc('duel_advance_progress', { p_challenge_id: challengeId, p_progress: progress });
     if (error) throw friendlyError(error);
     return toFrontendDuel(data);
   }
@@ -884,8 +903,17 @@ const LexPrepApi = (function () {
       player1PlayedAt: m.player1_played_at,
       player2PlayedAt: m.player2_played_at,
       winnerId: m.winner_id,
-      status: m.status
+      status: m.status,
+      player1Progress: m.player1_progress || 0,
+      player2Progress: m.player2_progress || 0
     };
+  }
+
+  async function advanceTournamentMatchProgress(matchId, progress) {
+    await requireSession();
+    const { data, error } = await client.rpc('tournament_match_advance_progress', { p_match_id: matchId, p_progress: progress });
+    if (error) throw friendlyError(error);
+    return toFrontendTournamentMatch(data);
   }
 
   async function joinTournament(typeId) {
@@ -1042,7 +1070,7 @@ const LexPrepApi = (function () {
   return {
     register, confirmSignupCode, resendSignupCode, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     syncXp, fetchLeaderboard,
-    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
+    adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     logAdminAction, adminListAuditLog,
     moderatorGrantCoins,
     submitHomepageFeedback, adminListHomepageFeedback, adminSetFeedbackStatus,
@@ -1051,8 +1079,8 @@ const LexPrepApi = (function () {
     createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,
     createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
-    getDuel, markDuelReady,
-    joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore,
+    getDuel, markDuelReady, advanceDuelProgress,
+    joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     askAiConsultant, askAiConsultantPro,
     getClient: () => client
   };
