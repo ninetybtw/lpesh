@@ -103,7 +103,7 @@ function activatePlan(tier) {
 document.addEventListener('DOMContentLoaded', async () => {
   let user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth.html';
+    window.location.href = 'auth';
     return;
   }
 

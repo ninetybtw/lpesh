@@ -85,7 +85,7 @@
       <div class="cookie-consent__text">
         Мы используем cookies и localStorage для входа в аккаунт, сохранения темы оформления и локального прогресса.
         Технические файлы необходимы для работы Сервиса и используются в любом случае — подробнее в
-        <a href="legal.html#privacy">Политике конфиденциальности</a>.
+        <a href="legal#privacy">Политике конфиденциальности</a>.
       </div>
       <div class="cookie-consent__actions">
         <button type="button" class="cookie-consent__btn cookie-consent__btn--decline" id="cookieConsentDecline">Не согласен</button>
