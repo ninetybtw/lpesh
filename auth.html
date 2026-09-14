@@ -21,7 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles/global.css">
 <link rel="stylesheet" href="./styles/style.css">
-<link rel="stylesheet" href="./styles/auth.css">
+<link rel="stylesheet" href="./styles/auth.css?v=20260914020000">
 </head>
 <body>
 <!-- HEADER -->
@@ -149,14 +149,22 @@
             <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-success__icon"><path d="M4 12l5 5L20 6"/></svg><span id="authSuccessText">Готово, входим…</span></p>
           </div>
 
-          <form class="auth-form" id="confirmCodeForm" hidden>
-            <p class="topic-desc">Мы отправили 6-значный код на <strong id="confirmCodeEmail"></strong>. Введи его, чтобы завершить регистрацию.</p>
-            <div class="form-group">
-              <label for="confirmCodeInput">Код подтверждения</label>
-              <input class="form-input" type="text" id="confirmCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code" required>
+          <form class="auth-form otp-form" id="confirmCodeForm" hidden>
+            <div class="otp-card">
+              <div class="otp-card__handle"></div>
+              <h2 class="otp-card__title">Введи код</h2>
+              <p class="otp-card__text">Мы отправили 6-значный код на <strong id="confirmCodeEmail"></strong>.</p>
+              <div class="otp-slots" id="otpSlots">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-otp-index="0">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="1">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="2">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="3">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="4">
+                <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="5">
+              </div>
+              <p class="otp-card__hint">Не пришло письмо? <button type="button" class="auth-switch__link" id="confirmCodeResend">Отправить ещё раз</button></p>
             </div>
-            <button type="submit" class="btn btn--primary btn--block btn--lg">Подтвердить</button>
-            <p class="auth-switch">Не пришло письмо? <button type="button" class="auth-switch__link" id="confirmCodeResend">Отправить код ещё раз</button></p>
+            <button type="submit" class="btn btn--primary btn--block btn--lg" id="confirmCodeSubmit" disabled>Подтвердить</button>
           </form>
         </div>
       </div>
@@ -174,7 +182,7 @@
 <script src="vendor/supabase-js.min.js"></script>
     <script src="api.js?v=20260914010000"></script>
 <script src="script.js?v=20260903180000"></script>
-<script src="auth.js?v=20260914000000"></script>
+<script src="auth.js?v=20260914020000"></script>
 <script src="cookie-consent.js?v=20260901000000"></script>
 </body>
 </html>

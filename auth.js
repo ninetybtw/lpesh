@@ -119,7 +119,56 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmCodeForm = document.getElementById('confirmCodeForm');
   const confirmCodeEmailEl = document.getElementById('confirmCodeEmail');
   const confirmCodeResendBtn = document.getElementById('confirmCodeResend');
+  const confirmCodeSubmitBtn = document.getElementById('confirmCodeSubmit');
+  const otpSlots = confirmCodeForm ? Array.from(confirmCodeForm.querySelectorAll('.otp-slot')) : [];
   let confirmCodeEmail = null;
+
+  function getOtpValue() {
+    return otpSlots.map(s => s.value).join('');
+  }
+
+  function clearOtpError() {
+    otpSlots.forEach(s => s.classList.remove('is-error'));
+  }
+
+  function updateSubmitState() {
+    if (confirmCodeSubmitBtn) confirmCodeSubmitBtn.disabled = getOtpValue().length !== otpSlots.length;
+  }
+
+  function fillOtp(digits) {
+    const chars = digits.replace(/\D/g, '').slice(0, otpSlots.length).split('');
+    otpSlots.forEach((slot, i) => {
+      slot.value = chars[i] || '';
+      slot.classList.toggle('is-filled', !!chars[i]);
+    });
+    updateSubmitState();
+    const nextEmpty = otpSlots.find(s => !s.value);
+    (nextEmpty || otpSlots[otpSlots.length - 1]).focus();
+  }
+
+  otpSlots.forEach((slot, i) => {
+    slot.addEventListener('input', () => {
+      clearOtpError();
+      slot.value = slot.value.replace(/\D/g, '').slice(-1);
+      slot.classList.toggle('is-filled', !!slot.value);
+      if (slot.value && otpSlots[i + 1]) otpSlots[i + 1].focus();
+      updateSubmitState();
+      if (getOtpValue().length === otpSlots.length && confirmCodeForm) {
+        confirmCodeForm.requestSubmit();
+      }
+    });
+
+    slot.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !slot.value && otpSlots[i - 1]) {
+        otpSlots[i - 1].focus();
+      }
+    });
+
+    slot.addEventListener('paste', (e) => {
+      e.preventDefault();
+      fillOtp((e.clipboardData || window.clipboardData).getData('text'));
+    });
+  });
 
   function showConfirmCodeForm(email) {
     confirmCodeEmail = email;
@@ -127,17 +176,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmCodeForm) confirmCodeForm.hidden = false;
     if (success) success.classList.remove('is-visible');
     hideAuthError();
-    const input = document.getElementById('confirmCodeInput');
-    if (input) input.focus();
+    otpSlots.forEach(s => { s.value = ''; s.classList.remove('is-filled', 'is-error'); });
+    updateSubmitState();
+    if (otpSlots[0]) otpSlots[0].focus();
   }
 
   if (confirmCodeForm) {
     confirmCodeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideAuthError();
-      const code = document.getElementById('confirmCodeInput').value.trim();
-      const submitBtn = confirmCodeForm.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
+      const code = getOtpValue();
+      if (code.length !== otpSlots.length) return;
+      confirmCodeSubmitBtn.disabled = true;
+      otpSlots.forEach(s => s.disabled = true);
       try {
         const user = await LexPrepApi.confirmSignupCode({ email: confirmCodeEmail, code });
         localStorage.setItem('lexprep_user', JSON.stringify(user));
@@ -146,9 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (success) success.classList.add('is-visible');
         setTimeout(() => { window.location.href = 'index.html'; }, 900);
       } catch (err) {
+        otpSlots.forEach(s => s.classList.add('is-error'));
         showAuthError(err.message);
       } finally {
-        submitBtn.disabled = false;
+        confirmCodeSubmitBtn.disabled = false;
+        otpSlots.forEach(s => s.disabled = false);
       }
     });
   }
