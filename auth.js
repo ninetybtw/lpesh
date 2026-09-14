@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
     panels.forEach(p => { p.classList.toggle('is-active', p.dataset.panel === name); p.hidden = false; });
     if (success) success.classList.remove('is-visible');
-    const confirmCodeForm = document.getElementById('confirmCodeForm');
-    if (confirmCodeForm) confirmCodeForm.hidden = true;
+    const otpOverlay = document.getElementById('otpOverlay');
+    if (otpOverlay) otpOverlay.classList.remove('is-visible');
   }
 
   tabs.forEach(tab => {
@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const result = await LexPrepApi.register({ name, email, password });
           if (result.pendingConfirmation) {
-            panel.hidden = true;
             showConfirmCodeForm(result.email);
           } else {
             localStorage.setItem('lexprep_user', JSON.stringify(result.user));
@@ -120,8 +119,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmCodeEmailEl = document.getElementById('confirmCodeEmail');
   const confirmCodeResendBtn = document.getElementById('confirmCodeResend');
   const confirmCodeSubmitBtn = document.getElementById('confirmCodeSubmit');
+  const otpErrorEl = document.getElementById('otpError');
   const otpSlots = confirmCodeForm ? Array.from(confirmCodeForm.querySelectorAll('.otp-slot')) : [];
   let confirmCodeEmail = null;
+
+  function showOtpError(message) {
+    if (!otpErrorEl) return;
+    otpErrorEl.textContent = message;
+    otpErrorEl.hidden = false;
+  }
+  function hideOtpError() {
+    if (otpErrorEl) otpErrorEl.hidden = true;
+  }
 
   function getOtpValue() {
     return otpSlots.map(s => s.value).join('');
@@ -129,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearOtpError() {
     otpSlots.forEach(s => s.classList.remove('is-error'));
+    hideOtpError();
   }
 
   function updateSubmitState() {
@@ -173,18 +183,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function showConfirmCodeForm(email) {
     confirmCodeEmail = email;
     if (confirmCodeEmailEl) confirmCodeEmailEl.textContent = email;
-    if (confirmCodeForm) confirmCodeForm.hidden = false;
+    const otpOverlay = document.getElementById('otpOverlay');
+    if (otpOverlay) otpOverlay.classList.add('is-visible');
     if (success) success.classList.remove('is-visible');
     hideAuthError();
+    hideOtpError();
     otpSlots.forEach(s => { s.value = ''; s.classList.remove('is-filled', 'is-error'); });
     updateSubmitState();
-    if (otpSlots[0]) otpSlots[0].focus();
+    setTimeout(() => { if (otpSlots[0]) otpSlots[0].focus(); }, 50);
   }
 
   if (confirmCodeForm) {
     confirmCodeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      hideAuthError();
+      hideOtpError();
       const code = getOtpValue();
       if (code.length !== otpSlots.length) return;
       confirmCodeSubmitBtn.disabled = true;
@@ -192,16 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const user = await LexPrepApi.confirmSignupCode({ email: confirmCodeEmail, code });
         localStorage.setItem('lexprep_user', JSON.stringify(user));
-        confirmCodeForm.hidden = true;
+        const otpOverlay = document.getElementById('otpOverlay');
+        if (otpOverlay) otpOverlay.classList.remove('is-visible');
         if (successText) successText.textContent = 'Готово, входим…';
         if (success) success.classList.add('is-visible');
         setTimeout(() => { window.location.href = 'index.html'; }, 900);
       } catch (err) {
         otpSlots.forEach(s => s.classList.add('is-error'));
-        showAuthError(err.message);
-      } finally {
-        confirmCodeSubmitBtn.disabled = false;
+        showOtpError(err.message);
         otpSlots.forEach(s => s.disabled = false);
+        confirmCodeSubmitBtn.disabled = false;
       }
     });
   }
@@ -212,9 +224,9 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmCodeResendBtn.disabled = true;
       try {
         await LexPrepApi.resendSignupCode({ email: confirmCodeEmail });
-        showAuthError('Код отправлен ещё раз — проверь почту.');
+        showOtpError('Код отправлен ещё раз — проверь почту.');
       } catch (err) {
-        showAuthError(err.message);
+        showOtpError(err.message);
       } finally {
         confirmCodeResendBtn.disabled = false;
       }

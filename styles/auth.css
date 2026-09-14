@@ -298,29 +298,55 @@ AUTH.CSS — страница входа/регистрации (положит�
   }
 }
 
-/* ---- OTP код подтверждения ---- */
-.otp-form {
+/* ---- OTP код подтверждения (модальное окно поверх страницы) ---- */
+.otp-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 10, 20, 0.6);
+  backdrop-filter: blur(6px);
+  animation: otpOverlayIn 0.25s ease;
+}
+
+.otp-overlay.is-visible {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+}
+
+@keyframes otpOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.otp-form {
+  width: 100%;
+  max-width: 380px;
 }
 
 .otp-card {
-  background: var(--color-bg-alt);
+  background: var(--color-white);
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 32px 28px;
+  border-radius: 24px;
+  padding: 36px 30px 30px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  animation: otpCardIn 0.35s cubic-bezier(0.25, 0.7, 0.35, 1);
+  box-shadow: 0 30px 70px rgba(2, 8, 24, 0.35);
+  animation: otpCardIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
 @keyframes otpCardIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.otp-card button[type="submit"] {
+  margin-top: 18px;
 }
 
 .otp-card__handle {
@@ -401,6 +427,12 @@ AUTH.CSS — страница входа/регистрации (положит�
 .otp-card__hint {
   color: var(--color-text-muted);
   font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.otp-card__error {
+  color: #e14d4d;
+  font-size: 13.5px;
   margin: 4px 0 0;
 }
 
