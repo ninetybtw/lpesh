@@ -13,8 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function switchTo(name) {
     tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
-    panels.forEach(p => p.classList.toggle('is-active', p.dataset.panel === name));
+    panels.forEach(p => { p.classList.toggle('is-active', p.dataset.panel === name); p.hidden = false; });
     if (success) success.classList.remove('is-visible');
+    const confirmCodeForm = document.getElementById('confirmCodeForm');
+    if (confirmCodeForm) confirmCodeForm.hidden = true;
   }
 
   tabs.forEach(tab => {
@@ -83,9 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const result = await LexPrepApi.register({ name, email, password });
           if (result.pendingConfirmation) {
-            if (successText) successText.textContent = `Осталось подтвердить email — мы отправили ссылку на ${result.email}.`;
-            if (success) success.classList.add('is-visible');
-            panel.reset();
+            panel.hidden = true;
+            showConfirmCodeForm(result.email);
           } else {
             localStorage.setItem('lexprep_user', JSON.stringify(result.user));
             if (successText) successText.textContent = 'Готово, входим…';
@@ -114,6 +115,58 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  const confirmCodeForm = document.getElementById('confirmCodeForm');
+  const confirmCodeEmailEl = document.getElementById('confirmCodeEmail');
+  const confirmCodeResendBtn = document.getElementById('confirmCodeResend');
+  let confirmCodeEmail = null;
+
+  function showConfirmCodeForm(email) {
+    confirmCodeEmail = email;
+    if (confirmCodeEmailEl) confirmCodeEmailEl.textContent = email;
+    if (confirmCodeForm) confirmCodeForm.hidden = false;
+    if (success) success.classList.remove('is-visible');
+    hideAuthError();
+    const input = document.getElementById('confirmCodeInput');
+    if (input) input.focus();
+  }
+
+  if (confirmCodeForm) {
+    confirmCodeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthError();
+      const code = document.getElementById('confirmCodeInput').value.trim();
+      const submitBtn = confirmCodeForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      try {
+        const user = await LexPrepApi.confirmSignupCode({ email: confirmCodeEmail, code });
+        localStorage.setItem('lexprep_user', JSON.stringify(user));
+        confirmCodeForm.hidden = true;
+        if (successText) successText.textContent = 'Готово, входим…';
+        if (success) success.classList.add('is-visible');
+        setTimeout(() => { window.location.href = 'index.html'; }, 900);
+      } catch (err) {
+        showAuthError(err.message);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  if (confirmCodeResendBtn) {
+    confirmCodeResendBtn.addEventListener('click', async () => {
+      if (!confirmCodeEmail) return;
+      confirmCodeResendBtn.disabled = true;
+      try {
+        await LexPrepApi.resendSignupCode({ email: confirmCodeEmail });
+        showAuthError('Код отправлен ещё раз — проверь почту.');
+      } catch (err) {
+        showAuthError(err.message);
+      } finally {
+        confirmCodeResendBtn.disabled = false;
+      }
+    });
+  }
 
   const hash = window.location.hash.replace('#', '');
   if (hash === 'register' || hash === 'login') {

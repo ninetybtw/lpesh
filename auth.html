@@ -148,6 +148,16 @@
           <div class="auth-success" id="authSuccess">
             <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-success__icon"><path d="M4 12l5 5L20 6"/></svg><span id="authSuccessText">Готово, входим…</span></p>
           </div>
+
+          <form class="auth-form" id="confirmCodeForm" hidden>
+            <p class="topic-desc">Мы отправили 6-значный код на <strong id="confirmCodeEmail"></strong>. Введи его, чтобы завершить регистрацию.</p>
+            <div class="form-group">
+              <label for="confirmCodeInput">Код подтверждения</label>
+              <input class="form-input" type="text" id="confirmCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code" required>
+            </div>
+            <button type="submit" class="btn btn--primary btn--block btn--lg">Подтвердить</button>
+            <p class="auth-switch">Не пришло письмо? <button type="button" class="auth-switch__link" id="confirmCodeResend">Отправить код ещё раз</button></p>
+          </form>
         </div>
       </div>
     </div>
@@ -162,9 +172,9 @@
 
 <script src="validation.js?v=20260831160000"></script>
 <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260913000000"></script>
+    <script src="api.js?v=20260914000000"></script>
 <script src="script.js?v=20260903180000"></script>
-<script src="auth.js?v=20260831160000"></script>
+<script src="auth.js?v=20260914000000"></script>
 <script src="cookie-consent.js?v=20260901000000"></script>
 </body>
 </html>

@@ -104,6 +104,18 @@ const LexPrepApi = (function () {
     return { pendingConfirmation: false, user: toFrontendUser(data.user, profile) };
   }
 
+  async function confirmSignupCode({ email, code }) {
+    const { data, error } = await client.auth.verifyOtp({ email, token: code, type: 'signup' });
+    if (error) throw friendlyError(error);
+    const profile = await fetchProfile(data.user.id);
+    return toFrontendUser(data.user, profile);
+  }
+
+  async function resendSignupCode({ email }) {
+    const { error } = await client.auth.resend({ type: 'signup', email });
+    if (error) throw friendlyError(error);
+  }
+
   async function login({ email, password }) {
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw friendlyError(error);
@@ -1028,7 +1040,7 @@ const LexPrepApi = (function () {
   }
 
   return {
-    register, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
+    register, confirmSignupCode, resendSignupCode, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     logAdminAction, adminListAuditLog,
