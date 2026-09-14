@@ -46,7 +46,7 @@ function initEditorToolbar(editor) {
 document.addEventListener('DOMContentLoaded', () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth';
+    window.location.href = 'auth.html';
     return;
   }
 
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       alert('Статья отправлена на модерацию — как только её одобрят, она появится в общем каталоге.');
-      window.location.href = 'article';
+      window.location.href = 'article.html';
     } catch (err) {
       alert('Не удалось отправить статью: ' + err.message);
       submitBtn.disabled = false;

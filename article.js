@@ -368,7 +368,7 @@ sortSelect.addEventListener('change', () => {
 });
 
 writeArticleBtn.addEventListener('click', () => {
-  window.location.href = 'write-article';
+  window.location.href = 'write-article.html';
 });
 
 renderArticles();

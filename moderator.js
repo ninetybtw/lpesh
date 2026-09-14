@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     me = await LexPrepApi.me();
   } catch (e) {
-    window.location.href = 'auth';
+    window.location.href = 'auth.html';
     return;
   }
 

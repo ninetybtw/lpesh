@@ -366,7 +366,7 @@ function initAuthState() {
           LexPrepApi.logout().catch(() => {});
           localStorage.removeItem('lexprep_user');
           alert('Аккаунт заблокирован' + (user.banReason ? `: ${user.banReason}` : '.'));
-          window.location.href = 'auth';
+          window.location.href = 'auth.html';
           return;
         }
         // Мержим, а не заменяем целиком — на фронтенде у user есть поля

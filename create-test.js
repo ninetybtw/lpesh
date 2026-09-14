@@ -18,7 +18,7 @@ function escapeHtml(str) {
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth';
+    window.location.href = 'auth.html';
     return;
   }
   await (window.LexPrepContentReady || Promise.resolve());
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       alert('Тест отправлен на модерацию — как только его одобрят, он появится во вкладке «Тесты» этой темы у всех.');
-      window.location.href = `app?discipline=${encodeURIComponent(disciplineSelect.value)}&topic=${encodeURIComponent(topicSelect.value)}&view=test`;
+      window.location.href = `app.html?discipline=${encodeURIComponent(disciplineSelect.value)}&topic=${encodeURIComponent(topicSelect.value)}&view=test`;
     } catch (err) {
       alert('Не удалось отправить тест: ' + err.message);
       submitBtn.disabled = false;

@@ -31,20 +31,20 @@
   <body>
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
-        <a href="/" class="logo">
+        <a href="index.html" class="logo">
           <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
           <span class="logo__text">LexPrep</span>
         </a>
 
         <nav class="nav" id="nav">
           <ul class="nav__list">
-            <li><a href="app" class="nav__link">Тренажёр</a></li>
-            <li><a href="profile" class="nav__link">Профиль</a></li>
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="profile.html" class="nav__link">Профиль</a></li>
           </ul>
         </nav>
 
         <div class="header__actions">
-          <a href="app" class="btn btn--ghost">← В тренажёр</a>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
 
           <div class="profile-menu" id="profileMenu">
             <button class="profile-btn" id="profileBtn" type="button">
@@ -52,17 +52,17 @@
               <span class="profile-btn__name" id="profileName">Профиль</span>
             </button>
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="admin" class="profile-dropdown__item" data-admin>Админка</a>
-              <a href="moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
-              <a href="profile#info" class="profile-dropdown__item">Личная информация</a>
-              <a href="profile#subscription" class="profile-dropdown__item">Подписка</a>
-              <a href="profile#stats" class="profile-dropdown__item">Статистика</a>
-              <a href="profile#articles" class="profile-dropdown__item">Мои статьи</a>
-              <a href="profile#tests" class="profile-dropdown__item">Мои тесты</a>
-              <a href="profile#referral" class="profile-dropdown__item">Реферальная программа</a>
-              <a href="support" class="profile-dropdown__item">Поддержка</a>
-              <a href="suggestions" class="profile-dropdown__item">Предложения</a>
-              <a href="profile#settings" class="profile-dropdown__item">Настройки</a>
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
               <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
           </div>
@@ -81,7 +81,7 @@
           <p class="admin-scope-note">
             Управление аккаунтами (блокировка/удаление, имя и аватар, выдача монет и подписки), модерация
             пользовательских тестов и статей, поддержка и предложения — то же самое доступно и на
-            <a href="moderator">странице модератора</a> (у модераторов — без тарифов и удаления аккаунтов).
+            <a href="moderator.html">странице модератора</a> (у модераторов — без тарифов и удаления аккаунтов).
           </p>
 
           <div id="adminGuard" hidden>
@@ -196,8 +196,8 @@
     <script src="api.js?v=20260914010000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260831160000"></script>
-    <script src="script.js?v=20260914040000"></script>
-    <script src="admin.js?v=20260914040000"></script>
-    <script src="cookie-consent.js?v=20260914040000"></script>
+    <script src="script.js?v=20260903180000"></script>
+    <script src="admin.js?v=20260914010000"></script>
+    <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

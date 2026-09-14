@@ -6,7 +6,7 @@ PROFILE.JS — личный кабинет: навигация по раздел
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth';
+    window.location.href = 'auth.html';
     return;
   }
 
@@ -570,7 +570,8 @@ function initMyTests() {
 /* ---------------- Referral program (код реальный, из profiles.referral_code;
    начисление наград за приглашение всё ещё не реализовано) ---------------- */
 function buildReferralLink(code) {
-  return `${window.location.origin}/auth?ref=${code}`;
+  const basePath = window.location.pathname.replace(/profile\.html$/, '');
+  return `${window.location.origin}${basePath}auth.html?ref=${code}`;
 }
 
 function initReferral() {
@@ -738,6 +739,6 @@ function initDangerZone() {
     Object.keys(localStorage)
       .filter(key => key.startsWith('lexprep_'))
       .forEach(key => localStorage.removeItem(key));
-    window.location.href = '/';
+    window.location.href = 'index.html';
   });
 }
