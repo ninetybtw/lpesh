@@ -121,6 +121,13 @@ const LexPrepApi = (function () {
   // {{ .Token }} (см. supabase/README про кастомный шаблон recovery-письма),
   // verifyOtp(type: 'recovery') превращает код в настоящую сессию.
   async function requestPasswordReset({ email }) {
+    const { data: exists, error: checkError } = await client.rpc('email_exists', { p_email: email });
+    if (checkError) throw friendlyError(checkError);
+    if (!exists) {
+      const err = new Error('Аккаунт с таким email не найден.');
+      err.code = 'email_not_found';
+      throw err;
+    }
     const { error } = await client.auth.resetPasswordForEmail(email);
     if (error) throw friendlyError(error);
   }
