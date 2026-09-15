@@ -116,6 +116,24 @@ const LexPrepApi = (function () {
     if (error) throw friendlyError(error);
   }
 
+  // Восстановление пароля тем же способом, что и подтверждение регистрации:
+  // GoTrue генерирует одноразовый токен и подставляет его в письмо как
+  // {{ .Token }} (см. supabase/README про кастомный шаблон recovery-письма),
+  // verifyOtp(type: 'recovery') превращает код в настоящую сессию.
+  async function requestPasswordReset({ email }) {
+    const { error } = await client.auth.resetPasswordForEmail(email);
+    if (error) throw friendlyError(error);
+  }
+
+  async function confirmPasswordReset({ email, code, newPassword }) {
+    const { data, error } = await client.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    if (error) throw friendlyError(error);
+    const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+    if (updateError) throw friendlyError(updateError);
+    const profile = await fetchProfile(data.user.id);
+    return toFrontendUser(data.user, profile);
+  }
+
   async function login({ email, password }) {
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw friendlyError(error);
@@ -1068,7 +1086,7 @@ const LexPrepApi = (function () {
   }
 
   return {
-    register, confirmSignupCode, resendSignupCode, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
+    register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     logAdminAction, adminListAuditLog,

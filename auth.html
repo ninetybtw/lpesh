@@ -21,7 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles/global.css">
 <link rel="stylesheet" href="./styles/style.css">
-<link rel="stylesheet" href="./styles/auth.css?v=20260914030000">
+<link rel="stylesheet" href="./styles/auth.css?v=20260915010000">
 </head>
 <body>
 <!-- HEADER -->
@@ -91,7 +91,7 @@
               <label for="loginPassword">Пароль</label>
               <input class="form-input" type="password" id="loginPassword" placeholder="••••••••" required>
             </div>
-            <a href="#" class="auth-forgot">Забыли пароль?</a>
+            <button type="button" class="auth-forgot" id="forgotPasswordLink">Забыли пароль?</button>
             <button type="submit" class="btn btn--primary btn--block btn--lg">Войти</button>
             <p class="auth-switch">Нет аккаунта? <button type="button" class="auth-switch__link" data-switch="register">Зарегистрироваться</button></p>
           </form>
@@ -169,6 +169,68 @@
               </div>
             </form>
           </div>
+
+          <div class="otp-overlay" id="resetOverlay">
+            <div class="otp-card">
+              <div class="otp-card__handle"></div>
+
+              <div id="resetStepEmail">
+                <h2 class="otp-card__title">Восстановление пароля</h2>
+                <p class="otp-card__text">Введи email, привязанный к аккаунту — пришлём код для сброса пароля.</p>
+                <form id="resetRequestForm">
+                  <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input class="form-input" type="email" id="resetEmail" placeholder="you@example.com" required>
+                  </div>
+                  <p class="otp-card__error" id="resetRequestError" hidden></p>
+                  <button type="submit" class="btn btn--primary btn--block btn--lg" id="resetRequestSubmit">Отправить код</button>
+                  <p class="otp-card__hint"><button type="button" class="auth-switch__link" id="resetCancelBtn">Отмена</button></p>
+                </form>
+              </div>
+
+              <form id="resetConfirmForm" hidden>
+                <h2 class="otp-card__title">Введи код</h2>
+                <p class="otp-card__text">Мы отправили 6-значный код на <strong id="resetConfirmEmail"></strong>.</p>
+                <div class="otp-slots" id="resetOtpSlots">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" data-otp-index="0">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="1">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="2">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="3">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="4">
+                  <input class="otp-slot" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-otp-index="5">
+                </div>
+                <div class="form-group">
+                  <label for="resetNewPassword">Новый пароль</label>
+                  <input class="form-input" type="password" id="resetNewPassword" placeholder="Минимум 8 символов" minlength="8" required>
+                  <ul class="password-rules" id="resetPasswordRules">
+                    <li class="password-rules__item" data-rule="length">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                      Не менее 8 символов
+                    </li>
+                    <li class="password-rules__item" data-rule="letter">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                      Есть буква
+                    </li>
+                    <li class="password-rules__item" data-rule="digit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                      Есть цифра
+                    </li>
+                    <li class="password-rules__item" data-rule="case">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                      Заглавная и строчная буква
+                    </li>
+                  </ul>
+                </div>
+                <div class="form-group">
+                  <label for="resetNewPasswordConfirm">Повторите пароль</label>
+                  <input class="form-input" type="password" id="resetNewPasswordConfirm" placeholder="Ещё раз пароль" minlength="8" required>
+                </div>
+                <p class="otp-card__error" id="resetConfirmError" hidden></p>
+                <button type="submit" class="btn btn--primary btn--block btn--lg" id="resetConfirmSubmit" disabled>Сбросить пароль</button>
+                <p class="otp-card__hint">Не пришло письмо? <button type="button" class="auth-switch__link" id="resetResendBtn">Отправить ещё раз</button></p>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -183,9 +245,9 @@
 
 <script src="validation.js?v=20260831160000"></script>
 <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260914010000"></script>
+    <script src="api.js?v=20260915010000"></script>
 <script src="script.js?v=20260903180000"></script>
-<script src="auth.js?v=20260914030000"></script>
+<script src="auth.js?v=20260915010000"></script>
 <script src="cookie-consent.js?v=20260901000000"></script>
 </body>
 </html>

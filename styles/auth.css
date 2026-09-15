@@ -177,6 +177,11 @@ AUTH.CSS — страница входа/регистрации (положит�
   font-weight: 600;
   margin-top: -8px;
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 .auth-checkbox {
   display: flex;
