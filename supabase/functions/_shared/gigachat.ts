@@ -14,16 +14,34 @@ const CHAT_URL = 'https://api.giga.chat/v1/chat/completions';
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
 async function fetchAccessToken(authKey: string, scope: string): Promise<{ value: string; expiresAt: number }> {
-  const res = await fetch(OAUTH_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'application/json',
-      RqUID: crypto.randomUUID(),
-      Authorization: `Basic ${authKey}`
-    },
-    body: `scope=${encodeURIComponent(scope)}`
-  });
+  const startedAt = Date.now();
+  console.log('[gigachat] fetchAccessToken: старт запроса к', OAUTH_URL);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  let res: Response;
+  try {
+    res = await fetch(OAUTH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+        RqUID: crypto.randomUUID(),
+        Authorization: `Basic ${authKey}`
+      },
+      body: `scope=${encodeURIComponent(scope)}`,
+      signal: controller.signal
+    });
+  } catch (e) {
+    console.error('[gigachat] fetchAccessToken: fetch упал через', Date.now() - startedAt, 'мс —', e?.name, e?.message);
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  console.log('[gigachat] fetchAccessToken: ответ получен через', Date.now() - startedAt, 'мс, статус', res.status);
+
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`GigaChat OAuth error (${res.status}): ${text.slice(0, 300)}`);
@@ -52,20 +70,36 @@ export async function callGigaChat(opts: {
 }): Promise<string> {
   const token = await getAccessToken(opts.authKey, opts.scope);
 
-  const doCall = (accessToken: string) => fetch(CHAT_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      model: opts.model,
-      messages: opts.messages,
-      temperature: opts.temperature ?? 0.4,
-      max_tokens: opts.maxTokens ?? 700
-    })
-  });
+  const doCall = async (accessToken: string) => {
+    const startedAt = Date.now();
+    console.log('[gigachat] callGigaChat: старт запроса к', CHAT_URL);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20_000);
+    try {
+      const r = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({
+          model: opts.model,
+          messages: opts.messages,
+          temperature: opts.temperature ?? 0.4,
+          max_tokens: opts.maxTokens ?? 700
+        }),
+        signal: controller.signal
+      });
+      console.log('[gigachat] callGigaChat: ответ получен через', Date.now() - startedAt, 'мс, статус', r.status);
+      return r;
+    } catch (e) {
+      console.error('[gigachat] callGigaChat: fetch упал через', Date.now() - startedAt, 'мс —', e?.name, e?.message);
+      throw e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
 
   let res = await doCall(token);
   if (res.status === 401) {
