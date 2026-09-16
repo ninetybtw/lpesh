@@ -245,6 +245,55 @@ DUEL.CSS — дуэль 1 на 1 против бота: экран настро�
   justify-content: flex-end;
 }
 
+/* ---------------- Анимации PvP-дуэлей ---------------- */
+
+@keyframes pvpViewIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+[data-pvp-view]:not([hidden]) {
+  animation: pvpViewIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes pvpQuestionIn {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+#pvpQuestionBox.is-animating {
+  animation: pvpQuestionIn 0.3s ease;
+}
+
+@keyframes pvpResultIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.duel-round-result:not([hidden]) {
+  animation: pvpResultIn 0.3s ease;
+}
+
+@keyframes pvpReadyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); }
+  50% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+}
+
+#pvpReadyBtn:disabled {
+  animation: pvpReadyPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pvpAnswerPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.answer:has(input:checked) {
+  animation: pvpAnswerPop 0.18s ease;
+  border-color: var(--color-primary);
+}
+
 .exam-breakdown .results-row {
   flex-wrap: wrap;
   gap: 8px;

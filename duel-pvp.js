@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="community-badge community-badge--open">${STATUS_LABEL[d.status]}</span>
           </div>
           <div class="community-item__meta">
-            <span>Создал: ${escapeHtml(d.challengerName || 'Игрок')} · ${formatDateTime(d.createdAt)}</span>
+            <span>Создал: ${escapeHtml(d.challengerName || 'Игрок')}${d.challengerLevel ? ` · ур. ${d.challengerLevel}` : ''}${d.challengerRating ? ` · рейтинг ${d.challengerRating}` : ''} · ${formatDateTime(d.createdAt)}</span>
             <button type="button" class="admin-action-btn" data-accept="${d.id}">Принять</button>
           </div>
         </div>
@@ -238,12 +238,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       createBtn.disabled = true;
       try {
+        const myLevel = (typeof LexPrepProgress !== 'undefined' && LexPrepProgress.getGamification().level) || 1;
         await LexPrepApi.createDuelChallenge({
           discipline: disciplineId,
           topic: topicId,
           questionIds: picked.map(p => ({ topicId: p.topicId, qIndex: p.qIndex })),
           questionCount: count,
-          challengerName: (user.name || 'Игрок').trim()
+          challengerName: (user.name || 'Игрок').trim(),
+          challengerLevel: myLevel,
+          challengerRating: user.duelRating || 1000
         });
         await refreshLists();
       } catch (err) {
@@ -447,6 +450,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           `).join('')}
         </div>
       `;
+
+      questionBox.classList.remove('is-animating');
+      void questionBox.offsetWidth;
+      questionBox.classList.add('is-animating');
 
       questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => {
         input.addEventListener('change', () => {

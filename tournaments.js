@@ -294,6 +294,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
+    questionBox.classList.remove('is-animating');
+    void questionBox.offsetWidth;
+    questionBox.classList.add('is-animating');
+
     questionBox.querySelectorAll('input[name="tourney-answer"]').forEach(input => {
       input.addEventListener('change', () => {
         battleChosen = Array.from(questionBox.querySelectorAll('input[name="tourney-answer"]:checked')).map(el => Number(el.value));

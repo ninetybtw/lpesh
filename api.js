@@ -788,6 +788,8 @@ const LexPrepApi = (function () {
       startedAt: d.started_at,
       secondsPerQuestion: d.seconds_per_question,
       challengerName: d.challenger_name,
+      challengerLevel: d.challenger_level,
+      challengerRating: d.challenger_rating,
       challengerProgress: d.challenger_progress || 0,
       opponentProgress: d.opponent_progress || 0,
       createdAt: d.created_at,
@@ -795,13 +797,15 @@ const LexPrepApi = (function () {
     };
   }
 
-  async function createDuelChallenge({ discipline, topic, questionIds, questionCount, challengerName }) {
+  async function createDuelChallenge({ discipline, topic, questionIds, questionCount, challengerName, challengerLevel, challengerRating }) {
     const session = await requireSession();
     const { data, error } = await client
       .from('pvp_duels')
       .insert({
         challenger_id: session.user.id,
         challenger_name: challengerName || null,
+        challenger_level: challengerLevel || null,
+        challenger_rating: challengerRating || null,
         discipline, topic,
         question_ids: questionIds,
         question_count: questionCount
