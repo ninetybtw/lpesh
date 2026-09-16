@@ -705,6 +705,8 @@ STYLE.CSS — компоненты и секции страницы
     box-shadow var(--transition);
   display: flex;
   flex-direction: column;
+  color: inherit;
+  text-decoration: none;
 }
 .article-card:hover {
   transform: translateY(-4px);

@@ -669,7 +669,7 @@
             return;
           }
           grid.innerHTML = latest.map(a => `
-            <article class="article-card reveal">
+            <a class="article-card reveal" href="article.html?open=${encodeURIComponent(a.id)}">
               <div class="article-card__body">
                 <span class="article-card__tag">${escapeHtml(a.topic || 'Статья')}</span>
                 <h3>${escapeHtml(a.title)}</h3>
@@ -682,7 +682,7 @@
                   </div>
                 </div>
               </div>
-            </article>
+            </a>
           `).join('');
         } catch (e) {
           grid.innerHTML = '<p class="topic-desc">Не удалось загрузить статьи.</p>';

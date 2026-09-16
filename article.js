@@ -378,4 +378,10 @@ loadUserArticles().then(() => {
   articles = [...userArticles];
   renderArticles();
   renderHistorySidebar();
+
+  // Прямая ссылка на статью (например, с блока статей на главной
+  // странице) — article.html?open=<id> сразу открывает нужную статью в
+  // модалке, вместо того чтобы просто показывать общий каталог.
+  const openId = new URLSearchParams(window.location.search).get('open');
+  if (openId) openArticle(openId);
 });

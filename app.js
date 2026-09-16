@@ -515,6 +515,11 @@ function initApp() {
       contentView.classList.add('content-fade-in');
     }
 
+    if (activeView === 'notes' && !locked && activeTopic.theory) {
+      LexPrepProgress.recordTheoryView(activeTopic.id);
+      renderGamifyBar();
+    }
+
     renderUserTestsList();
 
     const createTestBtn = document.getElementById('createTestBtn');

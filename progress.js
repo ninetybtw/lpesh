@@ -26,11 +26,12 @@ const LexPrepProgress = (function () {
         tests: (raw && raw.tests) || {},
         examAttempts: (raw && raw.examAttempts) || [],
         weak: (raw && raw.weak) || {},
+        theoryRead: (raw && raw.theoryRead) || {},
         dailyUsage: (raw && raw.dailyUsage) || null,
         monthlyUsage: (raw && raw.monthlyUsage) || null
       };
     } catch (e) {
-      return { cards: {}, tests: {}, examAttempts: [], weak: {}, dailyUsage: null, monthlyUsage: null };
+      return { cards: {}, tests: {}, examAttempts: [], weak: {}, theoryRead: {}, dailyUsage: null, monthlyUsage: null };
     }
   }
 
@@ -122,24 +123,31 @@ const LexPrepProgress = (function () {
       });
   }
 
-  // Учитывается (даёт опыт, попадает в статистику и "Последние тесты" в
-  // профиле) только первое прохождение конкретного теста — повторные
-  // попытки того же теста по-прежнему можно проходить и видеть свой
-  // результат, но в data.tests новая запись больше не добавляется,
-  // поэтому среднюю оценку/счётчик тестов/опыт они не трогают. Слабые
-  // места (data.weak) при этом обновляются всегда — важно знать, что
-  // вопрос всё ещё даётся тяжело, даже если это не первая попытка.
+  // Каждая попытка честно сохраняется в истории (для "Последних тестов" в
+  // профиле), но в опыт/среднюю оценку идёт только ЛУЧШИЙ результат по
+  // теме — если человек допустил ошибки, а потом их исправил в следующей
+  // попытке, опыт довыдаётся за разницу автоматически (см. computeXp:
+  // берётся max по всем попыткам, а не первая). Пересдать тест на
+  // результат ХУЖЕ прежнего можно свободно — это просто не уменьшит уже
+  // заработанный опыт. Слабые места (data.weak) обновляются всегда —
+  // важно знать, что вопрос всё ещё даётся тяжело, даже если это не
+  // первая попытка.
+  function bestFraction(attempts) {
+    return attempts.reduce((best, a) => {
+      const frac = a.total ? a.score / a.total : 0;
+      return frac > best ? frac : best;
+    }, 0);
+  }
+
   function recordTestAttempt(topicId, score, total, wrongIndexes) {
     if (!total) return;
     const data = load();
     if (!data.tests[topicId]) data.tests[topicId] = [];
-    const alreadyCounted = data.tests[topicId].length > 0;
-    if (!alreadyCounted) {
-      data.tests[topicId].push({ date: Date.now(), score, total });
-    }
+    const prevBest = bestFraction(data.tests[topicId]);
+    data.tests[topicId].push({ date: Date.now(), score, total });
+    const newBest = bestFraction(data.tests[topicId]);
 
-    const total_ = total;
-    for (let i = 0; i < total_; i++) {
+    for (let i = 0; i < total; i++) {
       const key = weakKey(topicId, i);
       if (wrongIndexes.includes(i)) {
         const prev = data.weak[key] || { misses: 0, lastMissed: 0 };
@@ -150,7 +158,18 @@ const LexPrepProgress = (function () {
     }
     save(data);
     incrementDailyUsage('testsTaken');
-    if (!alreadyCounted) checkLevelUp();
+    if (newBest > prevBest) checkLevelUp();
+  }
+
+  // Один раз даёт опыт за факт прочтения конспекта темы (открытие вкладки
+  // "Конспект") — раньше чтение теории вообще не учитывалось в опыте.
+  function recordTheoryView(topicId) {
+    if (!topicId) return;
+    const data = load();
+    if (data.theoryRead[topicId]) return;
+    data.theoryRead[topicId] = Date.now();
+    save(data);
+    checkLevelUp();
   }
 
   function recordExamAttempt(score, total, topics, wrongEntries) {
@@ -218,22 +237,23 @@ const LexPrepProgress = (function () {
     const activityDays = new Set();
     const recent = [];
 
-    // Считаем только первую попытку по каждому тесту (topicId, либо
-    // "topicId::user::testId" для пользовательских тестов) — повторное
-    // прохождение уже пройденного теста больше не задваивает счётчик и
-    // среднюю оценку (см. recordTestAttempt: сама запись новой попытки в
-    // data.tests теперь тоже происходит только один раз на тест).
+    // Средняя оценка и счётчик тестов считаются по лучшей попытке за тему
+    // (честно отражает реально достигнутый уровень, а не первую попытку
+    // навсегда) — при этом каждая попытка засчитывается в серию активности
+    // (streak), а в "Недавние" попадает самая свежая попытка, а не лучшая,
+    // чтобы лента активности отражала реальные последние действия.
     Object.keys(data.tests).forEach(topicId => {
       const attempts = data.tests[topicId];
       if (!attempts.length) return;
       touchedTopics.add(topicId);
-      const a = attempts[0];
       testsCount++;
-      scoreSum += a.score;
-      scoreTotal += a.total;
-      activityDays.add(new Date(a.date).toDateString());
+      const best = attempts.reduce((b, a) => (a.total && a.score / a.total > (b.total ? b.score / b.total : 0)) ? a : b, attempts[0]);
+      scoreSum += best.score;
+      scoreTotal += best.total;
+      attempts.forEach(a => activityDays.add(new Date(a.date).toDateString()));
+      const latest = attempts[attempts.length - 1];
       const topic = findTopic(allData, topicId);
-      recent.push({ date: a.date, title: topic ? topic.title : 'Тест по теме (недоступна)', score: a.score, total: a.total });
+      recent.push({ date: latest.date, title: topic ? topic.title : 'Тест по теме (недоступна)', score: latest.score, total: latest.total });
     });
 
     data.examAttempts.forEach(a => {
@@ -254,6 +274,8 @@ const LexPrepProgress = (function () {
       touchedTopics.add(key.split('::')[0]);
       cardsReviewed++;
     });
+
+    Object.keys(data.theoryRead).forEach(topicId => touchedTopics.add(topicId));
 
     recent.sort((a, b) => b.date - a.date);
 
@@ -423,18 +445,23 @@ const LexPrepProgress = (function () {
     return stats;
   }
 
-  // Опыт за тест начисляется только за первую попытку (повторное
-  // прохождение уже пройденного теста опыт не даёт), за карточку — один
-  // раз за сам факт прохождения, а не за каждое повторение по расписанию
-  // интервального повторения.
+  // Опыт за тест начисляется по ЛУЧШЕЙ попытке за тему (см. bestFraction) —
+  // если исправил ошибки в следующей попытке, опыт довыдаётся за разницу
+  // автоматически, потому что xp пересчитывается заново от максимума при
+  // каждом вызове, а не суммируется по попыткам. За карточку — один раз за
+  // сам факт прохождения, а не за каждое повторение по расписанию
+  // интервального повторения. За конспект — один раз за факт прочтения.
   function computeXp(data) {
     let xp = 0;
     Object.keys(data.tests).forEach(topicId => {
       const attempts = data.tests[topicId];
-      if (attempts.length) xp += attempts[0].score * 2;
+      if (!attempts.length) return;
+      const best = attempts.reduce((b, a) => (a.total && a.score / a.total > (b.total ? b.score / b.total : 0)) ? a : b, attempts[0]);
+      xp += best.score * 2;
     });
     data.examAttempts.forEach(a => { xp += a.score * 3; });
     xp += Object.keys(data.cards).length * 2;
+    xp += Object.keys(data.theoryRead).length * 8;
     return xp;
   }
 
@@ -509,6 +536,7 @@ const LexPrepProgress = (function () {
     Object.keys(data.tests).forEach(topicId => { if (data.tests[topicId].length) touchedTopicIds.add(topicId); });
     data.examAttempts.forEach(a => a.topics.forEach(id => touchedTopicIds.add(id)));
     Object.keys(data.cards).forEach(key => touchedTopicIds.add(key.split('::')[0]));
+    Object.keys(data.theoryRead).forEach(topicId => touchedTopicIds.add(topicId));
 
     const disciplinesTouched = new Set();
     touchedTopicIds.forEach(topicId => {
@@ -520,10 +548,10 @@ const LexPrepProgress = (function () {
     Object.keys(data.tests).forEach(topicId => {
       const attempts = data.tests[topicId];
       if (!attempts.length) return;
-      const a = attempts[0];
+      const best = attempts.reduce((b, a) => (a.total && a.score / a.total > (b.total ? b.score / b.total : 0)) ? a : b, attempts[0]);
       testsCount++;
-      testScoreSum += a.score;
-      testScoreTotal += a.total;
+      testScoreSum += best.score;
+      testScoreTotal += best.total;
     });
     const testAvgPercent = testScoreTotal ? Math.round((testScoreSum / testScoreTotal) * 100) : 0;
 
@@ -686,6 +714,7 @@ const LexPrepProgress = (function () {
     reviewCard,
     getDueCardIndexes,
     recordTestAttempt,
+    recordTheoryView,
     recordExamAttempt,
     getWeakQuestions,
     getStats,
