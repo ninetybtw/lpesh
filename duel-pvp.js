@@ -130,11 +130,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    function renderMyList(list) {
-      if (!list.length) {
+    function renderMyList(fullList) {
+      if (!fullList.length) {
         myListEl.innerHTML = '<p class="community-empty">Ты ещё не создавал и не принимал дуэли.</p>';
         return;
       }
+      // Активные (открытые/идущие) — нужны все, они требуют действия.
+      // Завершённые — только последние 5, иначе список бесконечно растёт
+      // историей сыгранных дуэлей.
+      const active = fullList.filter(d => d.status !== 'completed' && d.status !== 'cancelled');
+      const finished = fullList.filter(d => d.status === 'completed' || d.status === 'cancelled').slice(0, 5);
+      const list = [...active, ...finished];
+
       myListEl.innerHTML = list.map(d => {
         const isChallenger = d.challengerId === user.id;
         const myScore = isChallenger ? d.challengerScore : d.opponentScore;
@@ -295,19 +302,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (progressPollTimer) { clearInterval(progressPollTimer); progressPollTimer = null; }
     }
 
-    // Сдаться — на экране готовности отправляет счёт 0 (ещё никто не
-    // отвечал), во время боя — текущий набранный счёт (не обнуляет то,
-    // что уже честно отвечено). В обоих случаях засчитывается как обычная
-    // отправка счёта — сервер сам решит исход, как только другая сторона
-    // тоже отправит свой (или автоматически спишет её как выбывшую по
-    // таймауту, если она давно не отвечает — см. duel_submit_score).
+    // Сдаться завершает дуэль СРАЗУ поражением, а не просто отправляет
+    // свой счёт пораньше (это была бы обычная отправка, ждущая, пока
+    // соперник тоже отправит свой — соперник как ни в чём не бывало
+    // доигрывал бы матч, не зная, что оппонент уже сдался).
     async function forfeitDuel() {
       if (!battleDuel || battleFinished) return;
-      if (!confirm('Сдаться в этой дуэли? Незавершённые вопросы будут засчитаны как неотвеченные.')) return;
+      if (!confirm('Сдаться в этой дуэли? Победа сразу засчитается сопернику.')) return;
       battleFinished = true;
       stopTimers();
       try {
-        const result = await LexPrepApi.submitDuelScore(battleDuel.id, battleScore);
+        const result = await LexPrepApi.forfeitDuel(battleDuel.id);
         finishBattle(result);
       } catch (err) {
         alert(err.message);
@@ -374,6 +379,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           const duel = await LexPrepApi.getDuel(battleDuel.id);
           battleDuel = duel;
+          if (duel.status === 'completed') {
+            // Соперник сдался, пока мы ещё не начали — незачем ждать
+            // дальше, показываем итог сразу.
+            stopTimers();
+            battleFinished = true;
+            finishBattle(duel);
+            return;
+          }
           if (duel.startedAt) {
             stopTimers();
             LexPrepProgress.incrementDailyUsage('duelsPlayed');
@@ -402,6 +415,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       progressPollTimer = setInterval(async () => {
         try {
           const fresh = await LexPrepApi.getDuel(battleDuel.id);
+          if (fresh.status === 'completed' && !battleFinished) {
+            // Соперник сдался прямо во время боя — не заставляем
+            // доигрывать матч, которого уже нет.
+            battleFinished = true;
+            stopTimers();
+            finishBattle(fresh);
+            return;
+          }
           oppProgress = amChallenger() ? fresh.opponentProgress : fresh.challengerProgress;
         } catch (e) { /* пропустим один опрос — не критично */ }
       }, 800);
@@ -511,18 +532,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     function finishBattle(result) {
       const titleEl = document.getElementById('pvpResultTitle');
       const msgEl = document.getElementById('pvpResultMsg');
+      const detailsEl = document.getElementById('pvpResultDetails');
 
       if (result.status === 'completed') {
         const isChallenger = result.challengerId === user.id;
         const myScore = isChallenger ? result.challengerScore : result.opponentScore;
         const oppScore = isChallenger ? result.opponentScore : result.challengerScore;
-        const delta = isChallenger ? result.challengerRatingDelta : result.opponentRatingDelta;
-        const outcome = myScore > oppScore ? 'Победа' : myScore < oppScore ? 'Поражение' : 'Ничья';
-        titleEl.textContent = `${outcome}: ${myScore} : ${oppScore}`;
-        msgEl.textContent = `Изменение дуэльного рейтинга: ${delta >= 0 ? '+' : ''}${delta}.`;
+        const myDelta = isChallenger ? result.challengerRatingDelta : result.opponentRatingDelta;
+        const oppDelta = isChallenger ? result.opponentRatingDelta : result.challengerRatingDelta;
+        const myName = (user.name || 'Ты').trim();
+        const oppName = (isChallenger ? result.opponentName : result.challengerName) || 'Соперник';
+        const outcome = myScore > oppScore ? 'Победа!' : myScore < oppScore ? 'Поражение' : 'Ничья';
+        const outcomeClass = myScore > oppScore ? 'is-win' : myScore < oppScore ? 'is-loss' : 'is-draw';
+
+        titleEl.textContent = outcome;
+        msgEl.textContent = '';
+
+        detailsEl.innerHTML = `
+          <div class="duel-vs duel-result-vs ${outcomeClass}">
+            <div class="duel-vs__side">
+              <span class="duel-vs__avatar">${escapeHtml(myName.charAt(0).toUpperCase())}</span>
+              <span class="duel-vs__name">${escapeHtml(myName)} (ты)</span>
+              <span class="duel-vs__score">${myScore}</span>
+              <span class="duel-result-vs__delta ${myDelta >= 0 ? 'is-up' : 'is-down'}">${myDelta >= 0 ? '+' : ''}${myDelta} рейтинга</span>
+            </div>
+            <div class="duel-vs__mid">
+              <span class="duel-vs__vs">VS</span>
+            </div>
+            <div class="duel-vs__side">
+              <span class="duel-vs__avatar">${escapeHtml(oppName.charAt(0).toUpperCase())}</span>
+              <span class="duel-vs__name">${escapeHtml(oppName)}</span>
+              <span class="duel-vs__score">${oppScore}</span>
+              <span class="duel-result-vs__delta ${oppDelta >= 0 ? 'is-up' : 'is-down'}">${oppDelta >= 0 ? '+' : ''}${oppDelta} рейтинга</span>
+            </div>
+          </div>
+        `;
       } else {
         titleEl.textContent = `Ты ответил на ${battleScore} из ${battleQuestions.length}`;
         msgEl.textContent = 'Соперник ещё не доиграл — результат и изменение рейтинга появятся здесь, как только он закончит (проверь во вкладке «Мои дуэли»).';
+        detailsEl.innerHTML = '';
       }
 
       showPvpView('results');

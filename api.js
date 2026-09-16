@@ -794,6 +794,7 @@ const LexPrepApi = (function () {
       startedAt: d.started_at,
       secondsPerQuestion: d.seconds_per_question,
       challengerName: d.challenger_name,
+      opponentName: d.opponent_name,
       challengerLevel: d.challenger_level,
       challengerRating: d.challenger_rating,
       challengerProgress: d.challenger_progress || 0,
@@ -879,6 +880,17 @@ const LexPrepApi = (function () {
   async function submitDuelScore(challengeId, score) {
     await requireSession();
     const { data, error } = await client.rpc('duel_submit_score', { p_challenge_id: challengeId, p_score: score });
+    if (error) throw friendlyError(error);
+    return toFrontendDuel(data);
+  }
+
+  // Сдаться — в отличие от submitDuelScore(0), завершает дуэль СРАЗУ,
+  // засчитывая победу сопернику, а не ждёт, пока он тоже отправит свой
+  // счёт (иначе соперник как ни в чём не бывало доигрывал бы матч,
+  // которого для сдавшегося уже нет).
+  async function forfeitDuel(challengeId) {
+    await requireSession();
+    const { data, error } = await client.rpc('duel_forfeit', { p_challenge_id: challengeId });
     if (error) throw friendlyError(error);
     return toFrontendDuel(data);
   }
@@ -1273,7 +1285,7 @@ const LexPrepApi = (function () {
     listSuggestions, createSuggestion, voteSuggestion, unvoteSuggestion, adminUpdateSuggestion,
     createUserTest, listPublishedUserTests, listMyUserTests, moderatorListPendingTests, moderatorSetTestStatus, deleteUserTest,
     createUserArticle, listPublishedUserArticles, listMyUserArticles, moderatorListPendingArticles, moderatorSetArticleStatus, deleteUserArticle,
-    createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
+    createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, forfeitDuel, cancelDuelChallenge,
     getDuel, markDuelReady, advanceDuelProgress,
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     forfeitTournamentMatch, leaveTournamentLobby,
