@@ -1,7 +1,7 @@
 -- LexPrep — Supabase migration: серверный учёт использования ИИ-консультанта.
 -- Выполнить один раз в SQL Editor, ПОСЛЕ duels.sql.
 --
--- Сам вызов NVIDIA API и лимиты по тарифу (кто вообще может спрашивать,
+-- Сам вызов GigaChat API и лимиты по тарифу (кто вообще может спрашивать,
 -- сколько раз в день) считает Edge Function ai-consultant
 -- (supabase/functions/ai-consultant/index.ts) через service_role — она
 -- же пишет счётчик сюда. Обычному пользователю никакого insert/update

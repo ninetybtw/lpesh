@@ -1,6 +1,6 @@
 // LexPrep — Edge Function: ИИ-консультант (виджет на app.html).
 //
-// NVIDIA API-ключ живёт только здесь, в секретах функции — во фронтенд он
+// GigaChat API-ключ живёт только здесь, в секретах функции — во фронтенд он
 // никогда не попадает. Доступ и дневной лимит проверяются на сервере по
 // profiles.plan_tier/plan_expires_at (клиентским данным не доверяем: сам
 // факт вызова функции с валидным JWT — единственное, что мы принимаем на
@@ -8,13 +8,15 @@
 //
 // Деплой:
 //   supabase functions deploy ai-consultant
-//   supabase secrets set NVIDIA_API_KEY=nvapi-...
+//   supabase secrets set GIGACHAT_AUTH_KEY=<Authorization key из личного кабинета GigaChat API>
+//   supabase secrets set GIGACHAT_SCOPE=GIGACHAT_API_PERS
 // (service_role уже доступен функции автоматически как SUPABASE_SERVICE_ROLE_KEY)
 // Перед первым деплоем этой версии выполни supabase/ai-extra-requests.sql
 // в SQL Editor — функция читает и списывает profiles.ai_extra_requests.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { callGigaChat } from '../_shared/gigachat.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,7 +31,7 @@ const PLAN_LIMITS: Record<string, number> = {
   max: 35
 };
 
-const MODEL = 'meta/llama-3.1-70b-instruct';
+const MODEL = 'GigaChat-3-Ultra';
 const MAX_MESSAGE_LEN = 1500;
 const MAX_HISTORY_TURNS = 3;
 
@@ -47,7 +49,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const nvidiaKey = Deno.env.get('NVIDIA_API_KEY')!;
+    const gigaKey = Deno.env.get('GIGACHAT_AUTH_KEY')!;
+    const gigaScope = Deno.env.get('GIGACHAT_SCOPE') || 'GIGACHAT_API_PERS';
 
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } }
@@ -104,7 +107,7 @@ serve(async (req) => {
     // Дневной лимит тарифа исчерпан — но если в магазине куплены "лишние"
     // запросы (profiles.ai_extra_requests, см. shop.js), используем один
     // из них вместо отказа. Списываем ниже, только если запрос реально
-    // выполнился (после успешного ответа NVIDIA), а не заранее.
+    // выполнился (после успешного ответа GigaChat), а не заранее.
     const extraRequests = profile.ai_extra_requests || 0;
     const usingExtraRequest = usedToday >= dailyLimit;
     if (usingExtraRequest && extraRequests <= 0) {
@@ -113,32 +116,18 @@ serve(async (req) => {
       }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const aiRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${nvidiaKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...cleanHistory,
-          { role: 'user', content: message }
-        ],
-        temperature: 0.4,
-        max_tokens: 700
-      })
+    const reply = await callGigaChat({
+      authKey: gigaKey,
+      scope: gigaScope,
+      model: MODEL,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...cleanHistory,
+        { role: 'user', content: message }
+      ],
+      temperature: 0.4,
+      maxTokens: 700
     });
-
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => '');
-      throw new Error(`NVIDIA API error (${aiRes.status}): ${errText.slice(0, 300)}`);
-    }
-
-    const aiData = await aiRes.json();
-    const reply = aiData?.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error('Пустой ответ от ИИ — попробуй переформулировать вопрос.');
 
     if (usingExtraRequest) {
       await adminClient

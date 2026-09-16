@@ -6,7 +6,7 @@
 --
 -- Отдельная таблица, а не переиспользование ai_consultant_usage: у
 -- продвинутого консультанта своя дневная квота, не расходующая обычную.
--- Сам вызов NVIDIA API и проверка тарифа/периода — в Edge Function
+-- Сам вызов GigaChat API и проверка тарифа/периода — в Edge Function
 -- ai-consultant-pro (supabase/functions/ai-consultant-pro/index.ts) через
 -- service_role; обычному пользователю insert/update не даём — иначе можно
 -- было бы обнулить себе счётчик и обойти лимит.

@@ -2,15 +2,20 @@
 // app.html), доступен только пользователям с оплаченной ГОДОВОЙ подпиской
 // (profiles.plan_billing_period = 'annual' — сейчас выставляется только
 // вручную администратором через admin.js, реального платёжного шлюза с
-// выбором периода на сайте ещё нет). Отдельная модель от обычного
-// ai-consultant и отдельный дневной счётчик — см. ai-consultant-pro.sql.
+// выбором периода на сайте ещё нет). Отдельный дневной счётчик от
+// обычного ai-consultant — см. ai-consultant-pro.sql.
 //
-// NVIDIA API-ключ живёт только здесь, в секретах функции — во фронтенд он
-// никогда не попадает.
+// GigaChat API-ключ живёт только здесь, в секретах функции — во фронтенд
+// он никогда не попадает. Используется тот же ключ и тот же аккаунт, что
+// и в обычном ai-consultant (см. supabase/functions/_shared/gigachat.ts) —
+// отдельной "продвинутой" модели на freemium-тарифе GigaChat нет, разница
+// между обычным и продвинутым консультантом — в лимитах, промпте и
+// поддержке вложений, а не в модели.
 //
 // Деплой:
 //   supabase functions deploy ai-consultant-pro
-//   supabase secrets set NVIDIA_PRO_API_KEY=nvapi-...
+//   supabase secrets set GIGACHAT_AUTH_KEY=<Authorization key из личного кабинета GigaChat API>
+//   supabase secrets set GIGACHAT_SCOPE=GIGACHAT_API_PERS
 // (service_role уже доступен функции автоматически как SUPABASE_SERVICE_ROLE_KEY)
 // Перед первым деплоем выполни supabase/ai-consultant-pro.sql и
 // supabase/plan-billing-period.sql в SQL Editor.
@@ -23,6 +28,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { callGigaChat } from '../_shared/gigachat.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,7 +44,7 @@ const PLAN_LIMITS: Record<string, number> = {
   max: 35
 };
 
-const MODEL = 'deepseek-ai/deepseek-v4-pro-0813';
+const MODEL = 'GigaChat-3-Ultra';
 const MAX_MESSAGE_LEN = 1500;
 const MAX_ATTACHMENT_LEN = 20000;
 const MAX_HISTORY_TURNS = 3;
@@ -57,7 +63,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const nvidiaKey = Deno.env.get('NVIDIA_PRO_API_KEY')!;
+    const gigaKey = Deno.env.get('GIGACHAT_AUTH_KEY')!;
+    const gigaScope = Deno.env.get('GIGACHAT_SCOPE') || 'GIGACHAT_API_PERS';
 
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } }
@@ -123,32 +130,18 @@ serve(async (req) => {
       }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const aiRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${nvidiaKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...cleanHistory,
-          { role: 'user', content: message + attachmentBlock }
-        ],
-        temperature: 0.4,
-        max_tokens: 1200
-      })
+    const reply = await callGigaChat({
+      authKey: gigaKey,
+      scope: gigaScope,
+      model: MODEL,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...cleanHistory,
+        { role: 'user', content: message + attachmentBlock }
+      ],
+      temperature: 0.4,
+      maxTokens: 1200
     });
-
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => '');
-      throw new Error(`NVIDIA API error (${aiRes.status}): ${errText.slice(0, 300)}`);
-    }
-
-    const aiData = await aiRes.json();
-    const reply = aiData?.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error('Пустой ответ от ИИ — попробуй переформулировать вопрос.');
 
     await adminClient
       .from('ai_consultant_pro_usage')
