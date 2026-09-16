@@ -67,4 +67,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
   }).join('');
+
+  const myEntry = entries.find(e => e.isCurrentUser);
+  if (myEntry && typeof window.LexPrepNotifyRatingTop === 'function') {
+    window.LexPrepNotifyRatingTop(myEntry.place, user);
+  }
 });

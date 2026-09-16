@@ -201,6 +201,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderGrid();
         renderConsumables();
         if (typeof initCoinBadge === 'function') initCoinBadge();
+        if (typeof LexPrepApi !== 'undefined' && LexPrepApi.createSelfNotification) {
+          LexPrepApi.createSelfNotification({
+            type: 'subscription',
+            title: `Подписка «${PLAN_TITLES[item.grantsTier]}» активирована`,
+            body: 'Действует 30 дней — новые возможности уже доступны.',
+            link: 'profile.html#subscription'
+          }).catch(() => {});
+        }
       });
     });
   }

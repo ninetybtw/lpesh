@@ -24,6 +24,7 @@
     />
     <link rel="stylesheet" href="./styles/global.css" />
     <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/notifications.css" />
     <link rel="stylesheet" href="./styles/profile.css" />
     <link rel="stylesheet" href="./styles/admin.css" />
     <link rel="stylesheet" href="./styles/community.css" />
@@ -96,6 +97,7 @@
               <button type="button" class="admin-tab" data-admin-tab="support">Поддержка <span id="adminTicketsOpenCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="feedback">Обратная связь <span id="adminFeedbackNewCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
+              <button type="button" class="admin-tab" data-admin-tab="notifications">Уведомления</button>
               <button type="button" class="admin-tab" data-admin-tab="logs">Журнал действий</button>
             </div>
 
@@ -161,6 +163,29 @@
               <div class="community-list" id="adminSuggestionsList"></div>
             </div>
 
+            <div class="admin-tab-panel" data-admin-panel="notifications" hidden>
+              <p class="admin-scope-note">
+                Отправить уведомление всем зарегистрированным пользователям (появится колокольчиком в шапке).
+                Используй для анонсов новых функций, важных изменений и т.п.
+              </p>
+              <div class="form-group">
+                <label for="adminNotifTitle">Заголовок</label>
+                <input class="form-input" type="text" id="adminNotifTitle" placeholder="Например: Добавили промокоды!" maxlength="200">
+              </div>
+              <div class="form-group">
+                <label for="adminNotifBody">Текст (необязательно)</label>
+                <textarea class="form-textarea" id="adminNotifBody" rows="3" placeholder="Коротко опиши, что изменилось" maxlength="500"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="adminNotifLink">Ссылка (необязательно)</label>
+                <input class="form-input" type="text" id="adminNotifLink" placeholder="Например: shop.html">
+              </div>
+              <div class="admin-toolbar">
+                <button class="btn btn--primary" type="button" id="adminNotifSendBtn">Отправить всем</button>
+              </div>
+              <p class="admin-scope-note" id="adminNotifStatus" hidden></p>
+            </div>
+
             <div class="admin-tab-panel" data-admin-panel="logs" hidden>
               <p class="admin-scope-note">
                 Что делали модераторы и другие админы: бан/разбан, начисление монет, выдача тарифа/роли,
@@ -193,7 +218,8 @@
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260916020000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260916030000"></script>
+    <script src="api.js?v=20260916040000"></script>
+    <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260916010000"></script>
     <script src="script.js?v=20260903180000"></script>

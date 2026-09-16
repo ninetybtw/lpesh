@@ -1024,6 +1024,76 @@ const LexPrepApi = (function () {
     return toFrontendTournamentMatch(data);
   }
 
+  /* ---------------- Уведомления ---------------- */
+
+  function toFrontendNotification(n) {
+    return {
+      id: n.id,
+      type: n.type,
+      title: n.title,
+      body: n.body,
+      link: n.link,
+      isRead: n.is_read,
+      createdAt: n.created_at
+    };
+  }
+
+  async function listNotifications(limit) {
+    const session = await requireSession();
+    const { data, error } = await client
+      .from('notifications')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit || 30);
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendNotification);
+  }
+
+  async function getUnreadNotificationCount() {
+    const session = await requireSession();
+    const { count, error } = await client
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .eq('is_read', false);
+    if (error) throw friendlyError(error);
+    return count || 0;
+  }
+
+  async function markNotificationsRead(ids) {
+    if (!ids || !ids.length) return;
+    const { error } = await client
+      .from('notifications')
+      .update({ is_read: true })
+      .in('id', ids);
+    if (error) throw friendlyError(error);
+  }
+
+  // Обычное уведомление самому себе (новый уровень, куплена подписка,
+  // топ в рейтинге и т.п.) — RLS разрешает insert только с user_id =
+  // auth.uid(), так что вставить уведомление кому-то другому отсюда
+  // нельзя.
+  async function createSelfNotification({ type, title, body, link }) {
+    const session = await requireSession();
+    const { error } = await client
+      .from('notifications')
+      .insert({ user_id: session.user.id, type: type || 'info', title, body: body || null, link: link || null });
+    if (error) throw friendlyError(error);
+  }
+
+  // Рассылка всем пользователям — только для админов/модераторов,
+  // проверяется на сервере (см. supabase/notifications.sql).
+  async function broadcastNotification({ title, body, link }) {
+    const { data, error } = await client.rpc('notifications_broadcast', {
+      p_title: title,
+      p_body: body || null,
+      p_link: link || null
+    });
+    if (error) throw friendlyError(error);
+    return data;
+  }
+
   /* ---------------- ИИ-консультант ----------------
      Сам вызов NVIDIA API живёт в Edge Function ai-consultant — ключ
      там, во фронтенде его нет и быть не должно. Функция сама же
@@ -1111,6 +1181,7 @@ const LexPrepApi = (function () {
     getDuel, markDuelReady, advanceDuelProgress,
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     askAiConsultant, askAiConsultantPro,
+    listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
     getClient: () => client
   };
 })();

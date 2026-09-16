@@ -249,6 +249,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  /* ---------------- Рассылка уведомлений всем пользователям ---------------- */
+
+  const notifSendBtn = document.getElementById('adminNotifSendBtn');
+  const notifStatusEl = document.getElementById('adminNotifStatus');
+  if (notifSendBtn) {
+    notifSendBtn.addEventListener('click', async () => {
+      const titleInput = document.getElementById('adminNotifTitle');
+      const bodyInput = document.getElementById('adminNotifBody');
+      const linkInput = document.getElementById('adminNotifLink');
+      const title = titleInput.value.trim();
+      if (!title) { titleInput.focus(); return; }
+
+      notifSendBtn.disabled = true;
+      notifStatusEl.hidden = true;
+      try {
+        const count = await LexPrepApi.broadcastNotification({
+          title,
+          body: bodyInput.value.trim() || null,
+          link: linkInput.value.trim() || null
+        });
+        await LexPrepApi.logAdminAction('broadcast-notification', { details: `«${title}» — получили ${count} пользователей` });
+        notifStatusEl.textContent = `Отправлено ${count} пользователям.`;
+        notifStatusEl.hidden = false;
+        titleInput.value = '';
+        bodyInput.value = '';
+        linkInput.value = '';
+      } catch (err) {
+        notifStatusEl.textContent = 'Ошибка: ' + err.message;
+        notifStatusEl.hidden = false;
+      } finally {
+        notifSendBtn.disabled = false;
+      }
+    });
+  }
+
   /* ---------------- Журнал действий админов/модераторов ---------------- */
 
   const ADMIN_LOG_ACTION_LABEL = {
@@ -272,7 +307,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     'read-feedback': 'отметил(а) обращение прочитанным',
     'close-feedback': 'закрыл(а) обращение',
     'comment-suggestion': 'прокомментировал(а) предложение',
-    'suggestion-status': 'сменил(а) статус предложения'
+    'suggestion-status': 'сменил(а) статус предложения',
+    'broadcast-notification': 'разослал(а) уведомление всем'
   };
 
   const logsBody = document.getElementById('adminLogsBody');
