@@ -177,3 +177,37 @@ SHOP.CSS — страница магазина наград
     text-align: left;
   }
 }
+
+.shop-promo {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 4px;
+}
+
+.shop-promo input {
+  flex: 1;
+  max-width: 320px;
+}
+
+.shop-promo__status {
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  margin: 0 0 18px;
+}
+
+.shop-promo__status.is-success {
+  color: #2fa86b;
+}
+
+.shop-promo__status.is-error {
+  color: #e14d4d;
+}
+
+@media (max-width: 520px) {
+  .shop-promo {
+    flex-direction: column;
+  }
+  .shop-promo input {
+    max-width: none;
+  }
+}

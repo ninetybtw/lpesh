@@ -98,6 +98,7 @@
               <button type="button" class="admin-tab" data-admin-tab="feedback">Обратная связь <span id="adminFeedbackNewCount"></span></button>
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
               <button type="button" class="admin-tab" data-admin-tab="notifications">Уведомления</button>
+              <button type="button" class="admin-tab" data-admin-tab="promo">Промокоды</button>
               <button type="button" class="admin-tab" data-admin-tab="logs">Журнал действий</button>
             </div>
 
@@ -186,6 +187,82 @@
               <p class="admin-scope-note" id="adminNotifStatus" hidden></p>
             </div>
 
+            <div class="admin-tab-panel" data-admin-panel="promo" hidden>
+              <p class="admin-scope-note">
+                Скидка — % скидки, копится пользователю и учтётся при следующей реальной оплате (платёжного шлюза
+                пока нет, это задел на будущее). Подписка и скидка — только для новых аккаунтов (не старше суток).
+                Монеты — можно вводить в любой момент, включая существующих пользователей.
+              </p>
+              <div class="form-group">
+                <label for="adminPromoCode">Код</label>
+                <input class="form-input" type="text" id="adminPromoCode" placeholder="Например: WELCOME2026" maxlength="40">
+              </div>
+              <div class="form-group">
+                <label for="adminPromoType">Тип</label>
+                <select class="form-input" id="adminPromoType">
+                  <option value="subscription">Подписка (новые пользователи)</option>
+                  <option value="discount">Скидка % (новые пользователи)</option>
+                  <option value="coins">Монеты (все пользователи)</option>
+                </select>
+              </div>
+              <div id="adminPromoSubscriptionFields">
+                <div class="form-group">
+                  <label for="adminPromoTier">Тариф</label>
+                  <select class="form-input" id="adminPromoTier">
+                    <option value="pro">Про</option>
+                    <option value="max">Максимум</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="adminPromoDuration">Срок</label>
+                  <div class="admin-toolbar">
+                    <input class="form-input" type="number" id="adminPromoDuration" min="1" value="30" style="max-width:120px">
+                    <select class="form-input" id="adminPromoDurationUnit" style="max-width:160px">
+                      <option value="1">дней</option>
+                      <option value="30">месяцев</option>
+                      <option value="365">лет</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div id="adminPromoDiscountFields" hidden>
+                <div class="form-group">
+                  <label for="adminPromoPercent">Процент скидки</label>
+                  <input class="form-input" type="number" id="adminPromoPercent" min="1" max="100" value="10">
+                </div>
+              </div>
+              <div id="adminPromoCoinsFields" hidden>
+                <div class="form-group">
+                  <label for="adminPromoCoins">Количество монет</label>
+                  <input class="form-input" type="number" id="adminPromoCoins" min="1" value="100">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="adminPromoMaxActivations">Количество активаций</label>
+                <input class="form-input" type="number" id="adminPromoMaxActivations" min="1" value="1">
+              </div>
+              <div class="admin-toolbar">
+                <button class="btn btn--primary" type="button" id="adminPromoCreateBtn">Создать промокод</button>
+                <button class="btn btn--outline" type="button" id="adminPromoRefreshBtn">Обновить список</button>
+              </div>
+              <p class="admin-scope-note" id="adminPromoStatus" hidden></p>
+
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Код</th>
+                      <th>Тип</th>
+                      <th>Параметры</th>
+                      <th>Активаций</th>
+                      <th>Создан</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminPromoBody"></tbody>
+                </table>
+              </div>
+            </div>
+
             <div class="admin-tab-panel" data-admin-panel="logs" hidden>
               <p class="admin-scope-note">
                 Что делали модераторы и другие админы: бан/разбан, начисление монет, выдача тарифа/роли,
@@ -218,12 +295,12 @@
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260916020000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260916040000"></script>
+    <script src="api.js?v=20260917020000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260916010000"></script>
     <script src="script.js?v=20260903180000"></script>
-    <script src="admin.js?v=20260914010000"></script>
+    <script src="admin.js?v=20260917020000"></script>
     <script src="cookie-consent.js?v=20260901000000"></script>
   </body>
 </html>

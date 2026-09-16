@@ -245,9 +245,102 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (target === 'support' && !ticketsLoaded) loadTickets();
       if (target === 'feedback' && !feedbackLoaded) loadFeedback();
       if (target === 'suggestions' && !suggestionsLoaded) loadSuggestions();
+      if (target === 'promo' && !promoLoaded) loadPromoCodes();
       if (target === 'logs' && !logsLoaded) loadLogs();
     });
   });
+
+  /* ---------------- Промокоды ---------------- */
+
+  const PROMO_TYPE_LABEL = { subscription: 'Подписка', discount: 'Скидка', coins: 'Монеты' };
+  const promoBody = document.getElementById('adminPromoBody');
+  const promoRefreshBtn = document.getElementById('adminPromoRefreshBtn');
+  const promoCreateBtn = document.getElementById('adminPromoCreateBtn');
+  const promoStatusEl = document.getElementById('adminPromoStatus');
+  const promoTypeSelect = document.getElementById('adminPromoType');
+  let promoLoaded = false;
+
+  function promoParamsText(p) {
+    if (p.type === 'subscription') return `${p.subscriptionTier === 'max' ? 'Максимум' : 'Про'}, ${p.subscriptionDays} дн.`;
+    if (p.type === 'discount') return `${p.discountPercent}%`;
+    if (p.type === 'coins') return `${p.coinsAmount} монет`;
+    return '';
+  }
+
+  function renderPromoList(list) {
+    if (!list.length) {
+      promoBody.innerHTML = '<tr><td colspan="5" class="admin-empty">Промокодов пока нет.</td></tr>';
+      return;
+    }
+    promoBody.innerHTML = list.map(p => `
+      <tr>
+        <td><strong>${escapeHtml(p.code)}</strong></td>
+        <td>${PROMO_TYPE_LABEL[p.type] || p.type}</td>
+        <td>${escapeHtml(promoParamsText(p))}</td>
+        <td>${p.activationsCount} / ${p.maxActivations}</td>
+        <td>${new Date(p.createdAt).toLocaleDateString('ru-RU')}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadPromoCodes() {
+    promoLoaded = true;
+    try {
+      const list = await LexPrepApi.listPromoCodes();
+      renderPromoList(list);
+    } catch (err) {
+      promoBody.innerHTML = `<tr><td colspan="5" class="admin-empty">Ошибка: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  if (promoRefreshBtn) promoRefreshBtn.addEventListener('click', loadPromoCodes);
+
+  if (promoTypeSelect) {
+    promoTypeSelect.addEventListener('change', () => {
+      const type = promoTypeSelect.value;
+      document.getElementById('adminPromoSubscriptionFields').hidden = type !== 'subscription';
+      document.getElementById('adminPromoDiscountFields').hidden = type !== 'discount';
+      document.getElementById('adminPromoCoinsFields').hidden = type !== 'coins';
+    });
+  }
+
+  if (promoCreateBtn) {
+    promoCreateBtn.addEventListener('click', async () => {
+      const codeInput = document.getElementById('adminPromoCode');
+      const code = codeInput.value.trim();
+      if (!code) { codeInput.focus(); return; }
+      const type = promoTypeSelect.value;
+      const maxActivations = Number(document.getElementById('adminPromoMaxActivations').value) || 1;
+
+      const payload = { code, type, maxActivations };
+      if (type === 'subscription') {
+        payload.subscriptionTier = document.getElementById('adminPromoTier').value;
+        const duration = Number(document.getElementById('adminPromoDuration').value) || 1;
+        const unit = Number(document.getElementById('adminPromoDurationUnit').value) || 1;
+        payload.subscriptionDays = duration * unit;
+      } else if (type === 'discount') {
+        payload.discountPercent = Number(document.getElementById('adminPromoPercent').value) || 10;
+      } else if (type === 'coins') {
+        payload.coinsAmount = Number(document.getElementById('adminPromoCoins').value) || 100;
+      }
+
+      promoCreateBtn.disabled = true;
+      promoStatusEl.hidden = true;
+      try {
+        await LexPrepApi.createPromoCode(payload);
+        await LexPrepApi.logAdminAction('create-promo', { targetLabel: code, details: `${PROMO_TYPE_LABEL[type]} · ${promoParamsText({ type, ...payload })} · до ${maxActivations} активаций` });
+        promoStatusEl.textContent = `Промокод «${code}» создан.`;
+        promoStatusEl.hidden = false;
+        codeInput.value = '';
+        await loadPromoCodes();
+      } catch (err) {
+        promoStatusEl.textContent = 'Ошибка: ' + err.message;
+        promoStatusEl.hidden = false;
+      } finally {
+        promoCreateBtn.disabled = false;
+      }
+    });
+  }
 
   /* ---------------- Рассылка уведомлений всем пользователям ---------------- */
 
@@ -308,7 +401,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     'close-feedback': 'закрыл(а) обращение',
     'comment-suggestion': 'прокомментировал(а) предложение',
     'suggestion-status': 'сменил(а) статус предложения',
-    'broadcast-notification': 'разослал(а) уведомление всем'
+    'broadcast-notification': 'разослал(а) уведомление всем',
+    'create-promo': 'создал(а) промокод'
   };
 
   const logsBody = document.getElementById('adminLogsBody');

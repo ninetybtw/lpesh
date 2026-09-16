@@ -50,6 +50,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authError) authError.hidden = true;
   }
 
+  // Промокод (реф. код/подписка/монеты) вводится один раз при регистрации
+  // и активируется сразу, как только появляется настоящая сессия — либо
+  // сразу после регистрации (если email-подтверждение выключено), либо
+  // после ввода кода из письма (см. confirmCodeForm ниже). Ошибку
+  // показываем, но регистрацию не блокируем — промокод необязателен.
+  async function redeemPromoIfEntered() {
+    const promoInput = document.getElementById('regPromoCode');
+    const code = promoInput && promoInput.value.trim();
+    if (!code || typeof LexPrepApi === 'undefined' || !LexPrepApi.redeemPromoCode) return;
+    try {
+      const result = await LexPrepApi.redeemPromoCode(code);
+      let message;
+      if (result.type === 'subscription') {
+        message = `Промокод активирован: подписка «${result.subscriptionTier === 'max' ? 'Максимум' : 'Про'}» на ${result.subscriptionDays} дн.`;
+      } else if (result.type === 'coins') {
+        message = `Промокод активирован: +${result.coinsAmount} монет.`;
+      } else if (result.type === 'discount') {
+        message = `Промокод активирован: скидка ${result.discountPercent}% учтётся при следующей оплате.`;
+      } else {
+        message = 'Промокод активирован.';
+      }
+      if (successText) successText.textContent = message;
+    } catch (err) {
+      showAuthError(`Промокод не применён: ${err.message}`);
+    }
+  }
+
   panels.forEach(panel => {
     panel.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -92,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('lexprep_user', JSON.stringify(result.user));
             if (successText) successText.textContent = 'Готово, входим…';
             if (success) success.classList.add('is-visible');
+            await redeemPromoIfEntered();
             setTimeout(() => { window.location.href = 'index.html'; }, 900);
           }
         } catch (err) {
@@ -210,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (otpOverlay) otpOverlay.classList.remove('is-visible');
         if (successText) successText.textContent = 'Готово, входим…';
         if (success) success.classList.add('is-visible');
+        await redeemPromoIfEntered();
         setTimeout(() => { window.location.href = 'index.html'; }, 900);
       } catch (err) {
         otpSlots.forEach(s => s.classList.add('is-error'));

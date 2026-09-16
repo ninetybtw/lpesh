@@ -39,6 +39,8 @@ const LexPrepApi = (function () {
       message = error.details || 'Промокод: 3-20 символов, латинские буквы, цифры и дефис.';
     } else if (error.code === '23505' && /suggestion_votes/.test(error.details || error.message || '')) {
       message = 'Ты уже голосовал за это предложение.';
+    } else if (error.code === '23505' && /promo_codes/.test(error.details || error.message || '')) {
+      message = 'Промокод с таким кодом уже существует.';
     } else if (DUEL_ERROR_MESSAGES[error.message]) {
       message = DUEL_ERROR_MESSAGES[error.message];
     }
@@ -1094,6 +1096,76 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  /* ---------------- Промокоды ---------------- */
+
+  const PROMO_ERROR_MESSAGES = {
+    promo_not_found: 'Такой промокод не найден или уже неактивен.',
+    promo_exhausted: 'У этого промокода закончились активации.',
+    promo_already_used: 'Ты уже активировал(а) этот промокод.',
+    promo_new_users_only: 'Этот промокод только для новых пользователей.'
+  };
+
+  function friendlyPromoError(error) {
+    const known = PROMO_ERROR_MESSAGES[error.message];
+    if (known) {
+      const err = new Error(known);
+      err.code = error.message;
+      return err;
+    }
+    return friendlyError(error);
+  }
+
+  async function redeemPromoCode(code) {
+    await requireSession();
+    const { data, error } = await client.rpc('redeem_promo_code', { p_code: code });
+    if (error) throw friendlyPromoError(error);
+    return {
+      type: data.type,
+      discountPercent: data.discountPercent,
+      subscriptionTier: data.subscriptionTier,
+      subscriptionDays: data.subscriptionDays,
+      coinsAmount: data.coinsAmount
+    };
+  }
+
+  function toFrontendPromoCode(p) {
+    return {
+      id: p.id,
+      code: p.code,
+      type: p.type,
+      discountPercent: p.discount_percent,
+      subscriptionTier: p.subscription_tier,
+      subscriptionDays: p.subscription_days,
+      coinsAmount: p.coins_amount,
+      maxActivations: p.max_activations,
+      activationsCount: p.activations_count,
+      active: p.active,
+      createdAt: p.created_at
+    };
+  }
+
+  async function listPromoCodes() {
+    await requireSession();
+    const { data, error } = await client.from('promo_codes').select('*').order('created_at', { ascending: false });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendPromoCode);
+  }
+
+  async function createPromoCode({ code, type, discountPercent, subscriptionTier, subscriptionDays, coinsAmount, maxActivations }) {
+    await requireSession();
+    const { data, error } = await client.rpc('create_promo_code', {
+      p_code: code,
+      p_type: type,
+      p_discount_percent: discountPercent || null,
+      p_subscription_tier: subscriptionTier || null,
+      p_subscription_days: subscriptionDays || null,
+      p_coins_amount: coinsAmount || null,
+      p_max_activations: maxActivations || 1
+    });
+    if (error) throw friendlyError(error);
+    return toFrontendPromoCode(data);
+  }
+
   /* ---------------- ИИ-консультант ----------------
      Сам вызов NVIDIA API живёт в Edge Function ai-consultant — ключ
      там, во фронтенде его нет и быть не должно. Функция сама же
@@ -1182,6 +1254,7 @@ const LexPrepApi = (function () {
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     askAiConsultant, askAiConsultantPro,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
+    redeemPromoCode, listPromoCodes, createPromoCode,
     getClient: () => client
   };
 })();

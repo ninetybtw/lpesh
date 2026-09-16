@@ -279,6 +279,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     return div.innerHTML;
   }
 
+  /* ---------------- Промокод ---------------- */
+  const promoInput = document.getElementById('shopPromoInput');
+  const promoBtn = document.getElementById('shopPromoBtn');
+  const promoStatus = document.getElementById('shopPromoStatus');
+
+  if (promoBtn) {
+    promoBtn.addEventListener('click', async () => {
+      const code = promoInput.value.trim();
+      if (!code || typeof LexPrepApi === 'undefined') return;
+      promoBtn.disabled = true;
+      promoStatus.hidden = true;
+      try {
+        const result = await LexPrepApi.redeemPromoCode(code);
+        let message;
+        if (result.type === 'subscription') {
+          message = `Готово! Подписка «${PLAN_TITLES[result.subscriptionTier]}» на ${result.subscriptionDays} дн.`;
+          const fresh = await LexPrepApi.me();
+          user = { ...user, ...fresh };
+          localStorage.setItem('lexprep_user', JSON.stringify(user));
+        } else if (result.type === 'coins') {
+          message = `Готово! Начислено ${result.coinsAmount} монет.`;
+        } else if (result.type === 'discount') {
+          message = `Готово! Скидка ${result.discountPercent}% учтётся при следующей оплате.`;
+        } else {
+          message = 'Промокод активирован.';
+        }
+        promoStatus.textContent = message;
+        promoStatus.className = 'shop-promo__status is-success';
+        promoStatus.hidden = false;
+        promoInput.value = '';
+        renderGrid();
+        renderConsumables();
+      } catch (err) {
+        promoStatus.textContent = err.message;
+        promoStatus.className = 'shop-promo__status is-error';
+        promoStatus.hidden = false;
+      } finally {
+        promoBtn.disabled = false;
+      }
+    });
+  }
+
   renderAvatar();
   renderGrid();
   renderConsumables();
