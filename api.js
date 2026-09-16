@@ -16,8 +16,12 @@ const DUEL_ERROR_MESSAGES = {
   cannot_accept_own_challenge: 'Нельзя принять собственный вызов.',
   challenge_not_active: 'Эта дуэль ещё не началась или уже завершена.',
   already_submitted: 'Счёт по этой дуэли уже отправлен.',
-  not_a_participant: 'Ты не участник этой дуэли.',
-  invalid_score: 'Некорректный счёт.'
+  not_a_participant: 'Ты не участник этого матча.',
+  invalid_score: 'Некорректный счёт.',
+  match_not_found: 'Этот матч не найден.',
+  match_not_active: 'Этот матч ещё не начался или уже завершён.',
+  match_already_completed: 'Этот матч уже завершён.',
+  not_in_open_lobby: 'Ты сейчас не в очереди на турнир.'
 };
 
 const LexPrepApi = (function () {
@@ -1026,6 +1030,26 @@ const LexPrepApi = (function () {
     return toFrontendTournamentMatch(data);
   }
 
+  // Сдаться в матче, который ещё не стартовал (оба не были готовы) —
+  // засчитывает победу сопернику и продвигает сетку дальше. Матч,
+  // который уже идёт (started_at выставлен), сдаётся обычным
+  // submitTournamentScore(matchId, 0).
+  async function forfeitTournamentMatch(matchId) {
+    await requireSession();
+    const { data, error } = await client.rpc('tournament_forfeit_match', { p_match_id: matchId });
+    if (error) throw friendlyError(error);
+    return toFrontendTournamentMatch(data);
+  }
+
+  // Выйти из очереди турнира, пока лобби ещё не набралось нужное число
+  // игроков (после старта сетки выйти уже нельзя — там только форфейт
+  // конкретного матча).
+  async function leaveTournamentLobby(typeId) {
+    await requireSession();
+    const { error } = await client.rpc('tournament_leave_lobby', { p_type_id: typeId });
+    if (error) throw friendlyError(error);
+  }
+
   /* ---------------- Уведомления ---------------- */
 
   function toFrontendNotification(n) {
@@ -1252,6 +1276,7 @@ const LexPrepApi = (function () {
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, cancelDuelChallenge,
     getDuel, markDuelReady, advanceDuelProgress,
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
+    forfeitTournamentMatch, leaveTournamentLobby,
     askAiConsultant, askAiConsultantPro,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
     redeemPromoCode, listPromoCodes, createPromoCode,

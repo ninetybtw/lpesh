@@ -295,6 +295,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (progressPollTimer) { clearInterval(progressPollTimer); progressPollTimer = null; }
     }
 
+    // Сдаться — на экране готовности отправляет счёт 0 (ещё никто не
+    // отвечал), во время боя — текущий набранный счёт (не обнуляет то,
+    // что уже честно отвечено). В обоих случаях засчитывается как обычная
+    // отправка счёта — сервер сам решит исход, как только другая сторона
+    // тоже отправит свой (или автоматически спишет её как выбывшую по
+    // таймауту, если она давно не отвечает — см. duel_submit_score).
+    async function forfeitDuel() {
+      if (!battleDuel || battleFinished) return;
+      if (!confirm('Сдаться в этой дуэли? Незавершённые вопросы будут засчитаны как неотвеченные.')) return;
+      battleFinished = true;
+      stopTimers();
+      try {
+        const result = await LexPrepApi.submitDuelScore(battleDuel.id, battleScore);
+        finishBattle(result);
+      } catch (err) {
+        alert(err.message);
+        showPvpView('lobby');
+        await refreshLists();
+      }
+    }
+
+    document.getElementById('pvpForfeitBtn').addEventListener('click', forfeitDuel);
+    document.getElementById('pvpBattleForfeitBtn').addEventListener('click', forfeitDuel);
+
     function playDuel(duel) {
       battleDuel = duel;
       battleQuestions = resolveQuestions(duel.questionIds);
@@ -512,5 +536,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     refreshLists();
+    // Списки открытых/своих дуэлей раньше обновлялись только вручную
+    // (после действия) — если открытый вызов появлялся или соперник
+    // доигрывал, пока страница просто лежала открытой, узнать об этом
+    // можно было только вручную обновив страницу. Опрашиваем сами.
+    setInterval(refreshLists, 5000);
   }
 });

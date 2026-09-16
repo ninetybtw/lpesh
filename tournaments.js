@@ -109,6 +109,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let progressPollTimer = null;
   let myProgress = 0;
   let oppProgress = 0;
+  // Что именно сейчас показывает экран "waiting" — от этого зависит,
+  // что должна делать кнопка "К списку турниров"/"Сдаться": в лобби —
+  // по-настоящему выйти из очереди, на экране готовности — сдать матч,
+  // между раундами — просто уйти с экрана, само участие не трогая.
+  let waitingStage = null;
 
   function stopTimers() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -152,9 +157,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const waitingBackBtn = document.getElementById('tourneyWaitingBackBtn');
+
     if (tournament.status === 'open') {
+      waitingStage = 'lobby';
       showView('waiting');
       readyBtn.hidden = true;
+      waitingBackBtn.textContent = 'Выйти из очереди';
       waitingTitleEl.textContent = 'Собираем участников…';
       waitingMsgEl.textContent = `В лобби ${lobbyCount} из ${tournament.size} игроков — турнир начнётся автоматически, как только наберётся нужное число участников.`;
       return;
@@ -162,8 +171,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // status === 'active'
     if (!match) {
+      waitingStage = 'between-rounds';
       showView('waiting');
       readyBtn.hidden = true;
+      waitingBackBtn.textContent = 'К списку турниров';
       waitingTitleEl.textContent = `Раунд ${tournament.currentRound}`;
       waitingMsgEl.textContent = 'Ждём формирования следующего матча…';
       return;
@@ -172,6 +183,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentMatch = match;
 
     if (match.status === 'pending') {
+      waitingStage = 'ready';
+      waitingBackBtn.textContent = 'Сдаться';
       stopTimers();
       pollTimer = setInterval(refreshTournamentFlow, 1500);
       showView('waiting');
@@ -329,6 +342,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   answerBtn.addEventListener('click', () => lockCurrentAnswer(renderedIndex));
 
+  document.getElementById('tourneyBattleForfeitBtn').addEventListener('click', () => {
+    if (battleFinished) return;
+    if (!confirm('Сдаться в этом матче? Незавершённые вопросы будут засчитаны как неотвеченные.')) return;
+    finishBattle(currentMatch);
+  });
+
   async function finishBattle(match) {
     if (battleFinished) return;
     battleFinished = true;
@@ -372,11 +391,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     showView('list');
     renderList();
   });
-  document.getElementById('tourneyWaitingBackBtn').addEventListener('click', () => {
+  document.getElementById('tourneyWaitingBackBtn').addEventListener('click', async () => {
+    const backBtn = document.getElementById('tourneyWaitingBackBtn');
+    // Раньше эта кнопка просто уводила с экрана, ничего не меняя на
+    // сервере — из очереди/начатого матча по факту выйти было нельзя,
+    // только сделать вид. Теперь она по-настоящему выходит из очереди
+    // (лобби) или сдаёт матч (экран готовности); между раундами сетки
+    // уже не отвертеться — там просто уходим со страницы, участие
+    // остаётся, продолжить можно позже через "Продолжить" в списке.
+    if (waitingStage === 'lobby') {
+      if (!confirm('Выйти из очереди на турнир?')) return;
+      backBtn.disabled = true;
+      try {
+        await LexPrepApi.leaveTournamentLobby(currentTypeId);
+      } catch (err) {
+        alert(err.message);
+        backBtn.disabled = false;
+        return;
+      }
+      backBtn.disabled = false;
+    } else if (waitingStage === 'ready') {
+      if (!confirm('Сдаться в этом матче? Победа будет засчитана сопернику.')) return;
+      backBtn.disabled = true;
+      try {
+        await LexPrepApi.forfeitTournamentMatch(currentMatch.id);
+      } catch (err) {
+        alert(err.message);
+        backBtn.disabled = false;
+        return;
+      }
+      backBtn.disabled = false;
+    }
     stopTimers();
     showView('list');
     renderList();
   });
 
   showView('list');
+
+  // Экран списка типов турниров раньше обновлялся только при заходе на
+  // страницу — если чей-то турнир только что заполнился, кнопка
+  // "Участвовать" не менялась на "Продолжить" без ручного обновления
+  // страницы. Опрашиваем, пока список реально виден.
+  setInterval(() => {
+    const listView = document.querySelector('[data-tourney-view="list"]');
+    if (listView && !listView.hidden) renderList();
+  }, 6000);
 });
