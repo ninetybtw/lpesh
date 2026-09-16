@@ -59,6 +59,10 @@ NOTIFICATIONS.CSS — колокольчик уведомлений в шапк�
   100% { transform: scale(1); }
 }
 
+.notif-dropdown[hidden] {
+  display: none;
+}
+
 .notif-dropdown {
   position: absolute;
   top: calc(100% + 10px);
