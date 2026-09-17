@@ -850,20 +850,17 @@ STYLE.CSS — компоненты и секции страницы
 .price-card--featured.is-annual {
   box-shadow: var(--price-annual-shadow), var(--shadow-lg);
 }
-.price-card__badge {
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 16px;
-  border-radius: 999px;
+/* Кнопка "Выбрать" красится в цвет активного периода — синий на
+   помесячной, оранжевый на годовой, одинаково на обеих карточках. */
+.price-card.is-annual .price-card__cta.btn--primary {
+  background: var(--color-accent);
+}
+.price-card.is-annual .price-card__cta.btn--primary:hover {
+  background: var(--color-accent);
+  filter: brightness(0.92);
 }
 .price-card__name {
-  font-size: 18px;
+  font-size: 21px;
   margin-bottom: 8px;
 }
 .price-card__price {
@@ -871,6 +868,9 @@ STYLE.CSS — компоненты и секции страницы
   font-weight: 800;
   margin-bottom: 4px;
   transition: opacity 0.15s ease;
+}
+.price-card__price--free {
+  font-size: 24px;
 }
 .price-card__price span {
   font-size: 15px;
@@ -888,12 +888,12 @@ STYLE.CSS — компоненты и секции страницы
 .price-card__toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
   margin-bottom: 14px;
 }
 .price-card__toggle-label {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
   transition: color var(--transition);
@@ -903,8 +903,8 @@ STYLE.CSS — компоненты и секции страницы
 }
 .ios-toggle {
   position: relative;
-  width: 51px;
-  height: 31px;
+  width: 38px;
+  height: 22px;
   border-radius: 999px;
   border: none;
   padding: 0;
@@ -917,8 +917,8 @@ STYLE.CSS — компоненты и секции страницы
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 27px;
-  height: 27px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -928,7 +928,7 @@ STYLE.CSS — компоненты и секции страницы
   background: var(--color-accent);
 }
 .ios-toggle[aria-pressed="true"] .ios-toggle__thumb {
-  transform: translateX(20px);
+  transform: translateX(16px);
 }
 
 /* Плавная смена контента (цена/пункты списка) при переключении периода */

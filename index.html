@@ -369,7 +369,7 @@
           <div class="grid grid--3 pricing">
             <div class="price-card reveal">
               <h3 class="price-card__name">Базовый</h3>
-              <div class="price-card__price">Бесплатно</div>
+              <div class="price-card__price price-card__price--free">Бесплатно</div>
               <ul class="price-card__list">
                 <li>Конспект — 1 предмет полностью, у остальных только оглавление</li>
                 <li>Карточки — 10–15 повторений в день</li>
@@ -380,7 +380,6 @@
               <p class="price-card__note">Доступен сразу после регистрации — оформлять ничего не нужно</p>
             </div>
             <div class="price-card price-card--featured is-annual reveal" data-price-card>
-              <span class="price-card__badge">Популярный</span>
               <h3 class="price-card__name">Про</h3>
 
               <div class="price-card__toggle">
@@ -388,7 +387,7 @@
                 <button type="button" class="ios-toggle" data-billing-toggle aria-pressed="true" aria-label="Переключить на помесячную оплату">
                   <span class="ios-toggle__thumb"></span>
                 </button>
-                <span class="price-card__toggle-label" data-toggle-label="monthly">Помесячно</span>
+                <span class="price-card__toggle-label" data-toggle-label="monthly">Месяц</span>
               </div>
 
               <div class="price-card__price" data-price-monthly hidden>600 ₽<span>/мес</span></div>
@@ -398,7 +397,8 @@
               <ul class="price-card__list">
                 <li>Все конспекты и карточки без ограничений</li>
                 <li>Карточки — полная колода, интервальное повторение</li>
-                <li>Тесты — 3–5 попыток в день с разбором ответов</li>
+                <li data-plan-monthly hidden>Тесты — 3 попытки в день с разбором ответов</li>
+                <li data-plan-annual>Тесты — 5 попыток в день с разбором ответов</li>
                 <li>Пробный экзамен — 3 попытки в месяц</li>
                 <li data-plan-monthly hidden>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
                 <li data-plan-annual>Продвинутый ИИ-консультант — 10 запросов в день</li>
@@ -406,7 +406,7 @@
                 <li data-plan-annual>Дуэли — 5 в день, турниры — 3 в месяц, без взноса</li>
                 <li>Без рекламы</li>
               </ul>
-              <a href="#cta" class="btn btn--primary btn--block">Выбрать</a>
+              <a href="#cta" class="btn btn--primary btn--block price-card__cta">Выбрать</a>
             </div>
             <div class="price-card is-annual reveal" data-price-card>
               <h3 class="price-card__name">Максимум</h3>
@@ -416,7 +416,7 @@
                 <button type="button" class="ios-toggle" data-billing-toggle aria-pressed="true" aria-label="Переключить на помесячную оплату">
                   <span class="ios-toggle__thumb"></span>
                 </button>
-                <span class="price-card__toggle-label" data-toggle-label="monthly">Помесячно</span>
+                <span class="price-card__toggle-label" data-toggle-label="monthly">Месяц</span>
               </div>
 
               <div class="price-card__price" data-price-monthly hidden>1000 ₽<span>/мес</span></div>
@@ -432,7 +432,7 @@
                 <li data-plan-monthly hidden>Турниры — до 5 участий в месяц, без взноса</li>
                 <li data-plan-annual>Турниры — до 10 участий в месяц, без взноса</li>
               </ul>
-              <a href="#cta" class="btn btn--outline btn--block">Выбрать</a>
+              <a href="#cta" class="btn btn--primary btn--block price-card__cta">Выбрать</a>
             </div>
           </div>
         </div>
