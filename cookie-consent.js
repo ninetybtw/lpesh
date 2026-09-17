@@ -69,11 +69,20 @@
           right: 10px;
           bottom: 10px;
           flex-direction: column;
+          flex-wrap: nowrap;
           align-items: stretch;
           padding: 14px 16px;
           gap: 10px;
           font-size: 13px;
           line-height: 1.4;
+        }
+        .cookie-consent__text {
+          /* Базовое правило .cookie-consent__text задаёт flex: 1 1 320px —
+             в flex-direction: row это ширина, но здесь контейнер уже
+             column (main-axis вертикальный), и тот же flex-basis: 320px
+             читается как ВЫСОТА блока — отсюда была огромная пустая
+             область между текстом и кнопками на мобильном. */
+          flex: 1 1 auto;
         }
         .cookie-consent__actions {
           justify-content: stretch;
@@ -95,8 +104,7 @@
     el.id = 'cookieConsentBanner';
     el.innerHTML = `
       <div class="cookie-consent__text">
-        Мы используем cookies и localStorage для входа в аккаунт, сохранения темы оформления и локального прогресса.
-        Технические файлы необходимы для работы Сервиса и используются в любом случае — подробнее в
+        Используем cookies и localStorage для работы сайта (вход, тема, прогресс) — подробнее в
         <a href="legal.html#privacy">Политике конфиденциальности</a>.
       </div>
       <div class="cookie-consent__actions">
