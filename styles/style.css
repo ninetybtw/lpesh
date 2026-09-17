@@ -859,6 +859,16 @@ STYLE.CSS — компоненты и секции страницы
   background: var(--color-accent);
   filter: brightness(0.92);
 }
+.price-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.price-card__head .price-card__name {
+  margin-bottom: 0;
+}
 .price-card__name {
   font-size: 21px;
   margin-bottom: 8px;
@@ -888,9 +898,8 @@ STYLE.CSS — компоненты и секции страницы
 .price-card__toggle {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 .price-card__toggle-label {
   font-size: 12px;
