@@ -22,20 +22,21 @@
 //                                    в acts, case_law пустой).
 //
 // Self-hosted backend (api.lexprep.ru) — в отличие от старых import-*.js в
-// этой папке, которые ходили в исходный hosted Supabase. Админ-логин не
-// хардкодим в файл: передаём через переменные окружения.
+// этой папке, которые ходили в исходный hosted Supabase. Старые скрипты
+// логинились под тестовым админ-аккаунтом, которого на новом бэкенде нет —
+// вместо этого используем SERVICE_ROLE_KEY (обходит RLS без входа под каким-
+// либо пользователем). Ключ не хардкодим в файл: передаём через переменную
+// окружения.
 //
 // Использование:
-//   LEXPREP_ADMIN_EMAIL=... LEXPREP_ADMIN_PASSWORD=... node import-civil-procedure.js <md-dir>
+//   LEXPREP_SERVICE_ROLE_KEY=... node import-civil-procedure.js <md-dir>
 
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = 'https://api.lexprep.ru';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg5MDYxNTk5LCJleHAiOjIxMDQ0MjE1OTl9.G72bJtIoEejCMnqrSZQHTKy74AcCBekpfIMLw3vuRC0';
-const ADMIN_EMAIL = process.env.LEXPREP_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.LEXPREP_ADMIN_PASSWORD;
+const SERVICE_ROLE_KEY = process.env.LEXPREP_SERVICE_ROLE_KEY;
 
 const DISCIPLINE_ID = 'civil-procedure';
 const DISCIPLINE_TITLE = 'Гражданский процесс';
@@ -44,11 +45,11 @@ const SKIP_TOPICS = [26]; // неполный набор файлов — тол
 
 const [, , mdDir] = process.argv;
 if (!mdDir) {
-  console.error('Usage: LEXPREP_ADMIN_EMAIL=... LEXPREP_ADMIN_PASSWORD=... node import-civil-procedure.js <md-dir>');
+  console.error('Usage: LEXPREP_SERVICE_ROLE_KEY=... node import-civil-procedure.js <md-dir>');
   process.exit(1);
 }
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error('Заданы не все переменные окружения: LEXPREP_ADMIN_EMAIL, LEXPREP_ADMIN_PASSWORD');
+if (!SERVICE_ROLE_KEY) {
+  console.error('Задайте переменную окружения LEXPREP_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
@@ -213,13 +214,9 @@ if (emptyActs.length) {
   process.exit(1);
 }
 
-const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const client = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 (async () => {
-  const { error: loginErr } = await client.auth.signInWithPassword({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
-  if (loginErr) { console.error('Login failed:', loginErr.message); process.exit(1); }
-  console.log('Logged in as admin.');
-
   const { error: discErr } = await client.from('disciplines').upsert({ id: DISCIPLINE_ID, title: DISCIPLINE_TITLE, sort_order: SORT_ORDER });
   if (discErr) { console.error('discipline upsert failed:', discErr.message); process.exit(1); }
 
