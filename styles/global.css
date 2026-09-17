@@ -14,6 +14,8 @@
   --color-border: #e6e8f0;
   --color-white: #ffffff;
   --color-success: #1fb774;
+  --price-annual-gradient: linear-gradient(135deg, #eef1ff 0%, #fff3ea 100%);
+  --price-annual-shadow: 0 12px 32px rgba(255, 122, 69, 0.18);
 
   --font-main: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
@@ -43,6 +45,8 @@
   --color-border: #2a2e3d;
   --color-white: #1b1e29;
   --color-success: #2fd98a;
+  --price-annual-gradient: linear-gradient(135deg, rgba(107, 130, 255, 0.22) 0%, rgba(255, 138, 92, 0.18) 100%);
+  --price-annual-shadow: 0 12px 32px rgba(255, 138, 92, 0.22);
 
   color-scheme: dark;
 }

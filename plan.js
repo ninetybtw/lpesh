@@ -13,10 +13,20 @@ const LexPrepPlan = (function () {
   const DISCIPLINE_KEY = 'lexprep_basic_discipline';
   const TIER_RANK = { basic: 0, pro: 1, max: 2 };
 
+  // Дуэли/турниры у "про" и "максимум" зависят ещё и от периода оплаты —
+  // годовая подписка даёт больше того и другого (см. price-card на
+  // index.html#pricing). Помесячные значения — те же, что были всегда;
+  // getLimits() ниже сам выбирает нужный набор через hasAnnualPlan().
   const LIMITS = {
     basic: { cardsPerDay: 15, testsPerDay: 1, testExplanations: false, duelsPerDay: 0, tourneysPerMonth: 0, pdfExport: false, examAttemptsPerMonth: 0 },
-    pro: { cardsPerDay: Infinity, testsPerDay: 5, testExplanations: true, duelsPerDay: 3, tourneysPerMonth: 1, pdfExport: false, examAttemptsPerMonth: 3 },
-    max: { cardsPerDay: Infinity, testsPerDay: Infinity, testExplanations: true, duelsPerDay: Infinity, tourneysPerMonth: 5, pdfExport: true, examAttemptsPerMonth: Infinity }
+    pro: {
+      monthly: { cardsPerDay: Infinity, testsPerDay: 5, testExplanations: true, duelsPerDay: 3, tourneysPerMonth: 1, pdfExport: false, examAttemptsPerMonth: 3 },
+      annual: { cardsPerDay: Infinity, testsPerDay: 5, testExplanations: true, duelsPerDay: 5, tourneysPerMonth: 3, pdfExport: false, examAttemptsPerMonth: 3 }
+    },
+    max: {
+      monthly: { cardsPerDay: Infinity, testsPerDay: Infinity, testExplanations: true, duelsPerDay: Infinity, tourneysPerMonth: 5, pdfExport: true, examAttemptsPerMonth: Infinity },
+      annual: { cardsPerDay: Infinity, testsPerDay: Infinity, testExplanations: true, duelsPerDay: Infinity, tourneysPerMonth: 10, pdfExport: true, examAttemptsPerMonth: Infinity }
+    }
   };
 
   const TIER_TITLES = { basic: 'Базовый', pro: 'Про', max: 'Максимум' };
@@ -53,7 +63,10 @@ const LexPrepPlan = (function () {
   }
 
   function getLimits() {
-    return LIMITS[getTier()];
+    const tier = getTier();
+    const tierLimits = LIMITS[tier];
+    if (tier === 'basic') return tierLimits;
+    return hasAnnualPlan() ? tierLimits.annual : tierLimits.monthly;
   }
 
   function getChosenDisciplineId(DATA) {

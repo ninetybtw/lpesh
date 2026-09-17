@@ -320,8 +320,7 @@
               <div class="step__num">04</div>
               <h3>Идёшь на экзамен</h3>
               <p>
-                Повторяешь готовые билеты и конспекты в офлайн-режиме без
-                интернета.
+                Повторяешь готовые билеты и конспекты прямо перед экзаменом.
               </p>
             </div>
           </div>
@@ -380,36 +379,58 @@
               </ul>
               <p class="price-card__note">Доступен сразу после регистрации — оформлять ничего не нужно</p>
             </div>
-            <div class="price-card price-card--featured reveal">
+            <div class="price-card price-card--featured is-annual reveal" data-price-card>
               <span class="price-card__badge">Популярный</span>
               <h3 class="price-card__name">Про</h3>
-              <div class="price-card__price">600 ₽<span>/мес</span></div>
-              <p class="price-card__annual">При оплате за 12 месяцев — 5040 ₽/год (420 ₽/мес)</p>
+
+              <div class="price-card__toggle">
+                <span class="price-card__toggle-label is-active" data-toggle-label="annual">Год</span>
+                <button type="button" class="ios-toggle" data-billing-toggle aria-pressed="true" aria-label="Переключить на помесячную оплату">
+                  <span class="ios-toggle__thumb"></span>
+                </button>
+                <span class="price-card__toggle-label" data-toggle-label="monthly">Помесячно</span>
+              </div>
+
+              <div class="price-card__price" data-price-monthly hidden>600 ₽<span>/мес</span></div>
+              <div class="price-card__price" data-price-annual>420 ₽<span>/мес</span></div>
+              <p class="price-card__annual" data-price-annual>5 040 ₽ раз в год</p>
+
               <ul class="price-card__list">
                 <li>Все конспекты и карточки без ограничений</li>
                 <li>Карточки — полная колода, интервальное повторение</li>
                 <li>Тесты — 3–5 попыток в день с разбором ответов</li>
                 <li>Пробный экзамен — 3 попытки в месяц</li>
-                <li>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
-                <li>Дуэли — 3 в день, турниры — 1 открытый в месяц, без взноса</li>
+                <li data-plan-monthly hidden>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
+                <li data-plan-annual>Продвинутый ИИ-консультант — 10 запросов в день</li>
+                <li data-plan-monthly hidden>Дуэли — 3 в день, турниры — 1 открытый в месяц, без взноса</li>
+                <li data-plan-annual>Дуэли — 5 в день, турниры — 3 в месяц, без взноса</li>
                 <li>Без рекламы</li>
-                <li>При оплате за 12 месяцев — продвинутый ИИ-консультант с загрузкой файлов</li>
               </ul>
               <a href="#cta" class="btn btn--primary btn--block">Выбрать</a>
             </div>
-            <div class="price-card reveal">
+            <div class="price-card is-annual reveal" data-price-card>
               <h3 class="price-card__name">Максимум</h3>
-              <div class="price-card__price">1000 ₽<span>/мес</span></div>
-              <p class="price-card__annual">При оплате за 12 месяцев — 9600 ₽/год (800 ₽/мес)</p>
+
+              <div class="price-card__toggle">
+                <span class="price-card__toggle-label is-active" data-toggle-label="annual">Год</span>
+                <button type="button" class="ios-toggle" data-billing-toggle aria-pressed="true" aria-label="Переключить на помесячную оплату">
+                  <span class="ios-toggle__thumb"></span>
+                </button>
+                <span class="price-card__toggle-label" data-toggle-label="monthly">Помесячно</span>
+              </div>
+
+              <div class="price-card__price" data-price-monthly hidden>1000 ₽<span>/мес</span></div>
+              <div class="price-card__price" data-price-annual>800 ₽<span>/мес</span></div>
+              <p class="price-card__annual" data-price-annual>9 600 ₽ раз в год</p>
+
               <ul class="price-card__list">
                 <li>Всё из Про</li>
-                <li>ИИ-консультант — 25–40 запросов в день</li>
-                <li>Проверка эссе — 20 в месяц</li>
-                <li>Офлайн-режим для всех материалов</li>
+                <li data-plan-monthly hidden>ИИ-консультант — 25–40 запросов в день</li>
+                <li data-plan-annual>Продвинутый ИИ-консультант — 40–60 запросов в день</li>
                 <li>Возможность скачивания PDF-конспектов</li>
                 <li>Безлимит: пробные экзамены, дуэли</li>
-                <li>Турниры — до 5 участий в месяц, без взноса</li>
-                <li>При оплате за 12 месяцев — продвинутый ИИ-консультант с загрузкой файлов</li>
+                <li data-plan-monthly hidden>Турниры — до 5 участий в месяц, без взноса</li>
+                <li data-plan-annual>Турниры — до 10 участий в месяц, без взноса</li>
               </ul>
               <a href="#cta" class="btn btn--outline btn--block">Выбрать</a>
             </div>
@@ -451,9 +472,9 @@
                   Базовый даёт доступ к одному предмету и ограниченному числу
                   попыток в тестах. Про открывает все предметы без
                   ограничений, дуэли, турниры и ИИ-консультанта. Максимум
-                  добавляет офлайн-режим, безлимитные экзамены и расширенные
-                  лимиты на ИИ-консультанта. Подробное сравнение — в разделе
-                  «Тарифы» выше.
+                  добавляет безлимитные экзамены, скачивание конспектов в PDF
+                  и расширенные лимиты на ИИ-консультанта, дуэли и турниры.
+                  Подробное сравнение — в разделе «Тарифы» выше.
                 </p>
               </div>
             </div>
@@ -690,6 +711,35 @@
           grid.innerHTML = '<p class="topic-desc">Не удалось загрузить статьи.</p>';
         }
       })();
+    </script>
+    <script>
+      // Переключатель "помесячно / год" на карточках тарифов Про/Максимум —
+      // сам факт выбора здесь ни на что не влияет (страница чисто
+      // информационная, "Выбрать" ведёт на регистрацию), просто показывает
+      // разный набор цифр и другое оформление карточки при выборе года.
+      document.querySelectorAll('[data-price-card]').forEach(card => {
+        const toggleBtn = card.querySelector('[data-billing-toggle]');
+        if (!toggleBtn) return;
+        const labels = card.querySelectorAll('[data-toggle-label]');
+
+        function applyState(period) {
+          const isAnnual = period === 'annual';
+          card.classList.toggle('is-annual', isAnnual);
+          toggleBtn.setAttribute('aria-pressed', String(isAnnual));
+          labels.forEach(l => l.classList.toggle('is-active', l.dataset.toggleLabel === period));
+          card.querySelectorAll('[data-price-monthly], [data-plan-monthly]').forEach(el => { el.hidden = isAnnual; });
+          card.querySelectorAll('[data-price-annual], [data-plan-annual]').forEach(el => { el.hidden = !isAnnual; });
+        }
+
+        toggleBtn.addEventListener('click', () => {
+          const goingAnnual = toggleBtn.getAttribute('aria-pressed') !== 'true';
+          card.classList.add('is-fading');
+          setTimeout(() => {
+            applyState(goingAnnual ? 'annual' : 'monthly');
+            card.classList.remove('is-fading');
+          }, 160);
+        });
+      });
     </script>
     <script src="cookie-consent.js?v=20260917050000"></script>
   </body>

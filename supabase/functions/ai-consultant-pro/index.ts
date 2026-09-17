@@ -36,12 +36,13 @@ const corsHeaders = {
 };
 
 // Дневной лимит продвинутого консультанта — отдельный от обычного
-// (см. ai-consultant/index.ts PLAN_LIMITS), той же величины: годовая
-// подписка добавляет отдельную квоту продвинутых запросов поверх обычных,
-// а не заменяет их.
+// (см. ai-consultant/index.ts PLAN_LIMITS). Цифры совпадают с тем, что
+// написано в годовой карточке тарифа на index.html#pricing (40-60 у
+// "максимума" — фиксируем 50 как конкретное число в диапазоне, тот же
+// подход, что и у PLAN_LIMITS.max в ai-consultant/index.ts).
 const PLAN_LIMITS: Record<string, number> = {
-  pro: 5,
-  max: 35
+  pro: 10,
+  max: 50
 };
 
 const MODEL = 'GigaChat-3-Ultra';

@@ -828,7 +828,9 @@ STYLE.CSS — компоненты и секции страницы
   flex-direction: column;
   transition:
     transform var(--transition),
-    box-shadow var(--transition);
+    box-shadow var(--transition),
+    background var(--transition),
+    border-color var(--transition);
 }
 .price-card:hover {
   transform: translateY(-4px);
@@ -838,6 +840,15 @@ STYLE.CSS — компоненты и секции страницы
   border-color: var(--color-primary);
   box-shadow: var(--shadow-lg);
   transform: scale(1.03);
+}
+/* Годовая оплата выбрана переключателем — отличительный вид карточки */
+.price-card.is-annual {
+  background: var(--price-annual-gradient);
+  border-color: var(--color-accent);
+  box-shadow: var(--price-annual-shadow);
+}
+.price-card--featured.is-annual {
+  box-shadow: var(--price-annual-shadow), var(--shadow-lg);
 }
 .price-card__badge {
   position: absolute;
@@ -859,6 +870,7 @@ STYLE.CSS — компоненты и секции страницы
   font-size: 34px;
   font-weight: 800;
   margin-bottom: 4px;
+  transition: opacity 0.15s ease;
 }
 .price-card__price span {
   font-size: 15px;
@@ -869,6 +881,69 @@ STYLE.CSS — компоненты и секции страницы
   font-size: 13px;
   color: var(--color-text-muted);
   margin-bottom: 20px;
+  transition: opacity 0.15s ease;
+}
+
+/* ---------------- Переключатель "помесячно / год" (в стиле iOS) ---------------- */
+.price-card__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.price-card__toggle-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: color var(--transition);
+}
+.price-card__toggle-label.is-active {
+  color: var(--color-text);
+}
+.ios-toggle {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: var(--color-border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.ios-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ios-toggle[aria-pressed="true"] {
+  background: var(--color-accent);
+}
+.ios-toggle[aria-pressed="true"] .ios-toggle__thumb {
+  transform: translateX(20px);
+}
+
+/* Плавная смена контента (цена/пункты списка) при переключении периода */
+.price-card__list li[data-plan-monthly],
+.price-card__list li[data-plan-annual],
+.price-card__price[data-price-monthly],
+.price-card__price[data-price-annual],
+.price-card__annual[data-price-annual] {
+  transition: opacity 0.18s ease;
+}
+.price-card.is-fading .price-card__price,
+.price-card.is-fading .price-card__annual,
+.price-card.is-fading .price-card__list li[data-plan-monthly],
+.price-card.is-fading .price-card__list li[data-plan-annual] {
+  opacity: 0;
 }
 .price-card__list {
   display: flex;
