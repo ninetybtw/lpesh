@@ -249,7 +249,7 @@ function lexprepShowLoadingOverlay() {
   overlay.innerHTML = `
     <div class="lexprep-spinner"></div>
     <p class="lexprep-overlay-title">Загружаем базу тем…</p>
-    <p>На медленном интернете это может занять до 20 секунд — это только один раз, дальше сайт будет открываться намного быстрее.</p>
+    <p>На медленном интернете это может занять до 30 секунд — это только один раз, дальше сайт будет открываться намного быстрее.</p>
     <p id="lexprepOverlayStatus" style="opacity:0.6;font-size:12px;"></p>
   `;
   document.head.appendChild(style);
@@ -286,19 +286,15 @@ async function lexprepRefreshContent(hadCache) {
     const client = LexPrepApi.getClient();
     const startedAt = Date.now();
     lexprepSetOverlayStatus('Запрашиваем данные…');
-    let results;
-    try {
-      results = await lexprepWithTimeout(lexprepFetchAll(client), 8000);
-      lexprepSetOverlayStatus('Данные получены за ' + (Date.now() - startedAt) + ' мс, обрабатываем…');
-    } catch (e) {
-      // Первая попытка не успела за 8с (медленная сеть) — пробуем ещё раз
-      // с более щедрым таймаутом, прежде чем сдаться.
-      console.warn('LexPrep: первая загрузка контента не удалась, повторяю попытку', e);
-      lexprepSetOverlayStatus('Первая попытка не успела за 8с (' + (e && e.message) + '), пробуем ещё раз…');
-      const retryStartedAt = Date.now();
-      results = await lexprepWithTimeout(lexprepFetchAll(client), 15000);
-      lexprepSetOverlayStatus('Данные получены со второй попытки за ' + (Date.now() - retryStartedAt) + ' мс, обрабатываем…');
-    }
+    // Раньше здесь было две попытки (8с и затем ещё 15с): при не-успехе
+    // первой Promise.race её просто "отпускал" не отменяя — те 5 запросов
+    // оставались докачиваться в фоне, а повтор запускал ЕЩЁ 5 новых поверх
+    // них, удваивая нагрузку на канал ровно в момент, когда сети и так не
+    // хватало. Теперь один и тот же запрос ждём один раз, но дольше — на
+    // медленном мобильном интернете лишнее время полезнее, чем повторный
+    // старт с нуля.
+    const results = await lexprepWithTimeout(lexprepFetchAll(client), 30000);
+    lexprepSetOverlayStatus('Данные получены за ' + (Date.now() - startedAt) + ' мс, обрабатываем…');
     const [
       { data: disciplines, error: discErr },
       { data: topics, error: topicErr },
