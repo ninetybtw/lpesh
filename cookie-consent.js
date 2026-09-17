@@ -65,11 +65,23 @@
       }
       @media (max-width: 520px) {
         .cookie-consent {
+          left: 10px;
+          right: 10px;
+          bottom: 10px;
           flex-direction: column;
           align-items: stretch;
+          padding: 14px 16px;
+          gap: 10px;
+          font-size: 13px;
+          line-height: 1.4;
         }
         .cookie-consent__actions {
-          justify-content: flex-end;
+          justify-content: stretch;
+        }
+        .cookie-consent__btn {
+          flex: 1;
+          text-align: center;
+          padding: 10px 14px;
         }
       }
     `;

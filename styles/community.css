@@ -210,6 +210,7 @@ body.is-authed .community-page [data-auth='user'] {
 @media (max-width: 560px) {
   .community-guest {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: flex-start;
   }
 }

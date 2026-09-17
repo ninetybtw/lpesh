@@ -158,6 +158,7 @@ TOURNAMENTS.CSS — список турниров и сетка раундов. 
 @media (max-width: 620px) {
   .tourney-bracket__rounds {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
   }
 
