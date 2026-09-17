@@ -250,10 +250,20 @@ function lexprepShowLoadingOverlay() {
     <div class="lexprep-spinner"></div>
     <p class="lexprep-overlay-title">Загружаем базу тем…</p>
     <p>На медленном интернете это может занять до 20 секунд — это только один раз, дальше сайт будет открываться намного быстрее.</p>
+    <p id="lexprepOverlayStatus" style="opacity:0.6;font-size:12px;"></p>
   `;
   document.head.appendChild(style);
   document.body.appendChild(overlay);
   return () => { overlay.remove(); style.remove(); };
+}
+
+// Временный видимый статус загрузки — на телефоне консоль недоступна, а
+// молчаливый console.error никак не помогает понять, на каком шаге и с
+// какой именно ошибкой не удалось загрузить контент.
+function lexprepSetOverlayStatus(text) {
+  const el = document.getElementById('lexprepOverlayStatus');
+  if (el) el.textContent = text;
+  console.log('LexPrep content: ' + text);
 }
 
 // Собственно загрузка/обновление из Supabase. Если передан cache — не
@@ -262,8 +272,11 @@ function lexprepShowLoadingOverlay() {
 // есть тот самый await, который ждут страницы через LexPrepContentReady.
 async function lexprepRefreshContent(hadCache) {
   const hideOverlay = hadCache ? null : lexprepShowLoadingOverlay();
+  let failed = false;
   try {
     if (typeof LEXPREP_DATA === 'undefined' || typeof LexPrepApi === 'undefined' || typeof marked === 'undefined') {
+      failed = true;
+      lexprepSetOverlayStatus('Скрипты страницы ещё не готовы (LEXPREP_DATA=' + typeof LEXPREP_DATA + ', LexPrepApi=' + typeof LexPrepApi + ', marked=' + typeof marked + ')');
       console.error('LexPrep: content-loader запустился раньше нужных скриптов, остаёмся на ' + (hadCache ? 'кэшированном' : 'demo') + ' контенте', {
         LEXPREP_DATA: typeof LEXPREP_DATA, LexPrepApi: typeof LexPrepApi, marked: typeof marked
       });
@@ -271,14 +284,20 @@ async function lexprepRefreshContent(hadCache) {
     }
 
     const client = LexPrepApi.getClient();
+    const startedAt = Date.now();
+    lexprepSetOverlayStatus('Запрашиваем данные…');
     let results;
     try {
       results = await lexprepWithTimeout(lexprepFetchAll(client), 8000);
+      lexprepSetOverlayStatus('Данные получены за ' + (Date.now() - startedAt) + ' мс, обрабатываем…');
     } catch (e) {
       // Первая попытка не успела за 8с (медленная сеть) — пробуем ещё раз
       // с более щедрым таймаутом, прежде чем сдаться.
       console.warn('LexPrep: первая загрузка контента не удалась, повторяю попытку', e);
+      lexprepSetOverlayStatus('Первая попытка не успела за 8с (' + (e && e.message) + '), пробуем ещё раз…');
+      const retryStartedAt = Date.now();
       results = await lexprepWithTimeout(lexprepFetchAll(client), 15000);
+      lexprepSetOverlayStatus('Данные получены со второй попытки за ' + (Date.now() - retryStartedAt) + ' мс, обрабатываем…');
     }
     const [
       { data: disciplines, error: discErr },
@@ -288,6 +307,8 @@ async function lexprepRefreshContent(hadCache) {
       { data: practiceRows, error: practiceErr }
     ] = results;
     if (discErr || topicErr || !disciplines || !topics) {
+      failed = true;
+      lexprepSetOverlayStatus('Сервер ответил ошибкой: ' + JSON.stringify((discErr || topicErr || {}).message || discErr || topicErr));
       console.error('LexPrep: не удалось загрузить контент из Supabase, остаёмся на ' + (hadCache ? 'кэшированном' : 'demo') + ' контенте', discErr || topicErr);
       return;
     }
@@ -306,11 +327,20 @@ async function lexprepRefreshContent(hadCache) {
 
     const disciplinesData = lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTopic, practiceByTopic);
     lexprepApplyDisciplinesData(disciplinesData);
+    lexprepSetOverlayStatus('Готово: ' + disciplinesData.length + ' дисциплин, сохраняем кэш…');
     await lexprepSaveContentCache(disciplinesData);
   } catch (e) {
+    failed = true;
+    lexprepSetOverlayStatus('Не удалось загрузить: ' + (e && e.message ? e.message : String(e)));
     console.error('LexPrep: контент из Supabase не загрузился, остаёмся на ' + (hadCache ? 'кэшированном' : 'demo') + ' контенте', e);
   } finally {
-    if (hideOverlay) hideOverlay();
+    if (hideOverlay) {
+      // Если это был самый первый визит (кэша ещё нет) и загрузка упала —
+      // держим оверлей чуть дольше с текстом ошибки, чтобы было видно, что
+      // именно пошло не так, а не просто мгновенно исчезал спиннер.
+      if (failed) await new Promise(r => setTimeout(r, 5000));
+      hideOverlay();
+    }
   }
 }
 
