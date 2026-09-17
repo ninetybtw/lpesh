@@ -733,13 +733,27 @@
           card.querySelectorAll('[data-price-annual], [data-plan-annual]').forEach(el => { el.hidden = !isAnnual; });
         }
 
-        toggleBtn.addEventListener('click', () => {
-          const goingAnnual = toggleBtn.getAttribute('aria-pressed') !== 'true';
+        function switchTo(period) {
+          const isAnnual = period === 'annual';
+          if (toggleBtn.getAttribute('aria-pressed') === String(isAnnual)) return;
           card.classList.add('is-fading');
           setTimeout(() => {
-            applyState(goingAnnual ? 'annual' : 'monthly');
+            applyState(period);
             card.classList.remove('is-fading');
           }, 160);
+        }
+
+        // У переключателя сам "пятачок" на мобильном — 38×22px, меньше
+        // рекомендуемых ~44px для удобного тапа. Вместо того чтобы
+        // раздувать его визуально, делаем кликабельными ещё и подписи
+        // рядом ("Год"/"Месяц") — так область тапа увеличивается без
+        // изменения внешнего вида самого переключателя.
+        toggleBtn.addEventListener('click', () => {
+          switchTo(toggleBtn.getAttribute('aria-pressed') === 'true' ? 'monthly' : 'annual');
+        });
+        labels.forEach(l => {
+          l.style.cursor = 'pointer';
+          l.addEventListener('click', () => switchTo(l.dataset.toggleLabel));
         });
       });
     </script>
