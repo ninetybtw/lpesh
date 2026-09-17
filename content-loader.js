@@ -27,15 +27,26 @@ create-test.js), дожидаются этот промис перед стар�
 Раньше этот промис всегда ждал сеть (до 23 секунд на медленном интернете —
 именно из-за этого на слабом вайфае страница часами не показывала темы: вся
 инициализация страницы стояла за одним await). Теперь контент из последней
-успешной загрузки кэшируется в localStorage: если кэш есть, он применяется
-СИНХРОННО прямо здесь, промис резолвится почти мгновенно, а свежую версию
-подтягиваем в фоне (не блокируя страницу) для следующего визита. Ждать сеть
-целиком приходится только при первом визите с этого браузера, когда кэша ещё
-нет вообще — в этом случае показываем оверлей с пояснением, чтобы страница
-не выглядела зависшей.
+успешной загрузки кэшируется: если кэш есть, он применяется прямо здесь,
+промис резолвится почти мгновенно, а свежую версию подтягиваем в фоне (не
+блокируя страницу) для следующего визита. Ждать сеть целиком приходится
+только при первом визите с этого браузера, когда кэша ещё нет вообще — в
+этом случае показываем оверлей с пояснением, чтобы страница не выглядела
+зависшей.
+
+Сам датасет (темы+тесты+карточки+практика) весит ~20+ МБ как JSON — это
+больше, чем localStorage вообще способен хранить (лимит ~5-10 МБ на origin
+почти во всех браузерах). Поэтому кэш хранится в IndexedDB (лимит там —
+доли/десятки процентов свободного места на диске, этого достаточно с
+большим запасом), а не в localStorage: раньше JSON.stringify+setItem тут
+почти наверняка тихо падал с QuotaExceededError и кэш никогда не
+сохранялся, что и работало не отдельным багом, а сразу для всех.
 ========================================================================== */
 
-const LEXPREP_CONTENT_CACHE_KEY = 'lexprep_content_cache_v1';
+const LEXPREP_CONTENT_DB_NAME = 'lexprep_content_db';
+const LEXPREP_CONTENT_DB_STORE = 'cache';
+const LEXPREP_CONTENT_DB_KEY = 'v1';
+const LEXPREP_CONTENT_CACHE_KEY_LEGACY = 'lexprep_content_cache_v1';
 
 function lexprepEscapeHtml(str) {
   const div = document.createElement('div');
@@ -155,9 +166,27 @@ function lexprepApplyDisciplinesData(disciplinesData) {
   });
 }
 
-function lexprepLoadContentCache() {
+function lexprepOpenContentDb() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('lexprep_no_indexeddb')); return; }
+    const req = indexedDB.open(LEXPREP_CONTENT_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(LEXPREP_CONTENT_DB_STORE)) {
+        req.result.createObjectStore(LEXPREP_CONTENT_DB_STORE);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('lexprep_indexeddb_open_failed'));
+  });
+}
+
+// Старый кэш когда-то писался в localStorage — на датасете такого размера
+// (20+ МБ) запись почти всегда падала на QuotaExceededError, так что для
+// подавляющего большинства пользователей там ничего и не было. На всякий
+// случай подхватываем то немногое, что могло сохраниться, одним разом.
+function lexprepLoadLegacyLocalStorageCache() {
   try {
-    const raw = localStorage.getItem(LEXPREP_CONTENT_CACHE_KEY);
+    const raw = localStorage.getItem(LEXPREP_CONTENT_CACHE_KEY_LEGACY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return parsed && Array.isArray(parsed.disciplines) && parsed.disciplines.length ? parsed : null;
@@ -166,12 +195,39 @@ function lexprepLoadContentCache() {
   }
 }
 
-function lexprepSaveContentCache(disciplinesData) {
+async function lexprepLoadContentCache() {
   try {
-    localStorage.setItem(LEXPREP_CONTENT_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), disciplines: disciplinesData }));
+    const db = await lexprepOpenContentDb();
+    const cache = await new Promise((resolve, reject) => {
+      const tx = db.transaction(LEXPREP_CONTENT_DB_STORE, 'readonly');
+      const req = tx.objectStore(LEXPREP_CONTENT_DB_STORE).get(LEXPREP_CONTENT_DB_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error || new Error('lexprep_indexeddb_read_failed'));
+    });
+    db.close();
+    if (cache && Array.isArray(cache.disciplines) && cache.disciplines.length) return cache;
   } catch (e) {
-    // localStorage переполнен или недоступен (приватный режим) — не
-    // критично, просто не кэшируем, в следующий раз опять подождём сеть.
+    console.warn('LexPrep: кэш контента из IndexedDB прочитать не удалось', e);
+  }
+  return lexprepLoadLegacyLocalStorageCache();
+}
+
+async function lexprepSaveContentCache(disciplinesData) {
+  try {
+    const db = await lexprepOpenContentDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(LEXPREP_CONTENT_DB_STORE, 'readwrite');
+      tx.objectStore(LEXPREP_CONTENT_DB_STORE).put({ savedAt: Date.now(), disciplines: disciplinesData }, LEXPREP_CONTENT_DB_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('lexprep_indexeddb_write_failed'));
+    });
+    db.close();
+    try { localStorage.removeItem(LEXPREP_CONTENT_CACHE_KEY_LEGACY); } catch (e) { /* не критично */ }
+  } catch (e) {
+    // IndexedDB недоступен (приватный режим Safari и т.п.) — не критично,
+    // просто не кэшируем, в следующий раз опять подождём сеть. В отличие
+    // от старой версии на localStorage теперь хотя бы видно причину в консоли.
+    console.warn('LexPrep: не удалось сохранить кэш контента', e);
   }
 }
 
@@ -250,7 +306,7 @@ async function lexprepRefreshContent(hadCache) {
 
     const disciplinesData = lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTopic, practiceByTopic);
     lexprepApplyDisciplinesData(disciplinesData);
-    lexprepSaveContentCache(disciplinesData);
+    await lexprepSaveContentCache(disciplinesData);
   } catch (e) {
     console.error('LexPrep: контент из Supabase не загрузился, остаёмся на ' + (hadCache ? 'кэшированном' : 'demo') + ' контенте', e);
   } finally {
@@ -259,7 +315,7 @@ async function lexprepRefreshContent(hadCache) {
 }
 
 window.LexPrepContentReady = (async function loadDbContent() {
-  const cache = lexprepLoadContentCache();
+  const cache = await lexprepLoadContentCache();
   if (cache) {
     lexprepApplyDisciplinesData(cache.disciplines);
     // Кэш уже на месте — страницу больше не задерживаем, обновление сети
