@@ -818,6 +818,18 @@ STYLE.CSS — компоненты и секции страницы
 }
 
 /* ---------------- PRICING ---------------- */
+.pricing__payment-note {
+  max-width: 640px;
+  margin: 28px auto 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.pricing__payment-note a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
 .price-card {
   position: relative;
   background: var(--color-white);
