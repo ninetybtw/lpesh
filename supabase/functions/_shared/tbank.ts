@@ -9,7 +9,13 @@
 // нижний регистр). Уведомления от банка подписаны тем же алгоритмом —
 // сверяем Token из тела запроса с посчитанным самим.
 
-const API_BASE = 'https://securepay.tinkoff.ru/v2';
+// securepay.tinkoff.ru — за российским корневым сертификатом, edge-runtime
+// не умеет ему доверять напрямую (та же история, что и с GigaChat/
+// ngw.devices.sberbank.ru — см. _shared/gigachat.ts). Идём через тот же
+// локальный nginx-прокси (gigachat-proxy, порт 8080, см.
+// supabase/gigachat-proxy.conf), у него полный контроль над доверенными
+// сертификатами; здесь — обычный HTTP внутри докер-сети.
+const API_BASE = 'http://gigachat-proxy:8080/tbank';
 
 // Копейки — совпадают с ценами на index.html#pricing. Общие для
 // payments-init (первая оплата) и payments-autocharge (продление), чтобы
