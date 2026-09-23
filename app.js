@@ -52,6 +52,7 @@ function initAiChat() {
   const title = document.getElementById('aiChatTitle');
   const panel = document.getElementById('aiChatPanel');
   const closeBtn = document.getElementById('aiChatClose');
+  const expandBtn = document.getElementById('aiChatExpand');
   const form = document.getElementById('aiChatForm');
   const input = document.getElementById('aiChatInput');
   const body = document.getElementById('aiChatBody');
@@ -60,7 +61,31 @@ function initAiChat() {
   const attachmentBox = document.getElementById('aiChatAttachment');
   if (!toggle || !panel || !form || !input || !body) return;
 
-  const history = [];
+  // Память диалога переживает перезагрузку страницы/переход между темами —
+  // раньше history жила только в переменной и обнулялась при каждом
+  // открытии страницы заново, из-за чего разговор с ИИ "забывался" уже на
+  // следующей странице. Храним в localStorage, ограничивая размер, чтобы
+  // не раздувать его бесконечно.
+  const AI_CHAT_HISTORY_KEY = 'lexprep_ai_chat_history';
+  const MAX_STORED_MESSAGES = 20;
+
+  function loadHistory() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(AI_CHAT_HISTORY_KEY) || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  const history = loadHistory();
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(history.slice(-MAX_STORED_MESSAGES)));
+    } catch (e) { /* localStorage переполнен/недоступен — не критично */ }
+  }
+
   let sending = false;
   let pendingAttachment = null; // { name, content }
 
@@ -109,6 +134,16 @@ function initAiChat() {
   });
   closeBtn.addEventListener('click', close);
 
+  if (expandBtn) {
+    const EXPAND_KEY = 'lexprep_ai_chat_expanded';
+    if (localStorage.getItem(EXPAND_KEY) === '1') panel.classList.add('ai-chat__panel--expanded');
+    expandBtn.addEventListener('click', () => {
+      const expanded = panel.classList.toggle('ai-chat__panel--expanded');
+      expandBtn.setAttribute('aria-label', expanded ? 'Уменьшить окно' : 'Увеличить окно');
+      try { localStorage.setItem(EXPAND_KEY, expanded ? '1' : '0'); } catch (e) { /* не критично */ }
+    });
+  }
+
   function addMessage(text, who) {
     const msg = document.createElement('div');
     msg.className = `ai-chat__msg ai-chat__msg--${who}`;
@@ -116,6 +151,13 @@ function initAiChat() {
     body.appendChild(msg);
     body.scrollTop = body.scrollHeight;
     return msg;
+  }
+
+  // Восстанавливаем видимые сообщения из сохранённой истории — иначе
+  // получилось бы странно: ИИ "помнит" контекст, а человек на экране видит
+  // пустой чат и не понимает, почему ответ ссылается на что-то раньше.
+  if (history.length) {
+    history.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
   }
 
   function clearAttachment() {
@@ -211,6 +253,7 @@ function initAiChat() {
         : await LexPrepApi.askAiConsultant(text, history);
       pending.textContent = result.reply;
       history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
+      saveHistory();
       if (typeof result.remaining === 'number' && result.remaining <= 2) {
         addMessage(`Осталось запросов сегодня: ${result.remaining} из ${result.limit}.`, 'bot');
       }
@@ -258,7 +301,10 @@ function initApp() {
   let cardFlipped = false;
   let cardMode = 'text';
   let voiceAnswerResult = null;
+  let voiceTranscript = '';
+  let voiceError = '';
   let searchQuery = '';
+  const SPEECH_RECOGNITION_SUPPORTED = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   const RU_STOPWORDS = new Set(['это', 'что', 'как', 'для', 'при', 'или', 'если', 'его', 'она', 'они', 'все', 'был', 'быть', 'есть', 'так', 'также', 'между', 'может', 'могут', 'который', 'которая', 'которые', 'том', 'том,', 'года', 'году']);
 
@@ -299,6 +345,8 @@ function initApp() {
     cardPos = 0;
     cardFlipped = false;
     voiceAnswerResult = null;
+    voiceTranscript = '';
+    voiceError = '';
   }
 
   // Единая точка смены темы/дисциплины.
@@ -453,7 +501,7 @@ function initApp() {
             <div class="flashcards__meta-actions">
               <div class="mode-toggle" role="tablist" aria-label="Режим тренировки">
                 <button class="mode-toggle__btn ${cardMode === 'text' ? 'is-active' : ''}" type="button" data-mode="text">Текст</button>
-                <button class="mode-toggle__btn ${cardMode === 'voice' ? 'is-active' : ''}" type="button" data-mode="voice">Голос</button>
+                <button class="mode-toggle__btn ${cardMode === 'voice' ? 'is-active' : ''}" type="button" data-mode="voice" ${SPEECH_RECOGNITION_SUPPORTED ? '' : 'disabled title="Голосовой ввод не поддерживается в этом браузере"'}>Голос</button>
               </div>
               <button class="btn btn--ghost" type="button" id="reviewAllBtn">Повторить всё</button>
             </div>
@@ -557,6 +605,8 @@ function initApp() {
       btn.addEventListener('click', () => {
         cardMode = btn.dataset.mode;
         voiceAnswerResult = null;
+        voiceTranscript = '';
+        voiceError = '';
         cardFlipped = false;
         modeToggleBtns.forEach(b => b.classList.toggle('is-active', b.dataset.mode === cardMode));
         renderCardSession();
@@ -917,16 +967,17 @@ function initApp() {
       </div>
       ${!cardFlipped && cardMode === 'voice' ? `
         <div class="voice-trainer">
-          <p class="flashcard-hint">Ответь голосом или текстом — черновая проверка подскажет, близко ли ты к ответу</p>
+          <p class="flashcard-hint">Скажи ответ вслух — черновая проверка подскажет, близко ли ты к ответу</p>
           <div class="voice-trainer__row">
             <button class="btn btn--outline voice-mic-btn" type="button" id="voiceMicBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
               <span id="voiceMicLabel">Записать ответ</span>
             </button>
-            <input type="text" class="form-input voice-trainer__input" id="voiceAnswerInput" placeholder="Или впиши ответ своими словами">
+            ${voiceTranscript ? `<span class="voice-trainer__transcript">«${escapeHtml(voiceTranscript)}»</span>` : ''}
           </div>
+          ${voiceError ? `<p class="voice-trainer__error">${escapeHtml(voiceError)}</p>` : ''}
           <div class="voice-trainer__actions">
-            <button class="btn btn--primary" type="button" id="voiceCheckBtn">Проверить</button>
+            <button class="btn btn--primary" type="button" id="voiceCheckBtn" ${voiceTranscript ? '' : 'disabled'}>Проверить</button>
           </div>
           ${voiceAnswerResult ? `
             <div class="voice-verdict voice-verdict--${voiceAnswerResult.ratio >= 0.5 ? 'good' : voiceAnswerResult.ratio > 0.15 ? 'mid' : 'bad'}">
@@ -960,50 +1011,48 @@ function initApp() {
       renderCardSession();
     });
 
-    const voiceAnswerInput = document.getElementById('voiceAnswerInput');
     const voiceMicBtn = document.getElementById('voiceMicBtn');
     const voiceMicLabel = document.getElementById('voiceMicLabel');
     const voiceCheckBtn = document.getElementById('voiceCheckBtn');
+    const VOICE_ERROR_MESSAGES = {
+      'not-allowed': 'Доступ к микрофону не разрешён — включи разрешение в настройках браузера.',
+      'no-speech': 'Не расслышал(а) ничего — попробуй ещё раз, говори чуть громче.',
+      'audio-capture': 'Микрофон не найден или недоступен.',
+      network: 'Проблема с сетью при распознавании речи — попробуй ещё раз.'
+    };
 
-    if (voiceMicBtn) {
+    if (voiceMicBtn && SPEECH_RECOGNITION_SUPPORTED) {
       const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognitionCtor) {
-        voiceMicBtn.disabled = true;
-        voiceMicLabel.textContent = 'Голосовой ввод не поддерживается в этом браузере';
-      } else {
-        voiceMicBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const recognition = new SpeechRecognitionCtor();
-          recognition.lang = 'ru-RU';
-          recognition.interimResults = false;
-          recognition.maxAlternatives = 1;
+      voiceMicBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const recognition = new SpeechRecognitionCtor();
+        recognition.lang = 'ru-RU';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
 
-          voiceMicBtn.classList.add('is-recording');
-          voiceMicLabel.textContent = 'Слушаю...';
+        voiceError = '';
+        voiceMicBtn.classList.add('is-recording');
+        voiceMicLabel.textContent = 'Слушаю...';
 
-          recognition.addEventListener('result', (event) => {
-            const transcript = event.results[0][0].transcript;
-            if (voiceAnswerInput) voiceAnswerInput.value = transcript;
-          });
-          recognition.addEventListener('end', () => {
-            voiceMicBtn.classList.remove('is-recording');
-            voiceMicLabel.textContent = 'Записать ответ';
-          });
-          recognition.addEventListener('error', () => {
-            voiceMicBtn.classList.remove('is-recording');
-            voiceMicLabel.textContent = 'Записать ответ';
-          });
-
-          recognition.start();
+        recognition.addEventListener('result', (event) => {
+          voiceTranscript = event.results[0][0].transcript;
+          voiceAnswerResult = null;
         });
-      }
+        recognition.addEventListener('end', () => {
+          renderCardSession();
+        });
+        recognition.addEventListener('error', (event) => {
+          voiceError = VOICE_ERROR_MESSAGES[event.error] || 'Не удалось распознать голос — попробуй ещё раз.';
+        });
+
+        recognition.start();
+      });
     }
 
     if (voiceCheckBtn) {
       voiceCheckBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const answer = voiceAnswerInput ? voiceAnswerInput.value : '';
-        voiceAnswerResult = checkVoiceAnswer(answer, card.back);
+        voiceAnswerResult = checkVoiceAnswer(voiceTranscript, card.back);
         renderCardSession();
       });
     }
@@ -1021,6 +1070,8 @@ function initApp() {
         cardPos++;
         cardFlipped = false;
         voiceAnswerResult = null;
+        voiceTranscript = '';
+        voiceError = '';
         renderCardSession();
         renderSelectors();
       }, 260);

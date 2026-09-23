@@ -79,6 +79,8 @@ const LexPrepApi = (function () {
       planExpiresAt: profile && profile.plan_expires_at,
       planBillingPeriod: (profile && profile.plan_billing_period) || 'monthly',
       planAutoRenew: !!(profile && profile.plan_auto_renew),
+      pendingPlanTier: profile && profile.pending_plan_tier,
+      pendingPlanBillingPeriod: profile && profile.pending_plan_billing_period,
       duelRating: (profile && profile.duel_rating) || 1000,
       aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
@@ -1297,6 +1299,29 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  // Понижение тарифа (например, "Максимум" → "Про") — без оплаты сейчас,
+  // применяется само в конце уже оплаченного периода. См.
+  // supabase/functions/payments-schedule-downgrade.
+  async function scheduleDowngrade({ planTier, billingPeriod }) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/payments-schedule-downgrade`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ planTier, billingPeriod })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось запланировать смену тарифа.');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
   /* ---------------- Рейтинг ----------------
      Реальный глобальный рейтинг: XP синхронизируется в profiles.xp (см.
      progress.js:checkLevelUp), а сам список читается из public
@@ -1336,7 +1361,7 @@ const LexPrepApi = (function () {
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     forfeitTournamentMatch, leaveTournamentLobby,
     askAiConsultant, askAiConsultantPro,
-    initSubscriptionPayment, setSubscriptionAutoRenew,
+    initSubscriptionPayment, setSubscriptionAutoRenew, scheduleDowngrade,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
     redeemPromoCode, listPromoCodes, createPromoCode,
     getClient: () => client

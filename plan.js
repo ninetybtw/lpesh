@@ -10,7 +10,6 @@ getEffectivePlan): profiles.plan_tier/plan_expires_at на сервере (ст�
 const LexPrepPlan = (function () {
   const PLAN_TIER_KEY = 'lexprep_plan_tier';
   const PLAN_EXPIRES_KEY = 'lexprep_plan_expires';
-  const DISCIPLINE_KEY = 'lexprep_basic_discipline';
   const TIER_RANK = { basic: 0, pro: 1, max: 2 };
 
   // Дуэли/турниры/тесты у "про" и "максимум" зависят ещё и от периода
@@ -69,14 +68,14 @@ const LexPrepPlan = (function () {
     return hasAnnualPlan() ? tierLimits.annual : tierLimits.monthly;
   }
 
-  function getChosenDisciplineId(DATA) {
-    const stored = localStorage.getItem(DISCIPLINE_KEY);
-    if (stored && DATA.some(d => d.id === stored)) return stored;
-    return DATA[0] && DATA[0].id;
-  }
+  // Дисциплина на "Базовом" — фиксированная (Гражданское право), больше
+  // не выбирается пользователем. DATA[0] как запасной вариант — только
+  // на случай, если 'civil' почему-то не найдётся в данных.
+  const BASIC_DISCIPLINE_ID = 'civil';
 
-  function setChosenDisciplineId(id) {
-    localStorage.setItem(DISCIPLINE_KEY, id);
+  function getChosenDisciplineId(DATA) {
+    if (DATA.some(d => d.id === BASIC_DISCIPLINE_ID)) return BASIC_DISCIPLINE_ID;
+    return DATA[0] && DATA[0].id;
   }
 
   function isDisciplineLocked(disciplineId, DATA) {
@@ -108,11 +107,11 @@ const LexPrepPlan = (function () {
   return {
     LIMITS,
     TIER_TITLES,
+    TIER_RANK,
     getEffectivePlan,
     getTier,
     getLimits,
     getChosenDisciplineId,
-    setChosenDisciplineId,
     isDisciplineLocked,
     hasAnnualPlan
   };

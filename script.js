@@ -345,6 +345,9 @@ function initAuthState() {
     logoutBtn.addEventListener('click', () => {
       const finish = () => {
         localStorage.removeItem('lexprep_user');
+        // Иначе на общем устройстве следующий вошедший увидит переписку с
+        // ИИ-консультантом от прошлого аккаунта (см. app.js initAiChat).
+        localStorage.removeItem('lexprep_ai_chat_history');
         window.location.reload();
       };
       if (typeof LexPrepApi !== 'undefined') {

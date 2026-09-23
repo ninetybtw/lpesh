@@ -704,9 +704,9 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923120000"></script>
+    <script src="api.js?v=20260923180000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260903180000"></script>
+    <script src="script.js?v=20260923180000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');
@@ -783,21 +783,85 @@
       });
     </script>
     <script>
-      // "Выбрать" на карточках тарифов — гостя просто ведёт на #cta
-      // (регистрация), как и раньше (href="#cta" сработает сам). Уже
-      // вошедшего пользователя сразу отправляем оплачивать через Т-Кассу
-      // вместо простого скролла по странице.
+      // "Выбрать" на карточках тарифов:
+      //   - гостя просто ведёт на #cta (регистрация), как и раньше (сработает
+      //     обычный href="#cta");
+      //   - у вошедшего пользователя, если это тариф, который у него УЖЕ
+      //     активен — кнопка вместо покупки показывает "Ваш текущий тариф" и
+      //     ничего не делает (нельзя купить то, что уже есть);
+      //   - если это тариф ВЫШЕ текущего — обычная немедленная оплата, как
+      //     раньше;
+      //   - если это тариф НИЖЕ текущего (понижение, например с "Максимума"
+      //     на "Про") — оплата сейчас НЕ происходит: подтверждаем действие
+      //     и планируем смену на конец уже оплаченного периода, чтобы не
+      //     терять неиспользованные дни более дорогого тарifa.
+      const TIER_RANK = { basic: 0, pro: 1, max: 2 };
+      const TIER_TITLES = { basic: 'Базовый', pro: 'Про', max: 'Максимум' };
+
+      function getCachedUser() {
+        try { return JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (e) { return null; }
+      }
+
+      function getActiveServerTier(user) {
+        if (!user || !user.planTier || !user.planExpiresAt) return 'basic';
+        return new Date(user.planExpiresAt).getTime() > Date.now() ? user.planTier : 'basic';
+      }
+
       document.querySelectorAll('[data-price-card][data-plan-tier]').forEach(card => {
         const cta = card.querySelector('.price-card__cta');
         if (!cta) return;
+        const planTier = card.dataset.planTier;
+
+        function refreshCtaState() {
+          const user = getCachedUser();
+          const currentTier = getActiveServerTier(user);
+          if (user && currentTier === planTier) {
+            cta.textContent = 'Ваш текущий тариф';
+            cta.setAttribute('aria-disabled', 'true');
+            cta.classList.add('price-card__cta--current');
+          } else {
+            cta.textContent = 'Выбрать';
+            cta.removeAttribute('aria-disabled');
+            cta.classList.remove('price-card__cta--current');
+          }
+        }
+        refreshCtaState();
+
         cta.addEventListener('click', async (e) => {
-          let cachedUser = null;
-          try { cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (err) { /* гость */ }
-          if (!cachedUser || typeof LexPrepApi === 'undefined') return;
+          const user = getCachedUser();
+          if (!user || typeof LexPrepApi === 'undefined') return; // гость — обычный переход на #cta
 
           e.preventDefault();
-          const planTier = card.dataset.planTier;
+          if (cta.getAttribute('aria-disabled') === 'true') return;
+
           const billingPeriod = card.classList.contains('is-annual') ? 'annual' : 'monthly';
+          const currentTier = getActiveServerTier(user);
+
+          if (currentTier !== 'basic' && TIER_RANK[planTier] < TIER_RANK[currentTier]) {
+            const priceEl = card.querySelector('.price-card__price:not([hidden])');
+            const priceText = priceEl ? priceEl.textContent.trim() : '';
+            const expiresDate = new Date(user.planExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            const confirmed = window.confirm(
+              `Сейчас у вас тариф «${TIER_TITLES[currentTier]}» до ${expiresDate}. Перейти на «${TIER_TITLES[planTier]}»?\n\n` +
+              `После окончания оплаченного периода «${TIER_TITLES[currentTier]}» ваш тариф станет «${TIER_TITLES[planTier]}», ` +
+              `дальше будет списываться ${priceText}.`
+            );
+            if (!confirmed) return;
+
+            cta.textContent = 'Планируем…';
+            cta.style.pointerEvents = 'none';
+            try {
+              await LexPrepApi.scheduleDowngrade({ planTier, billingPeriod });
+              alert(`Готово — после ${expiresDate} тариф сменится на «${TIER_TITLES[planTier]}».`);
+            } catch (err) {
+              alert('Ошибка: ' + err.message);
+            } finally {
+              cta.style.pointerEvents = '';
+              refreshCtaState();
+            }
+            return;
+          }
+
           const originalText = cta.textContent;
           cta.textContent = 'Открываем оплату…';
           cta.style.pointerEvents = 'none';

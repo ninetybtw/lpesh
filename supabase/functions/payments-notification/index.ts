@@ -82,6 +82,11 @@ serve(async (req) => {
           plan_expires_at: newExpiresAt,
           plan_billing_period: payment.billing_period,
           plan_auto_renew: true,
+          // Если этим платежом закрывалось запланированное понижение
+          // тарифа (см. payments-schedule-downgrade) — снимаем отметку,
+          // раз оно только что применилось.
+          pending_plan_tier: null,
+          pending_plan_billing_period: null,
           ...(rebillId ? { tbank_rebill_id: rebillId } : {})
         })
         .eq('id', payment.user_id);

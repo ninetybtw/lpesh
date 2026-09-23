@@ -892,6 +892,16 @@ STYLE.CSS — компоненты и секции страницы
   background: var(--color-accent);
   filter: brightness(0.92);
 }
+.price-card__cta--current {
+  background: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  cursor: default;
+  box-shadow: none !important;
+}
+.price-card__cta--current:hover {
+  background: var(--color-border) !important;
+  transform: none;
+}
 .price-card__head {
   display: flex;
   align-items: center;

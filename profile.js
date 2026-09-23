@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initProfileHero(user);
   initAvatarEditor(user);
   initInfoForm(user);
-  initPayment();
   initSubscription();
   handlePaymentReturn();
   initMyArticles();
@@ -189,40 +188,6 @@ function initInfoForm(user) {
 }
 
 /* ---------------- Payment (demo only, nothing is sent anywhere) ---------------- */
-function initPayment() {
-  const display = document.getElementById('paymentDisplay');
-  const form = document.getElementById('paymentForm');
-  const summary = document.getElementById('paymentSummary');
-  const editBtn = document.getElementById('editPaymentBtn');
-  const cancelBtn = document.getElementById('cancelPaymentBtn');
-
-  const saved = JSON.parse(localStorage.getItem('lexprep_payment') || 'null');
-  if (saved && saved.last4) {
-    summary.textContent = `•••• •••• •••• ${saved.last4}`;
-  }
-
-  editBtn.addEventListener('click', () => {
-    display.hidden = true;
-    form.hidden = false;
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    form.hidden = true;
-    display.hidden = false;
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const number = document.getElementById('fieldCardNumber').value.replace(/\s+/g, '');
-    const last4 = number.slice(-4) || '0000';
-    localStorage.setItem('lexprep_payment', JSON.stringify({ last4 }));
-    summary.textContent = `•••• •••• •••• ${last4}`;
-    form.reset();
-    form.hidden = true;
-    display.hidden = false;
-  });
-}
-
 /* ---------------- Subscription ---------------- */
 const PLAN_PRICES = {
   basic: 'Бесплатно',
@@ -288,9 +253,24 @@ function initSubscription() {
   const renewalDate = new Date(expires).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
   function applyState() {
-    const cancelled = !getUser().planAutoRenew;
+    const freshUser = getUser();
+    const cancelled = !freshUser.planAutoRenew;
+    const pendingTier = freshUser.pendingPlanTier;
+
+    if (pendingTier) {
+      // Запланированное понижение тарифа (см. index.html#pricing) —
+      // показываем вместо обычного текста про автопродление, отменить
+      // автопродление отдельно тут уже не имеет смысла (тариф и так сменится).
+      note.hidden = false;
+      note.textContent = `Запланирован переход на тариф «${LexPrepPlan.TIER_TITLES[pendingTier]}» — сработает ${renewalDate}, когда закончится оплаченный период «${title}».`;
+      cancelBtn.hidden = true;
+      renewalEl.textContent = `Тариф «${title}» действует до ${renewalDate}`;
+      return;
+    }
+
     note.hidden = !cancelled;
     if (cancelled) note.textContent = `Автопродление выключено. Доступ к тарифу «${title}» сохранится до конца оплаченного периода — ${renewalDate}.`;
+    cancelBtn.hidden = false;
     cancelBtn.textContent = cancelled ? 'Включить автопродление' : 'Отменить подписку';
     renewalEl.textContent = cancelled ? `Тариф действует до ${renewalDate}, дальше не продлится` : `Следующее списание: ${renewalDate}`;
     if (LexPrepPlan.hasAnnualPlan()) {
@@ -506,17 +486,17 @@ function initNotificationsSwitch() {
   syncSwitch();
 }
 
-/* ---------------- Discipline choice for the Basic tier ---------------- */
+/* ---------------- Discipline choice for the Basic tier ----------------
+   Раньше пользователь сам выбирал, какая дисциплина у него открыта
+   на "Базовом" — теперь она фиксирована (см. LexPrepPlan.getChosenDisciplineId),
+   здесь просто показываем название, без возможности сменить. */
 function initBasicDisciplineSetting() {
-  const select = document.getElementById('basicDisciplineSelect');
-  if (!select || typeof LEXPREP_DATA === 'undefined' || typeof LexPrepPlan === 'undefined') return;
+  const valueEl = document.getElementById('basicDisciplineValue');
+  if (!valueEl || typeof LEXPREP_DATA === 'undefined' || typeof LexPrepPlan === 'undefined') return;
 
-  select.innerHTML = LEXPREP_DATA.map(d => `<option value="${d.id}">${d.title}</option>`).join('');
-  select.value = LexPrepPlan.getChosenDisciplineId(LEXPREP_DATA);
-
-  select.addEventListener('change', () => {
-    LexPrepPlan.setChosenDisciplineId(select.value);
-  });
+  const id = LexPrepPlan.getChosenDisciplineId(LEXPREP_DATA);
+  const discipline = LEXPREP_DATA.find(d => d.id === id);
+  if (discipline) valueEl.textContent = discipline.title;
 }
 
 /* ---------------- Мои статьи / мои тесты (с модерацией) ----------------

@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
     <link rel="stylesheet" href="./styles/style.css?v=20260923160000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/app.css" />
+    <link rel="stylesheet" href="./styles/app.css?v=20260923180000" />
   </head>
   <body>
     <header class="header" id="header">
@@ -159,9 +159,14 @@
             <span class="ai-chat__badge" id="aiChatBadge">ИИ</span>
             <span id="aiChatTitle">ИИ-консультант</span>
           </div>
-          <button class="ai-chat__close" type="button" id="aiChatClose" aria-label="Закрыть">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-          </button>
+          <div class="ai-chat__head-actions">
+            <button class="ai-chat__expand" type="button" id="aiChatExpand" aria-label="Увеличить окно">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+            <button class="ai-chat__close" type="button" id="aiChatClose" aria-label="Закрыть">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
         </div>
         <div class="ai-chat__body" id="aiChatBody">
           <div class="ai-chat__msg ai-chat__msg--bot">
@@ -188,16 +193,16 @@
 
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260916020000"></script>
-    <script src="plan.js?v=20260917090000"></script>
+    <script src="plan.js?v=20260923180000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923120000"></script>
+    <script src="api.js?v=20260923180000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="vendor/jspdf.umd.min.js"></script>
     <script src="vendor/roboto-fonts.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260903180000"></script>
-    <script src="app.js?v=20260916020000"></script>
+    <script src="script.js?v=20260923180000"></script>
+    <script src="app.js?v=20260923180000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>

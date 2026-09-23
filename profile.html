@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
     <link rel="stylesheet" href="./styles/style.css?v=20260923160000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/profile.css" />
+    <link rel="stylesheet" href="./styles/profile.css?v=20260923180000" />
   </head>
   <body>
     <header class="header" id="header">
@@ -187,39 +187,6 @@
                   </form>
                 </div>
 
-                <div class="profile-card">
-                  <h2 class="profile-card__title">Платёжные реквизиты</h2>
-                  <p class="profile-card__subtitle">
-                    Демо-режим: данные не передаются платёжному провайдеру и хранятся только локально в браузере.
-                  </p>
-
-                  <div class="payment-card" id="paymentDisplay">
-                    <div class="payment-card__row">
-                      <span class="payment-card__label">Способ оплаты</span>
-                      <span class="payment-card__value" id="paymentSummary">Карта не привязана</span>
-                    </div>
-                    <button class="btn btn--outline" type="button" id="editPaymentBtn">Изменить способ оплаты</button>
-                  </div>
-
-                  <form class="profile-form" id="paymentForm" hidden>
-                    <div class="form-group form-group--full">
-                      <label for="fieldCardNumber">Номер карты</label>
-                      <input class="form-input" type="text" id="fieldCardNumber" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" />
-                    </div>
-                    <div class="form-group">
-                      <label for="fieldCardExpiry">Срок действия</label>
-                      <input class="form-input" type="text" id="fieldCardExpiry" placeholder="ММ/ГГ" maxlength="5" />
-                    </div>
-                    <div class="form-group">
-                      <label for="fieldCardCvc">CVC</label>
-                      <input class="form-input" type="text" id="fieldCardCvc" inputmode="numeric" maxlength="3" placeholder="123" />
-                    </div>
-                    <div class="profile-form__submit-row form-group--full">
-                      <button type="submit" class="btn btn--primary">Сохранить карту</button>
-                      <button type="button" class="btn btn--ghost" id="cancelPaymentBtn">Отмена</button>
-                    </div>
-                  </form>
-                </div>
               </section>
 
               <!-- ПОДПИСКА -->
@@ -404,7 +371,7 @@
                       <div class="setting-row__title">Основная дисциплина (тариф «Базовый»)</div>
                       <div class="setting-row__desc">На тарифе «Базовый» полностью открыта только эта дисциплина — у остальных виден только список тем. На «Про» и «Максимум» это не ограничивает доступ.</div>
                     </div>
-                    <select class="form-input setting-row__select" id="basicDisciplineSelect"></select>
+                    <span class="setting-row__value" id="basicDisciplineValue">Гражданское право</span>
                   </div>
                 </div>
 
@@ -556,15 +523,15 @@
     <script src="validation.js?v=20260831160000"></script>
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260916020000"></script>
-    <script src="plan.js?v=20260917090000"></script>
+    <script src="plan.js?v=20260923180000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923120000"></script>
+    <script src="api.js?v=20260923180000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260903180000"></script>
+    <script src="script.js?v=20260923180000"></script>
     <script src="legal-docs.js?v=20260923150000"></script>
-    <script src="profile.js?v=20260923120000"></script>
+    <script src="profile.js?v=20260923180000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>

@@ -51,7 +51,7 @@ serve(async (req) => {
     const windowEnd = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const { data: dueProfiles, error: findErr } = await adminClient
       .from('profiles')
-      .select('id, email, plan_tier, plan_billing_period, plan_expires_at, tbank_rebill_id')
+      .select('id, email, plan_tier, plan_billing_period, plan_expires_at, tbank_rebill_id, pending_plan_tier, pending_plan_billing_period')
       .eq('plan_auto_renew', true)
       .eq('is_banned', false)
       .not('tbank_rebill_id', 'is', null)
@@ -63,8 +63,25 @@ serve(async (req) => {
 
     for (const profile of dueProfiles || []) {
       try {
-        const tier = profile.plan_tier as 'pro' | 'max';
-        const period = (profile.plan_billing_period as 'monthly' | 'annual') || 'monthly';
+        // Запланированное понижение до "Базового" — оплата не нужна вообще,
+        // просто переводим на бесплатный тариф в момент истечения текущего
+        // оплаченного периода (см. payments-schedule-downgrade).
+        if (profile.pending_plan_tier === 'basic') {
+          const { error: downgradeErr } = await adminClient
+            .from('profiles')
+            .update({ plan_tier: 'basic', plan_auto_renew: false, pending_plan_tier: null, pending_plan_billing_period: null })
+            .eq('id', profile.id);
+          if (downgradeErr) throw downgradeErr;
+          results.push({ userId: profile.id, ok: true });
+          continue;
+        }
+
+        // Запланированное понижение до другого платного тарифа (например,
+        // "Максимум" → "Про") — списываем уже за НОВЫЙ тариф/период, а не
+        // за старый. pending_plan_tier/pending_plan_billing_period снимутся
+        // в payments-notification при успешном подтверждении этого платежа.
+        const tier = (profile.pending_plan_tier || profile.plan_tier) as 'pro' | 'max';
+        const period = ((profile.pending_plan_tier ? profile.pending_plan_billing_period : profile.plan_billing_period) || 'monthly') as 'monthly' | 'annual';
         const amountKopecks = PRICES_KOPECKS[tier][period];
         const description = `Автопродление LexPrep «${TIER_TITLES[tier]}», ${PERIOD_TITLES[period]} оплата`;
 
