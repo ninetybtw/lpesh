@@ -819,9 +819,24 @@ STYLE.CSS — компоненты и секции страницы
 
 /* ---------------- PRICING ---------------- */
 .pricing__payment-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   max-width: 640px;
   margin: 28px auto 0;
-  text-align: center;
+  text-align: left;
+}
+.pricing__payment-badge {
+  flex-shrink: 0;
+  line-height: 0;
+}
+.pricing__payment-badge img {
+  display: block;
+  border-radius: 6px;
+}
+.pricing__payment-note p {
+  margin: 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-text-muted);
@@ -829,6 +844,12 @@ STYLE.CSS — компоненты и секции страницы
 .pricing__payment-note a {
   color: var(--color-primary);
   text-decoration: underline;
+}
+@media (max-width: 560px) {
+  .pricing__payment-note {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 .price-card {
   position: relative;
