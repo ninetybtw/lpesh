@@ -379,7 +379,7 @@
               </ul>
               <p class="price-card__note">Доступен сразу после регистрации — оформлять ничего не нужно</p>
             </div>
-            <div class="price-card price-card--featured is-annual reveal" data-price-card>
+            <div class="price-card price-card--featured is-annual reveal" data-price-card data-plan-tier="pro">
               <div class="price-card__head">
                 <h3 class="price-card__name">Про</h3>
                 <div class="price-card__toggle">
@@ -409,7 +409,7 @@
               </ul>
               <a href="#cta" class="btn btn--primary btn--block price-card__cta">Выбрать</a>
             </div>
-            <div class="price-card is-annual reveal" data-price-card>
+            <div class="price-card is-annual reveal" data-price-card data-plan-tier="max">
               <div class="price-card__head">
                 <h3 class="price-card__name">Максимум</h3>
                 <div class="price-card__toggle">
@@ -679,7 +679,7 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260917040000"></script>
+    <script src="api.js?v=20260923120000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="script.js?v=20260903180000"></script>
     <script>
@@ -754,6 +754,36 @@
         labels.forEach(l => {
           l.style.cursor = 'pointer';
           l.addEventListener('click', () => switchTo(l.dataset.toggleLabel));
+        });
+      });
+    </script>
+    <script>
+      // "Выбрать" на карточках тарифов — гостя просто ведёт на #cta
+      // (регистрация), как и раньше (href="#cta" сработает сам). Уже
+      // вошедшего пользователя сразу отправляем оплачивать через Т-Кассу
+      // вместо простого скролла по странице.
+      document.querySelectorAll('[data-price-card][data-plan-tier]').forEach(card => {
+        const cta = card.querySelector('.price-card__cta');
+        if (!cta) return;
+        cta.addEventListener('click', async (e) => {
+          let cachedUser = null;
+          try { cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (err) { /* гость */ }
+          if (!cachedUser || typeof LexPrepApi === 'undefined') return;
+
+          e.preventDefault();
+          const planTier = card.dataset.planTier;
+          const billingPeriod = card.classList.contains('is-annual') ? 'annual' : 'monthly';
+          const originalText = cta.textContent;
+          cta.textContent = 'Открываем оплату…';
+          cta.style.pointerEvents = 'none';
+          try {
+            const paymentUrl = await LexPrepApi.initSubscriptionPayment({ planTier, billingPeriod });
+            window.location.href = paymentUrl;
+          } catch (err) {
+            alert('Ошибка: ' + err.message);
+            cta.textContent = originalText;
+            cta.style.pointerEvents = '';
+          }
         });
       });
     </script>

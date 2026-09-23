@@ -78,6 +78,7 @@ const LexPrepApi = (function () {
       planTier: (profile && profile.plan_tier) || 'basic',
       planExpiresAt: profile && profile.plan_expires_at,
       planBillingPeriod: (profile && profile.plan_billing_period) || 'monthly',
+      planAutoRenew: !!(profile && profile.plan_auto_renew),
       duelRating: (profile && profile.duel_rating) || 1000,
       aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
@@ -1251,6 +1252,51 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  /* ---------------- Оплата подписки (Т-Касса) ----------------
+     Секреты терминала и вся подпись запросов — только в Edge Functions
+     (payments-init/payments-notification/payments-autocharge/payments-cancel,
+     см. supabase/payments.sql). Отсюда только вызовы. */
+
+  async function initSubscriptionPayment({ planTier, billingPeriod }) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/payments-init`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ planTier, billingPeriod })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось начать оплату. Попробуй ещё раз.');
+      err.status = res.status;
+      throw err;
+    }
+    return data.paymentUrl;
+  }
+
+  async function setSubscriptionAutoRenew(autoRenew) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/payments-cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ autoRenew })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Не удалось изменить автопродление.');
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
   /* ---------------- Рейтинг ----------------
      Реальный глобальный рейтинг: XP синхронизируется в profiles.xp (см.
      progress.js:checkLevelUp), а сам список читается из public
@@ -1290,6 +1336,7 @@ const LexPrepApi = (function () {
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
     forfeitTournamentMatch, leaveTournamentLobby,
     askAiConsultant, askAiConsultantPro,
+    initSubscriptionPayment, setSubscriptionAutoRenew,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
     redeemPromoCode, listPromoCodes, createPromoCode,
     getClient: () => client

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initInfoForm(user);
   initPayment();
   initSubscription();
+  handlePaymentReturn();
   initMyArticles();
   initReferral();
   initThemeSwitch();
@@ -267,33 +268,89 @@ function initSubscription() {
     return;
   }
 
+  // Автопродление (реальные деньги через Т-Кассу) есть только у тарифа,
+  // выданного сервером за настоящую оплату — временный апгрейд за монеты
+  // из магазина (localStorage, см. shop.js) просто истекает сам, там
+  // нечего отменять на сервере. Если сейчас "эффективный" тариф выше
+  // именно за счёт монет — кнопку не показываем вообще.
+  const user = getUser();
+  const serverPlanActive = user.planTier && user.planTier !== 'basic'
+    && user.planExpiresAt && new Date(user.planExpiresAt).getTime() > Date.now();
+
+  if (!serverPlanActive) {
+    cancelBtn.hidden = true;
+    note.hidden = true;
+    renewalEl.textContent = 'Действует временный апгрейд за монеты из магазина — продлевать вручную не нужно, истечёт сам.';
+    return;
+  }
+
   cancelBtn.hidden = false;
   const renewalDate = new Date(expires).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
   function applyState() {
-    const cancelled = localStorage.getItem('lexprep_sub_cancelled') === '1';
+    const cancelled = !getUser().planAutoRenew;
     note.hidden = !cancelled;
-    if (cancelled) note.textContent = `Подписка отменена. Доступ к тарифу «${title}» сохранится до конца оплаченного периода — ${renewalDate}.`;
-    cancelBtn.textContent = cancelled ? 'Возобновить подписку' : 'Отменить подписку';
-    renewalEl.textContent = `Следующее списание: ${renewalDate}`;
+    if (cancelled) note.textContent = `Автопродление выключено. Доступ к тарифу «${title}» сохранится до конца оплаченного периода — ${renewalDate}.`;
+    cancelBtn.textContent = cancelled ? 'Включить автопродление' : 'Отменить подписку';
+    renewalEl.textContent = cancelled ? `Тариф действует до ${renewalDate}, дальше не продлится` : `Следующее списание: ${renewalDate}`;
     if (LexPrepPlan.hasAnnualPlan()) {
       renewalEl.textContent += ' · годовая оплата — доступен продвинутый ИИ-консультант';
     }
   }
 
-  cancelBtn.addEventListener('click', () => {
-    const cancelled = localStorage.getItem('lexprep_sub_cancelled') === '1';
-    if (!cancelled) {
-      const confirmed = window.confirm(`Отменить подписку? Доступ к тарифу «${title}» сохранится до конца оплаченного периода.`);
+  cancelBtn.addEventListener('click', async () => {
+    const cancelled = !getUser().planAutoRenew;
+    const goingToEnable = cancelled; // сейчас выключено — кнопка "включить"
+    if (!goingToEnable) {
+      const confirmed = window.confirm(`Отменить автопродление? Доступ к тарифу «${title}» сохранится до конца оплаченного периода, дальше карта списываться не будет.`);
       if (!confirmed) return;
-      localStorage.setItem('lexprep_sub_cancelled', '1');
-    } else {
-      localStorage.removeItem('lexprep_sub_cancelled');
     }
-    applyState();
+    cancelBtn.disabled = true;
+    try {
+      await LexPrepApi.setSubscriptionAutoRenew(goingToEnable);
+      saveUser({ planAutoRenew: goingToEnable });
+      applyState();
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    } finally {
+      cancelBtn.disabled = false;
+    }
   });
 
   applyState();
+}
+
+// Т-Касса возвращает пользователя сюда после оплаты (см. payments-init) —
+// сам вебхук от банка (payments-notification) обычно успевает обработаться
+// раньше, чем человек долистает страницу редиректа, но не гарантированно,
+// поэтому переспрашиваем LexPrepApi.me() пару раз с паузой, а не один раз.
+async function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('payment');
+  if (!status) return;
+
+  window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+
+  if (status === 'fail') {
+    alert('Оплата не прошла. Можно попробовать ещё раз на странице тарифов.');
+    return;
+  }
+  if (status !== 'success') return;
+
+  const priorExpiresAt = getUser().planExpiresAt;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const fresh = await LexPrepApi.me();
+      saveUser(fresh);
+      if (fresh.planExpiresAt && fresh.planExpiresAt !== priorExpiresAt) {
+        initSubscription();
+        alert('Оплата прошла, подписка обновлена!');
+        return;
+      }
+    } catch (e) { /* попробуем ещё раз */ }
+  }
+  alert('Оплата обрабатывается — если тариф не обновился в течение минуты, обнови страницу.');
 }
 
 /* ---------------- Stats (real data from LexPrepProgress) ---------------- */
