@@ -54,6 +54,15 @@ function tooSimilarToCorrect(newText: string, correctText: string): boolean {
   return overlap / newWords.size > 0.5;
 }
 
+// Ещё один реальный случай, пойманный на ручной проверке: ИИ иногда прямо
+// подписывает вариант как неверный ("...ошибочно включаемый...",
+// "...что неверно...") — такая формулировка сама выдаёт ответ не хуже,
+// чем исходная проблема с длиной, поэтому такие варианты тоже отклоняем.
+const GIVEAWAY_PATTERN = /ошиб|неверн|неправильн|не является (верным|правильным|точным)|заблужден/i;
+function givesAwayAnswer(newText: string): boolean {
+  return GIVEAWAY_PATTERN.test(newText);
+}
+
 async function rewriteDistractor(
   gigaKey: string,
   gigaScope: string,
@@ -70,7 +79,8 @@ async function rewriteDistractor(
 Разверни (или, наоборот, сократи) формулировку ИМЕННО ЭТОЙ уже существующей неверной идеи «${distractorText}» до объёма и стиля правильного ответа. Строго запрещено:
 - придумывать новый критерий/идею с нуля вместо исходной;
 - заимствовать формулировки, критерии или суть из правильного ответа;
-- делать результат синонимичным или близким по смыслу к правильному ответу.
+- делать результат синонимичным или близким по смыслу к правильному ответу;
+- любыми словами намекать или прямо указывать, что вариант неверный/ошибочный (никаких слов вроде "ошибочно", "неверно", "неправильно" и т.п. — вариант должен звучать как обычное утверждение, будто оно верное, хотя по сути таковым не является).
 
 Результат должен остаться той же по сути неверной мыслью, что и «${distractorText}», просто изложенной подробнее/короче и в похожем стиле.
 
@@ -172,6 +182,10 @@ serve(async (req) => {
           if (!newText) continue;
           if (tooSimilarToCorrect(newText, correctOpt?.text || '')) {
             changes.push({ optionId, oldText: opt.text, newText, skipped: true, error: 'Слишком похоже на правильный ответ — пропущено, нужна ручная правка.' });
+            continue;
+          }
+          if (givesAwayAnswer(newText)) {
+            changes.push({ optionId, oldText: opt.text, newText, skipped: true, error: 'Текст сам выдаёт, что вариант неверный — пропущено, нужна ручная правка.' });
             continue;
           }
           changes.push({ optionId, oldText: opt.text, newText });
