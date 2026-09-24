@@ -146,19 +146,47 @@ function initAiChat() {
 
   function formatBotText(text) {
     const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return text
-      .split('\n')
-      .map((line) => {
-        let l = escape(line);
-        const heading = l.match(/^#{1,6}\s+(.*)$/);
-        if (heading) return `<strong>${heading[1]}</strong>`;
-        l = l.replace(/^[*-]\s+/, '• ');
-        l = l.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-        l = l.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        l = l.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        return l;
-      })
-      .join('<br>');
+    const inline = (s) =>
+      s
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+    const isTableRow = (line) => /^\s*\|.*\|\s*$/.test(line);
+    const isTableSeparator = (line) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line);
+    const splitCells = (line) => line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+
+    const lines = text.split('\n');
+    const parts = [];
+    let i = 0;
+    while (i < lines.length) {
+      if (isTableRow(lines[i]) && lines[i + 1] !== undefined && isTableSeparator(lines[i + 1])) {
+        const headerCells = splitCells(lines[i]);
+        i += 2;
+        const bodyRows = [];
+        while (i < lines.length && isTableRow(lines[i])) {
+          bodyRows.push(splitCells(lines[i]));
+          i++;
+        }
+        let table = '<div class="ai-chat__table-wrap"><table class="ai-chat__table"><thead><tr>';
+        table += headerCells.map((c) => `<th>${inline(escape(c))}</th>`).join('');
+        table += '</tr></thead><tbody>';
+        bodyRows.forEach((row) => {
+          table += '<tr>' + row.map((c) => `<td>${inline(escape(c))}</td>`).join('') + '</tr>';
+        });
+        table += '</tbody></table></div>';
+        parts.push(table);
+        continue;
+      }
+      const escaped = escape(lines[i]);
+      const heading = escaped.match(/^#{1,6}\s+(.*)$/);
+      if (heading) {
+        parts.push(`<strong>${inline(heading[1])}</strong>`);
+      } else {
+        parts.push(inline(escaped.replace(/^[*-]\s+/, '• ')));
+      }
+      i++;
+    }
+    return parts.join('<br>');
   }
 
   function addMessage(text, who) {

@@ -1752,6 +1752,34 @@ body {
   border-bottom-left-radius: 4px;
 }
 
+.ai-chat__table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 6px 0;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.ai-chat__table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+}
+
+.ai-chat__table th,
+.ai-chat__table td {
+  padding: 6px 9px;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.ai-chat__table th {
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
 .ai-chat__msg--user {
   align-self: flex-end;
   background: var(--color-primary);
