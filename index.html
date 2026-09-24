@@ -50,7 +50,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924190000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260924200000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
   </head>
   <body>
@@ -178,30 +178,47 @@
           </div>
           <div class="hero__visual reveal">
             <div class="hero__blob" aria-hidden="true"></div>
-            <div class="coin3d" id="heroCoin">
-              <div class="coin3d__stage" id="heroCoinStage">
-                <div class="coin3d__face coin3d__face--front">
-                  <svg class="coin3d__icon" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-                    <path d="M50 16v9M31 27h38" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" />
-                    <path d="M50 21l-12.5 7.5h25L50 21z" fill="currentColor" />
-                    <path
-                      d="M33 30.5l-8 15a8 8 0 0 0 16 0l-8-15zM67 30.5l-8 15a8 8 0 0 0 16 0l-8-15z"
-                      stroke="currentColor"
-                      stroke-width="3.2"
-                      stroke-linejoin="round"
-                    />
-                    <path d="M50 30.5v37" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" />
-                    <rect x="37" y="70" width="26" height="6.5" rx="2.2" fill="currentColor" />
-                  </svg>
-                  <span class="coin3d__label">LexPrep</span>
+            <div class="mock-card">
+              <span class="mock-card__ribbon">LexPrep</span>
+              <div class="mock-card__body">
+                <div class="mock-info mock-info--enter" id="mockInfo">
+                  <div class="mock-info__title">Конспект</div>
+                  <p class="mock-info__desc">
+                    Разбор темы простым языком с примерами и судебной практикой —
+                    быстро войти в тему перед семинаром.
+                  </p>
                 </div>
-                <div class="coin3d__face coin3d__face--back">
-                  <span class="coin3d__paragraph">§</span>
-                  <span class="coin3d__label">Кодекс знаний</span>
+                <div class="mock-chip-row">
+                  <span
+                    class="mock-chip mock-chip--active"
+                    data-progress="62"
+                    data-desc="Разбор темы простым языком с примерами и судебной практикой — быстро войти в тему перед семинаром."
+                    >Конспект</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="35"
+                    data-desc="ИИ подбирает карточки под твой уровень и повторяет их по интервалам — сложное не забывается, а простое не отнимает время."
+                    >Карточки</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="90"
+                    data-desc="Проверка знаний с разбором каждого ответа — сразу видно, что подтянуть перед семинаром или экзаменом."
+                    >Тест</span
+                  >
+                  <span
+                    class="mock-chip"
+                    data-progress="48"
+                    data-desc="Судебные кейсы и практические задачи по теме — учишься применять норму, а не только запоминать её."
+                    >Практика</span
+                  >
+                </div>
+                <div class="mock-progress">
+                  <div class="mock-progress__bar"></div>
                 </div>
               </div>
             </div>
-            <p class="coin3d__hint">Потяни, чтобы покрутить →</p>
             <div class="floating-badge floating-badge--top">🔥 12 дней подряд</div>
             <div class="floating-badge floating-badge--bottom">⭐ 4.9 · 1200+ оценок</div>
           </div>
@@ -767,7 +784,7 @@
     <script src="api.js?v=20260923180000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260924190000"></script>
+    <script src="script.js?v=20260924200000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');
