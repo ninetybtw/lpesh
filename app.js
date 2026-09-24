@@ -145,14 +145,20 @@ function initAiChat() {
   }
 
   function formatBotText(text) {
-    const escaped = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    return escaped
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br>');
+    const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return text
+      .split('\n')
+      .map((line) => {
+        let l = escape(line);
+        const heading = l.match(/^#{1,6}\s+(.*)$/);
+        if (heading) return `<strong>${heading[1]}</strong>`;
+        l = l.replace(/^[*-]\s+/, '• ');
+        l = l.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        l = l.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        l = l.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        return l;
+      })
+      .join('<br>');
   }
 
   function addMessage(text, who) {
