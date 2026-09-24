@@ -50,7 +50,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260924170000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
   </head>
   <body>
@@ -177,12 +177,9 @@
             </div>
           </div>
           <div class="hero__visual reveal">
+            <div class="hero__blob" aria-hidden="true"></div>
             <div class="mock-card">
-              <div class="mock-card__row--head">
-                <span class="dot dot--red"></span
-                ><span class="dot dot--yellow"></span
-                ><span class="dot dot--green"></span>
-              </div>
+              <span class="mock-card__ribbon">LexPrep</span>
               <div class="mock-card__body">
                 <div class="mock-info mock-info--enter" id="mockInfo">
                   <div class="mock-info__title">Конспект</div>
@@ -222,6 +219,8 @@
                 </div>
               </div>
             </div>
+            <div class="floating-badge floating-badge--top">🔥 12 дней подряд</div>
+            <div class="floating-badge floating-badge--bottom">⭐ 4.9 · 1200+ оценок</div>
           </div>
         </div>
       </section>
@@ -238,18 +237,26 @@
               От адаптивных карточек до готовых билетов на экзамен.
             </p>
           </div>
-          <div class="grid grid--3">
-            <div class="feature-card reveal">
+          <div class="bento reveal">
+            <div class="bento__item bento__item--lg">
               <div class="feature-card__icon feature-card__icon--blue">
                 <img src="./images/images icon-tree.svg" alt="" />
               </div>
               <h3>Дерево категорий</h3>
               <p>
                 Категория → предмет → тема. Всплывающие окна ведут по дереву без
-                потери контекста.
+                потери контекста — как в привычном маркетплейсе, только вместо
+                товаров учебный материал.
               </p>
+              <div class="bento__crumbs" aria-hidden="true">
+                <span class="bento__crumb">Гражданское право</span>
+                <span class="bento__crumb-arrow">→</span>
+                <span class="bento__crumb">Обязательства</span>
+                <span class="bento__crumb-arrow">→</span>
+                <span class="bento__crumb bento__crumb--active">Договор купли-продажи</span>
+              </div>
             </div>
-            <div class="feature-card reveal">
+            <div class="bento__item">
               <div class="feature-card__icon feature-card__icon--orange">
                 <img src="./images/images icon-ai-cards.svg" alt="" />
               </div>
@@ -259,7 +266,7 @@
                 новичка до продвинутого.
               </p>
             </div>
-            <div class="feature-card reveal">
+            <div class="bento__item">
               <div class="feature-card__icon feature-card__icon--green">
                 <img src="./images/images icon-tests.svg" alt="" />
               </div>
@@ -269,7 +276,7 @@
                 проверкой модераторами.
               </p>
             </div>
-            <div class="feature-card reveal">
+            <div class="bento__item">
               <div class="feature-card__icon feature-card__icon--purple">
                 <img src="./images/images icon-court.svg" alt="" />
               </div>
@@ -279,7 +286,7 @@
                 билету.
               </p>
             </div>
-            <div class="feature-card reveal">
+            <div class="bento__item">
               <div class="feature-card__icon feature-card__icon--indigo">
                 <img src="./images/images icon-tickets.svg" alt="" />
               </div>
@@ -289,7 +296,7 @@
                 источников.
               </p>
             </div>
-            <div class="feature-card reveal">
+            <div class="bento__item">
               <div class="feature-card__icon feature-card__icon--yellow">
                 <img src="./images/images icon-rewards.svg" alt="" />
               </div>
@@ -310,32 +317,33 @@
             <span class="eyebrow">Процесс</span>
             <h2 class="section__title">Как проходит подготовка</h2>
           </div>
-          <div class="steps">
-            <div class="step reveal">
-              <div class="step__num">01</div>
+          <div class="roadmap reveal">
+            <div class="roadmap__line" aria-hidden="true"></div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">1</div>
               <h3>Выбираешь тему</h3>
               <p>
                 Находишь нужную тему через навигацию по отраслям и предметам.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">02</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">2</div>
               <h3>Изучаешь материал</h3>
               <p>
                 Конспект, судебная практика и карточки, подобранные под твой
                 уровень.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">03</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">3</div>
               <h3>Проверяешь себя</h3>
               <p>
                 Проходишь тест — от редакции, ИИ или сообщества — и видишь
                 пробелы.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">04</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">4</div>
               <h3>Идёшь на экзамен</h3>
               <p>
                 Повторяешь готовые билеты и конспекты прямо перед экзаменом.
