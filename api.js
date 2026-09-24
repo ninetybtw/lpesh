@@ -342,6 +342,37 @@ const LexPrepApi = (function () {
     return data;
   }
 
+  async function adminAuditQuizOptions() {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-quiz-audit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Не удалось проверить тесты.');
+    return data;
+  }
+
+  async function adminFixQuizOptions({ dryRun = true, limit = 10 } = {}) {
+    const session = await requireSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-quiz-fix`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ dryRun, limit })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Не удалось переписать варианты ответа.');
+    return data;
+  }
+
   /* ---------------- Журнал действий админов/модераторов ----------------
      public.admin_audit_log (см. supabase/admin-audit-log.sql). Пишет
      сюда сам фронтенд сразу после успешного действия — не подмена
@@ -1349,6 +1380,7 @@ const LexPrepApi = (function () {
     register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
+    adminAuditQuizOptions, adminFixQuizOptions,
     logAdminAction, adminListAuditLog,
     moderatorGrantCoins,
     submitHomepageFeedback, adminListHomepageFeedback, adminSetFeedbackStatus,

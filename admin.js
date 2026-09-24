@@ -250,6 +250,101 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  /* ---------------- Аудит очевидности вариантов ответа в тестах ---------------- */
+
+  const quizAuditBtn = document.getElementById('adminQuizAuditBtn');
+  const quizPreviewBtn = document.getElementById('adminQuizPreviewBtn');
+  const quizAuditCountEl = document.getElementById('adminQuizAuditCount');
+  const quizAuditResultEl = document.getElementById('adminQuizAuditResult');
+
+  function renderQuizAuditSummary(data) {
+    quizAuditCountEl.textContent = `Подозрительных вопросов: ${data.flaggedCount} из ${data.totalQuestions}`;
+    if (!data.flagged.length) {
+      quizAuditResultEl.innerHTML = '<p class="admin-empty">Ничего подозрительного не найдено.</p>';
+      return;
+    }
+    quizAuditResultEl.innerHTML = data.flagged.map(item => `
+      <div class="admin-scope-note" style="margin-bottom:10px;">
+        <strong>${escapeHtml(item.topicId)}</strong> · вопрос №${item.questionIndex + 1}<br>
+        ${escapeHtml(item.question)}
+        <ul style="margin:6px 0 0; padding-left:18px;">
+          ${item.options.map(o => `<li>${o.isCorrect ? '✅' : '·'} ${escapeHtml(o.text)} <em>(${o.words} слов)</em></li>`).join('')}
+        </ul>
+      </div>
+    `).join('') + (data.truncated ? '<p class="admin-empty">Показаны не все — список обрезан.</p>' : '');
+  }
+
+  function renderQuizFixPreview(data) {
+    quizAuditCountEl.textContent = `Обработано в этой пачке: ${data.processedCount}, осталось: ${data.remainingFlagged}`;
+    if (!data.processed.length) {
+      quizAuditResultEl.innerHTML = '<p class="admin-empty">Нет предложений — либо всё уже исправлено, либо ИИ не смог переписать варианты.</p>';
+      return;
+    }
+    quizAuditResultEl.innerHTML = data.processed.map(item => `
+      <div class="admin-scope-note" style="margin-bottom:10px;">
+        <strong>${escapeHtml(item.topicId)}</strong> · вопрос №${item.questionIndex + 1}<br>
+        ${escapeHtml(item.question)}
+        <ul style="margin:6px 0 0; padding-left:18px;">
+          ${item.changes.map(c => c.error
+            ? `<li>Ошибка для варианта: ${escapeHtml(c.error)}</li>`
+            : `<li>«${escapeHtml(c.oldText)}» → «${escapeHtml(c.newText)}»</li>`
+          ).join('')}
+        </ul>
+      </div>
+    `).join('') + `
+      <div class="admin-toolbar" style="margin-top:10px;">
+        <button class="btn btn--primary" type="button" id="adminQuizApplyBtn">Сохранить эту пачку в базу</button>
+      </div>
+    `;
+    const applyBtn = document.getElementById('adminQuizApplyBtn');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', async () => {
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Сохраняю...';
+        try {
+          const result = await LexPrepApi.adminFixQuizOptions({ dryRun: false, limit: data.processed.length });
+          await LexPrepApi.logAdminAction('fix-quiz-options', { details: `Переписано вопросов: ${result.processedCount}` });
+          quizAuditResultEl.innerHTML = `<p class="admin-empty">Сохранено. Осталось подозрительных вопросов: ${result.remainingFlagged}. Нажми «Предложить правки» ещё раз, чтобы обработать следующую пачку.</p>`;
+          quizAuditCountEl.textContent = '';
+        } catch (err) {
+          alert('Ошибка сохранения: ' + err.message);
+          applyBtn.disabled = false;
+          applyBtn.textContent = 'Сохранить эту пачку в базу';
+        }
+      });
+    }
+  }
+
+  if (quizAuditBtn) {
+    quizAuditBtn.addEventListener('click', async () => {
+      quizAuditBtn.disabled = true;
+      quizAuditResultEl.innerHTML = '<p class="admin-empty">Проверяю...</p>';
+      try {
+        const data = await LexPrepApi.adminAuditQuizOptions();
+        renderQuizAuditSummary(data);
+      } catch (err) {
+        quizAuditResultEl.innerHTML = `<p class="admin-empty">Ошибка: ${escapeHtml(err.message)}</p>`;
+      } finally {
+        quizAuditBtn.disabled = false;
+      }
+    });
+  }
+
+  if (quizPreviewBtn) {
+    quizPreviewBtn.addEventListener('click', async () => {
+      quizPreviewBtn.disabled = true;
+      quizAuditResultEl.innerHTML = '<p class="admin-empty">ИИ переписывает варианты, это может занять минуту...</p>';
+      try {
+        const data = await LexPrepApi.adminFixQuizOptions({ dryRun: true, limit: 10 });
+        renderQuizFixPreview(data);
+      } catch (err) {
+        quizAuditResultEl.innerHTML = `<p class="admin-empty">Ошибка: ${escapeHtml(err.message)}</p>`;
+      } finally {
+        quizPreviewBtn.disabled = false;
+      }
+    });
+  }
+
   /* ---------------- Промокоды ---------------- */
 
   const PROMO_TYPE_LABEL = { subscription: 'Подписка', discount: 'Скидка', coins: 'Монеты' };

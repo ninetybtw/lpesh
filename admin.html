@@ -99,6 +99,7 @@
               <button type="button" class="admin-tab" data-admin-tab="suggestions">Предложения</button>
               <button type="button" class="admin-tab" data-admin-tab="notifications">Уведомления</button>
               <button type="button" class="admin-tab" data-admin-tab="promo">Промокоды</button>
+              <button type="button" class="admin-tab" data-admin-tab="quiz-audit">Очевидность тестов</button>
               <button type="button" class="admin-tab" data-admin-tab="logs">Журнал действий</button>
             </div>
 
@@ -261,6 +262,23 @@
                   <tbody id="adminPromoBody"></tbody>
                 </table>
               </div>
+            </div>
+
+            <div class="admin-tab-panel" data-admin-panel="quiz-audit" hidden>
+              <p class="admin-scope-note">
+                Ищет вопросы, где правильный ответ угадывается по одному внешнему виду варианта (например, три
+                варианта в одно слово и один развёрнутый) — независимо от порядка вариантов, который и так
+                перемешивается при показе. «Проверить» ничего не меняет, только показывает список. «Переписать»
+                отправляет варианты-отступники на переформулировку в ИИ — сначала в режиме предпросмотра
+                (ничего не сохраняется), реальная запись — отдельной кнопкой ниже результата, за раз обрабатывается
+                небольшая пачка вопросов, повторяй, пока не останется 0.
+              </p>
+              <div class="admin-toolbar">
+                <button class="btn btn--outline" type="button" id="adminQuizAuditBtn">Проверить тесты</button>
+                <button class="btn btn--outline" type="button" id="adminQuizPreviewBtn">Предложить правки (предпросмотр)</button>
+                <span class="admin-toolbar__count" id="adminQuizAuditCount"></span>
+              </div>
+              <div id="adminQuizAuditResult"></div>
             </div>
 
             <div class="admin-tab-panel" data-admin-panel="logs" hidden>
