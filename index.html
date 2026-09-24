@@ -50,7 +50,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924170000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260924190000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
   </head>
   <body>
@@ -178,47 +178,30 @@
           </div>
           <div class="hero__visual reveal">
             <div class="hero__blob" aria-hidden="true"></div>
-            <div class="mock-card">
-              <span class="mock-card__ribbon">LexPrep</span>
-              <div class="mock-card__body">
-                <div class="mock-info mock-info--enter" id="mockInfo">
-                  <div class="mock-info__title">Конспект</div>
-                  <p class="mock-info__desc">
-                    Разбор темы простым языком с примерами и судебной практикой —
-                    быстро войти в тему перед семинаром.
-                  </p>
+            <div class="coin3d" id="heroCoin">
+              <div class="coin3d__stage" id="heroCoinStage">
+                <div class="coin3d__face coin3d__face--front">
+                  <svg class="coin3d__icon" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                    <path d="M50 16v9M31 27h38" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" />
+                    <path d="M50 21l-12.5 7.5h25L50 21z" fill="currentColor" />
+                    <path
+                      d="M33 30.5l-8 15a8 8 0 0 0 16 0l-8-15zM67 30.5l-8 15a8 8 0 0 0 16 0l-8-15z"
+                      stroke="currentColor"
+                      stroke-width="3.2"
+                      stroke-linejoin="round"
+                    />
+                    <path d="M50 30.5v37" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" />
+                    <rect x="37" y="70" width="26" height="6.5" rx="2.2" fill="currentColor" />
+                  </svg>
+                  <span class="coin3d__label">LexPrep</span>
                 </div>
-                <div class="mock-chip-row">
-                  <span
-                    class="mock-chip mock-chip--active"
-                    data-progress="62"
-                    data-desc="Разбор темы простым языком с примерами и судебной практикой — быстро войти в тему перед семинаром."
-                    >Конспект</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="35"
-                    data-desc="ИИ подбирает карточки под твой уровень и повторяет их по интервалам — сложное не забывается, а простое не отнимает время."
-                    >Карточки</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="90"
-                    data-desc="Проверка знаний с разбором каждого ответа — сразу видно, что подтянуть перед семинаром или экзаменом."
-                    >Тест</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="48"
-                    data-desc="Судебные кейсы и практические задачи по теме — учишься применять норму, а не только запоминать её."
-                    >Практика</span
-                  >
-                </div>
-                <div class="mock-progress">
-                  <div class="mock-progress__bar"></div>
+                <div class="coin3d__face coin3d__face--back">
+                  <span class="coin3d__paragraph">§</span>
+                  <span class="coin3d__label">Кодекс знаний</span>
                 </div>
               </div>
             </div>
+            <p class="coin3d__hint">Потяни, чтобы покрутить →</p>
             <div class="floating-badge floating-badge--top">🔥 12 дней подряд</div>
             <div class="floating-badge floating-badge--bottom">⭐ 4.9 · 1200+ оценок</div>
           </div>
@@ -237,74 +220,125 @@
               От адаптивных карточек до готовых билетов на экзамен.
             </p>
           </div>
-          <div class="bento reveal">
-            <div class="bento__item bento__item--lg">
-              <div class="feature-card__icon feature-card__icon--blue">
-                <img src="./images/images icon-tree.svg" alt="" />
-              </div>
-              <h3>Дерево категорий</h3>
-              <p>
-                Категория → предмет → тема. Всплывающие окна ведут по дереву без
-                потери контекста — как в привычном маркетплейсе, только вместо
-                товаров учебный материал.
-              </p>
-              <div class="bento__crumbs" aria-hidden="true">
-                <span class="bento__crumb">Гражданское право</span>
-                <span class="bento__crumb-arrow">→</span>
-                <span class="bento__crumb">Обязательства</span>
-                <span class="bento__crumb-arrow">→</span>
-                <span class="bento__crumb bento__crumb--active">Договор купли-продажи</span>
-              </div>
+          <div class="feature-tabs reveal" id="featureTabs">
+            <div class="feature-tabs__list" role="tablist">
+              <button class="feature-tabs__item is-active" type="button" data-feature-tab="tree" style="--tab-accent: var(--color-primary)">
+                <span class="feature-card__icon feature-card__icon--blue"><img src="./images/images icon-tree.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Дерево категорий</strong>
+                  <small>Категория → предмет → тема</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="cards" style="--tab-accent: #ff7a45">
+                <span class="feature-card__icon feature-card__icon--orange"><img src="./images/images icon-ai-cards.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>ИИ-карточки под уровень</strong>
+                  <small>Сложность подбирается автоматически</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="tests" style="--tab-accent: #1fb774">
+                <span class="feature-card__icon feature-card__icon--green"><img src="./images/images icon-tests.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Тесты трёх видов</strong>
+                  <small>Редакция, ИИ и сообщество</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="practice" style="--tab-accent: #8c54ff">
+                <span class="feature-card__icon feature-card__icon--purple"><img src="./images/images icon-court.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Судебная практика</strong>
+                  <small>Пленумы и решения судов</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="tickets" style="--tab-accent: #5865f2">
+                <span class="feature-card__icon feature-card__icon--indigo"><img src="./images/images icon-tickets.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Готовые билеты к экзамену</strong>
+                  <small>Собраны заранее</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="rewards" style="--tab-accent: #e0a316">
+                <span class="feature-card__icon feature-card__icon--yellow"><img src="./images/images icon-rewards.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Награды за вклад</strong>
+                  <small>Бонусы к подписке</small>
+                </span>
+              </button>
             </div>
-            <div class="bento__item">
-              <div class="feature-card__icon feature-card__icon--orange">
-                <img src="./images/images icon-ai-cards.svg" alt="" />
+
+            <div class="feature-tabs__preview">
+              <div class="feature-tabs__panel is-active" data-feature-panel="tree" style="--tab-accent: var(--color-primary)">
+                <h3>Дерево категорий</h3>
+                <p>
+                  Категория → предмет → тема. Всплывающие окна ведут по дереву без
+                  потери контекста — как в привычном маркетплейсе, только вместо
+                  товаров учебный материал.
+                </p>
+                <div class="feature-visual feature-visual--crumbs">
+                  <span class="bento__crumb">Гражданское право</span>
+                  <span class="bento__crumb-arrow">→</span>
+                  <span class="bento__crumb">Обязательства</span>
+                  <span class="bento__crumb-arrow">→</span>
+                  <span class="bento__crumb bento__crumb--active">Договор купли-продажи</span>
+                </div>
               </div>
-              <h3>ИИ-карточки под уровень</h3>
-              <p>
-                Нейросеть подбирает сложность карточек индивидуально — от
-                новичка до продвинутого.
-              </p>
-            </div>
-            <div class="bento__item">
-              <div class="feature-card__icon feature-card__icon--green">
-                <img src="./images/images icon-tests.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="cards" style="--tab-accent: #ff7a45">
+                <h3>ИИ-карточки под уровень</h3>
+                <p>
+                  Нейросеть подбирает сложность карточек индивидуально — от
+                  новичка до продвинутого.
+                </p>
+                <div class="feature-visual feature-visual--levels">
+                  <span class="feature-visual__level">Новичок</span>
+                  <span class="feature-visual__level is-active">Средний</span>
+                  <span class="feature-visual__level">Продвинутый</span>
+                </div>
               </div>
-              <h3>Тесты трёх видов</h3>
-              <p>
-                От редакции, от нейросети или созданные другими студентами — с
-                проверкой модераторами.
-              </p>
-            </div>
-            <div class="bento__item">
-              <div class="feature-card__icon feature-card__icon--purple">
-                <img src="./images/images icon-court.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="tests" style="--tab-accent: #1fb774">
+                <h3>Тесты трёх видов</h3>
+                <p>
+                  От редакции, от нейросети или созданные другими студентами — с
+                  проверкой модераторами.
+                </p>
+                <div class="feature-visual feature-visual--sources">
+                  <span class="feature-visual__source">📘 От редакции</span>
+                  <span class="feature-visual__source">🤖 От ИИ</span>
+                  <span class="feature-visual__source">👥 От студентов</span>
+                </div>
               </div>
-              <h3>Судебная практика</h3>
-              <p>
-                Актуальные пленумы и решения судов, привязанные к каждой теме и
-                билету.
-              </p>
-            </div>
-            <div class="bento__item">
-              <div class="feature-card__icon feature-card__icon--indigo">
-                <img src="./images/images icon-tickets.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="practice" style="--tab-accent: #8c54ff">
+                <h3>Судебная практика</h3>
+                <p>
+                  Актуальные пленумы и решения судов, привязанные к каждой теме и
+                  билету.
+                </p>
+                <blockquote class="feature-visual feature-visual--quote">
+                  «Постановление Пленума ВС РФ № 25: сделка, совершённая под влиянием
+                  существенного заблуждения относительно её природы...»
+                </blockquote>
               </div>
-              <h3>Готовые билеты к экзамену</h3>
-              <p>
-                Конспекты и билеты собраны заранее — не нужно искать по десяткам
-                источников.
-              </p>
-            </div>
-            <div class="bento__item">
-              <div class="feature-card__icon feature-card__icon--yellow">
-                <img src="./images/images icon-rewards.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="tickets" style="--tab-accent: #5865f2">
+                <h3>Готовые билеты к экзамену</h3>
+                <p>
+                  Конспекты и билеты собраны заранее — не нужно искать по десяткам
+                  источников.
+                </p>
+                <div class="feature-visual feature-visual--ticket">
+                  <span>Билет</span>
+                  <strong>№ 14</strong>
+                </div>
               </div>
-              <h3>Награды за вклад</h3>
-              <p>
-                Предлагай правки и идеи карточек — после проверки редакцией
-                получай бонусы к подписке.
-              </p>
+              <div class="feature-tabs__panel" data-feature-panel="rewards" style="--tab-accent: #e0a316">
+                <h3>Награды за вклад</h3>
+                <p>
+                  Предлагай правки и идеи карточек — после проверки редакцией
+                  получай бонусы к подписке.
+                </p>
+                <div class="feature-visual feature-visual--reward">
+                  <span>🪙</span>
+                  <strong>+250 монет</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -733,7 +767,7 @@
     <script src="api.js?v=20260923180000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260924150000"></script>
+    <script src="script.js?v=20260924190000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');

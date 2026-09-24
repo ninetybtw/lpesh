@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNav();
   initSmoothAnchors();
   initAccordion();
-  initHeroMock();
+  initHeroCoin3D();
+  initFeatureTabs();
   initFeedbackForm();
   initRevealOnScroll();
   initAuthState();
@@ -187,47 +188,107 @@ function initAccordion() {
   });
 }
 
-/* ---------------- Hero mock-card: clickable chips + 3D tilt ---------------- */
-function initHeroMock() {
-  const visual = document.querySelector('.hero__visual');
-  const card = document.querySelector('.mock-card');
-  const chips = document.querySelectorAll('.mock-chip');
-  const progressBar = document.querySelector('.mock-progress__bar');
-  const infoBox = document.getElementById('mockInfo');
-  const infoTitle = infoBox ? infoBox.querySelector('.mock-info__title') : null;
-  const infoDesc = infoBox ? infoBox.querySelector('.mock-info__desc') : null;
+/* ---------------- Hero: вращаемая 3D-монета ----------------
+   Чистый CSS 3D (perspective + preserve-3d + rotateY) — без
+   Three.js/WebGL/моделей, чтобы не тянуть лишний вес на страницу. Две
+   грани с backface-visibility:hidden, вторая развёрнута на 180° — та же
+   схема, на которой обычно строят переворот игральной карты, только
+   крутится по кругу через перетаскивание, а не по hover. Управление —
+   Pointer Events (единый код для мыши и тача), с инерцией после
+   отпускания и медленным авто-вращением в состоянии покоя. */
+function initHeroCoin3D() {
+  const coin = document.getElementById('heroCoin');
+  const stage = document.getElementById('heroCoinStage');
+  if (!coin || !stage) return;
 
-  if (chips.length && progressBar) {
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        if (chip.classList.contains('mock-chip--active')) return;
-        chips.forEach(c => c.classList.remove('mock-chip--active'));
-        chip.classList.add('mock-chip--active');
-        const value = chip.dataset.progress || '62';
-        progressBar.style.width = value + '%';
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const idleSpeed = reduceMotion ? 0 : 0.35;
 
-        if (infoBox && infoTitle && infoDesc) {
-          infoBox.classList.remove('mock-info--enter');
-          void infoBox.offsetWidth; // перезапуск CSS-анимации
-          infoTitle.textContent = chip.textContent.trim();
-          infoDesc.textContent = chip.dataset.desc || '';
-          infoBox.classList.add('mock-info--enter');
-        }
-      });
-    });
+  let rotY = -25;
+  let velocity = idleSpeed;
+  let dragging = false;
+  let lastX = 0;
+  let lastTime = 0;
+  let rafId = null;
+
+  function render() {
+    stage.style.transform = `rotateX(-10deg) rotateY(${rotY}deg)`;
+  }
+  render();
+
+  function tick() {
+    if (!dragging) {
+      rotY += velocity;
+      render();
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+
+  function settleToIdle() {
+    if (Math.abs(velocity) > Math.abs(idleSpeed) + 0.05) {
+      velocity *= 0.95;
+      setTimeout(settleToIdle, 16);
+    } else {
+      velocity = idleSpeed;
+    }
   }
 
-  if (visual && card && window.matchMedia('(pointer: fine)').matches) {
-    visual.addEventListener('mousemove', (e) => {
-      const rect = visual.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      card.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
-    });
-    visual.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
+  coin.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    coin.classList.add('is-dragging');
+    lastX = e.clientX;
+    lastTime = performance.now();
+    coin.setPointerCapture(e.pointerId);
+  });
+
+  coin.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const now = performance.now();
+    const dx = e.clientX - lastX;
+    const dt = Math.max(now - lastTime, 1);
+    rotY += dx * 0.5;
+    velocity = (dx * 0.5) / (dt / 16.6);
+    lastX = e.clientX;
+    lastTime = now;
+    render();
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    coin.classList.remove('is-dragging');
+    velocity = reduceMotion ? 0 : Math.max(Math.min(velocity, 10), -10);
+    settleToIdle();
   }
+  coin.addEventListener('pointerup', endDrag);
+  coin.addEventListener('pointercancel', endDrag);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && rafId) cancelAnimationFrame(rafId);
+    else if (!document.hidden) rafId = requestAnimationFrame(tick);
+  });
+}
+
+/* ---------------- Возможности: вкладки с превью ---------------- */
+function initFeatureTabs() {
+  const root = document.getElementById('featureTabs');
+  if (!root) return;
+  const tabs = root.querySelectorAll('[data-feature-tab]');
+  const panels = root.querySelectorAll('[data-feature-panel]');
+  const preview = root.querySelector('.feature-tabs__preview');
+
+  const initialTab = root.querySelector('[data-feature-tab].is-active') || tabs[0];
+  if (preview && initialTab) preview.style.setProperty('--tab-accent', initialTab.style.getPropertyValue('--tab-accent'));
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const key = tab.dataset.featureTab;
+      tabs.forEach(t => t.classList.toggle('is-active', t === tab));
+      panels.forEach(p => p.classList.toggle('is-active', p.dataset.featurePanel === key));
+      if (preview) preview.style.setProperty('--tab-accent', tab.style.getPropertyValue('--tab-accent'));
+    });
+  });
 }
 
 /* ---------------- Feedback form ---------------- */

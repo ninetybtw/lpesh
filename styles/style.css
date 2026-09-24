@@ -303,9 +303,10 @@ STYLE.CSS — компоненты и секции страницы
 /* Hero mock visual */
 .hero__visual {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   position: relative;
-  perspective: 1200px;
 }
 .hero__blob {
   position: absolute;
@@ -326,129 +327,78 @@ STYLE.CSS — компоненты и секции страницы
     transform: scale(1.08) rotate(2deg);
   }
 }
-.mock-card {
+/* Вращаемая 3D-монета в hero — чистый CSS 3D (perspective + preserve-3d +
+   rotateY), без каких-либо 3D-библиотек/WebGL/моделей, чтобы не грузить
+   страницу. Классическая схема "флип-карты": две грани с
+   backface-visibility:hidden, вторая развёрнута на 180° — ровно то же,
+   на чём обычно строят переворот игральной карты, только по кругу и
+   с перетаскиванием мышью/пальцем вместо hover. */
+.coin3d {
   position: relative;
   z-index: 1;
+  width: 260px;
+  height: 260px;
+  perspective: 900px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.coin3d.is-dragging {
+  cursor: grabbing;
+}
+.coin3d__stage {
+  position: relative;
   width: 100%;
-  max-width: 420px;
-  background: var(--color-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
+  height: 100%;
   transform-style: preserve-3d;
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
-  animation: mockFloat 6s ease-in-out infinite;
-  cursor: default;
+  will-change: transform;
 }
-@keyframes mockFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-.mock-card:hover {
-  box-shadow: 0 32px 64px rgba(20, 22, 31, 0.18);
-}
-.mock-card__ribbon {
+.coin3d__face {
   position: absolute;
-  top: 18px;
-  right: -34px;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 11px;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  backface-visibility: hidden;
+  background: radial-gradient(circle at 38% 32%, #f6dfa3 0%, #dcaa52 45%, #b9873c 80%, #9c6a24 100%);
+  border: 9px solid #96692a;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.25),
+    0 24px 54px rgba(0, 0, 0, 0.28);
+  color: #5b3c14;
+}
+.coin3d__face--back {
+  transform: rotateY(180deg);
+}
+.coin3d__icon {
+  width: 72px;
+  height: 72px;
+}
+.coin3d__label {
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 5px 40px;
-  transform: rotate(35deg);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
-.mock-card__body {
-  padding: 32px 26px 28px;
-}
-.mock-info {
-  min-height: 90px;
-  margin-bottom: 8px;
-}
-.mock-info__title {
-  font-size: 19px;
+.coin3d__paragraph {
+  font-size: 62px;
   font-weight: 800;
-  color: var(--color-text);
-  margin-bottom: 8px;
+  line-height: 1;
 }
-.mock-info__desc {
-  font-size: 13.5px;
-  line-height: 1.6;
+.coin3d__hint {
+  margin-top: 16px;
+  font-size: 12.5px;
   color: var(--color-text-muted);
-}
-.mock-info--enter {
-  animation: mockInfoEnter 0.4s ease;
-}
-@keyframes mockInfoEnter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
-  .mock-info--enter,
   .hero__blob,
-  .mock-card,
   .floating-badge {
     animation: none;
   }
-}
-.mock-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 22px 0;
-}
-.mock-chip {
-  padding: 7px 14px;
-  font-size: 12.5px;
-  font-weight: 700;
-  border-radius: 999px;
-  background: var(--color-bg-alt);
-  color: var(--color-text-muted);
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition:
-    background var(--transition),
-    color var(--transition),
-    transform var(--transition),
-    border-color var(--transition);
-}
-.mock-chip:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-primary);
-}
-.mock-chip--active {
-  background: var(--color-text);
-  color: var(--color-bg);
-}
-.mock-progress {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--color-border);
-  overflow: hidden;
-}
-.mock-progress__bar {
-  width: 62%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-  border-radius: 999px;
-  transition: width 0.6s ease;
 }
 .floating-badge {
   position: absolute;
@@ -465,13 +415,13 @@ STYLE.CSS — компоненты и секции страницы
   white-space: nowrap;
 }
 .floating-badge--top {
-  top: -6px;
-  left: -18px;
+  top: 10px;
+  left: calc(50% - 190px);
   animation-delay: 0.3s;
 }
 .floating-badge--bottom {
-  bottom: 22px;
-  right: -22px;
+  bottom: 46px;
+  right: calc(50% - 200px);
   animation-delay: 1s;
 }
 @keyframes badgeFloat {
@@ -488,10 +438,10 @@ STYLE.CSS — компоненты и секции страницы
     grid-template-columns: 1fr;
   }
   .floating-badge--top {
-    left: 0;
+    left: 4px;
   }
   .floating-badge--bottom {
-    right: 0;
+    right: 4px;
   }
 }
 @media (max-width: 480px) {
@@ -502,6 +452,17 @@ STYLE.CSS — компоненты и секции страницы
   .stat {
     padding-right: 20px;
     margin-right: 20px;
+  }
+  .coin3d {
+    width: 200px;
+    height: 200px;
+  }
+  .coin3d__icon {
+    width: 56px;
+    height: 56px;
+  }
+  .coin3d__paragraph {
+    font-size: 48px;
   }
   .floating-badge {
     display: none;
@@ -528,94 +489,20 @@ STYLE.CSS — компоненты и секции страницы
   font-size: 16px;
 }
 
-/* ---------------- FEATURES: BENTO GRID ---------------- */
-.bento {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(160px, auto);
-  gap: 20px;
-}
-.bento__item {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 28px 26px;
-  transition:
-    transform var(--transition),
-    box-shadow var(--transition),
-    border-color var(--transition);
-}
-.bento__item:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
-}
-.bento__item--lg {
-  grid-column: span 2;
-  grid-row: span 2;
-  background: linear-gradient(145deg, var(--color-primary-light) 0%, var(--color-bg) 70%);
-}
-.bento__item--lg .feature-card__icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
-  margin-bottom: 28px;
-}
-.bento__item--lg .feature-card__icon img {
-  width: 34px;
-  height: 34px;
-}
-.bento__item--lg h3 {
-  font-size: 26px;
-}
-.bento__item--lg p {
-  font-size: 15.5px;
-  max-width: 340px;
-}
-.bento__crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 28px;
-}
-.bento__crumb {
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 7px 13px;
-  border-radius: 999px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-}
-.bento__crumb--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-.bento__crumb-arrow {
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
+/* ---------------- FEATURES: ВКЛАДКИ С ПРЕВЬЮ ---------------- */
 .feature-card__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
+  flex-shrink: 0;
   transition: transform var(--transition);
 }
-.bento__item:hover .feature-card__icon {
-  transform: scale(1.08) rotate(-4deg);
-}
 .feature-card__icon img {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 .feature-card__icon--blue {
   background: var(--color-primary-light);
@@ -635,29 +522,210 @@ STYLE.CSS — компоненты и секции страницы
 .feature-card__icon--yellow {
   background: #fff3de;
 }
-.bento__item h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
+
+.feature-tabs {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  align-items: start;
 }
-.bento__item p {
+.feature-tabs__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.feature-tabs__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+}
+.feature-tabs__item:hover {
+  background: var(--color-bg-alt);
+}
+.feature-tabs__item.is-active {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+.feature-tabs__item.is-active .feature-card__icon {
+  transform: scale(1.08);
+}
+.feature-tabs__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.feature-tabs__item-text strong {
   font-size: 14.5px;
+  color: var(--color-text);
+}
+.feature-tabs__item-text small {
+  font-size: 12.5px;
   color: var(--color-text-muted);
 }
-@media (max-width: 960px) {
-  .bento {
-    grid-template-columns: repeat(2, 1fr);
+
+.feature-tabs__preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 340px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  overflow: hidden;
+}
+.feature-tabs__preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--tab-accent, var(--color-primary)) 12%, transparent) 0%, transparent 60%);
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+.feature-tabs__panel {
+  display: none;
+  position: relative;
+  animation: featurePanelIn 0.35s ease;
+}
+.feature-tabs__panel.is-active {
+  display: block;
+  width: 100%;
+}
+@keyframes featurePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  .bento__item--lg {
-    grid-column: span 2;
-    grid-row: span 1;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.feature-tabs__panel h3 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  color: var(--tab-accent, var(--color-text));
+}
+.feature-tabs__panel p {
+  font-size: 15.5px;
+  color: var(--color-text-muted);
+  max-width: 480px;
+  margin-bottom: 32px;
+}
+.feature-visual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.bento__crumb {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.bento__crumb--active {
+  background: var(--tab-accent, var(--color-primary));
+  border-color: var(--tab-accent, var(--color-primary));
+  color: #fff;
+}
+.bento__crumb-arrow {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.feature-visual--levels {
+  gap: 8px;
+}
+.feature-visual__level {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+  border: 1.5px solid transparent;
+}
+.feature-visual__level.is-active {
+  background: var(--tab-accent, var(--color-primary));
+  color: #fff;
+}
+.feature-visual--sources {
+  gap: 12px;
+}
+.feature-visual__source {
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+}
+.feature-visual--quote {
+  display: block;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--color-text);
+  padding: 20px 24px;
+  border-left: 4px solid var(--tab-accent, var(--color-primary));
+  background: var(--color-bg-alt);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  max-width: 520px;
+}
+.feature-visual--ticket,
+.feature-visual--reward {
+  gap: 14px;
+  padding: 18px 26px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-alt);
+  border: 1px dashed var(--color-border);
+}
+.feature-visual--ticket span,
+.feature-visual--reward span {
+  font-size: 22px;
+}
+.feature-visual--ticket strong,
+.feature-visual--reward strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--tab-accent, var(--color-primary));
+}
+@media (max-width: 960px) {
+  .feature-tabs {
+    grid-template-columns: 1fr;
+  }
+  .feature-tabs__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .feature-tabs__item {
+    flex: 1 1 auto;
+  }
+  .feature-tabs__item-text small {
+    display: none;
   }
 }
 @media (max-width: 560px) {
-  .bento {
-    grid-template-columns: 1fr;
+  .feature-tabs__preview {
+    padding: 26px 22px;
+    min-height: 320px;
   }
-  .bento__item--lg {
-    grid-column: span 1;
+  .feature-tabs__item {
+    flex: 1 1 100%;
   }
 }
 
@@ -788,6 +856,8 @@ STYLE.CSS — компоненты и секции страницы
   z-index: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 .roadmap__node {
   width: 54px;
@@ -826,6 +896,8 @@ STYLE.CSS — компоненты и секции страницы
     gap: 0;
   }
   .roadmap__step {
+    align-items: flex-start;
+    text-align: left;
     padding-left: 70px;
     padding-bottom: 32px;
   }
