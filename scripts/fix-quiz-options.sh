@@ -5,41 +5,38 @@
 #
 # Использование:
 #   ./fix-quiz-options.sh
-# Спросит email и пароль администратора (пароль не отображается при вводе),
-# получит токен через Supabase Auth, затем будет вызывать admin-quiz-fix
-# пачками по 30 вопросов с dryRun=false, пока remainingFlagged не станет 0.
+# Спросит access-токен уже залогиненной сессии администратора в браузере
+# (получить: на сайте, залогинившись как админ, открыть консоль браузера —
+# F12 → Console — и выполнить:
+#   Object.keys(localStorage).filter(k => k.includes('auth-token')).map(k => JSON.parse(localStorage.getItem(k)).access_token)
+# и скопировать полученную строку, она начинается на "eyJ") и anon key,
+# затем будет вызывать admin-quiz-fix пачками по 30 вопросов с
+# dryRun=false, пока remainingFlagged не станет 0.
 #
 # ВНИМАНИЕ: сразу пишет в базу (без предпросмотра) — если хочешь сначала
 # посмотреть на выборке, прогони через админку (вкладка "Очевидность
 # тестов" → "Предложить правки") на паре пачек вручную.
+#
+# Токен живёт ограниченное время (обычно ~1 час) — если скрипт на середине
+# начнёт получать 401, просто получи новый токен и перезапусти: уже
+# исправленные вопросы не попадут в выборку повторно.
 
 set -euo pipefail
 
 API_BASE="https://api.lexprep.ru"
 
-read -rp "Email администратора: " ADMIN_EMAIL
-read -rsp "Пароль: " ADMIN_PASSWORD
-echo
+read -rp "Access token администратора (из localStorage браузера): " ACCESS_TOKEN
 
 if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
   read -rp "SUPABASE_ANON_KEY (anon key из .env): " SUPABASE_ANON_KEY
 fi
 
-echo "Авторизация..."
-LOGIN_RESPONSE=$(curl -sS -X POST "${API_BASE}/auth/v1/token?grant_type=password" \
-  -H "Content-Type: application/json" \
-  -H "apikey: ${SUPABASE_ANON_KEY}" \
-  -d "{\"email\":\"${ADMIN_EMAIL}\",\"password\":\"${ADMIN_PASSWORD}\"}")
-
-ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))")
-
 if [ -z "$ACCESS_TOKEN" ]; then
-  echo "Не удалось авторизоваться. Ответ сервера:"
-  echo "$LOGIN_RESPONSE"
+  echo "Токен не введён."
   exit 1
 fi
 
-echo "Авторизация успешна. Начинаю пачками по 30..."
+echo "Начинаю пачками по 30..."
 
 TOTAL_PROCESSED=0
 BATCH=1
