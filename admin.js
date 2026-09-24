@@ -285,10 +285,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         <strong>${escapeHtml(item.topicId)}</strong> · вопрос №${item.questionIndex + 1}<br>
         ${escapeHtml(item.question)}
         <ul style="margin:6px 0 0; padding-left:18px;">
-          ${item.changes.map(c => c.error
-            ? `<li>Ошибка для варианта: ${escapeHtml(c.error)}</li>`
-            : `<li>«${escapeHtml(c.oldText)}» → «${escapeHtml(c.newText)}»</li>`
-          ).join('')}
+          ${item.changes.map(c => {
+            if (c.skipped) return `<li>⚠️ Пропущено (${escapeHtml(c.error)}): «${escapeHtml(c.oldText)}» → предложено «${escapeHtml(c.newText)}»</li>`;
+            if (c.error) return `<li>Ошибка для варианта: ${escapeHtml(c.error)}</li>`;
+            return `<li>«${escapeHtml(c.oldText)}» → «${escapeHtml(c.newText)}»</li>`;
+          }).join('')}
         </ul>
       </div>
     `).join('') + `

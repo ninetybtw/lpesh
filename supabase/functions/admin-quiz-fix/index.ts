@@ -28,6 +28,32 @@ const MODEL = 'GigaChat-3-Ultra';
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
 
+const STOPWORDS = new Set(['это', 'который', 'которая', 'которое', 'которые', 'при', 'для', 'если', 'также', 'быть', 'своих', 'своей', 'своего']);
+
+function significantWords(text: string): Set<string> {
+  return new Set(
+    String(text || '')
+      .toLowerCase()
+      .replace(/[^а-яa-zё0-9\s]/gi, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !STOPWORDS.has(w))
+  );
+}
+
+// Защита от того, что ИИ вместо переформулировки исходной неверной мысли
+// придумает новую идею с нуля, которая случайно совпадёт по смыслу с
+// правильным ответом (реальный случай, пойманный на ручной проверке
+// предпросмотра) — если новый текст варианта подозрительно пересекается
+// по значимым словам с правильным ответом, не применяем его автоматически.
+function tooSimilarToCorrect(newText: string, correctText: string): boolean {
+  const newWords = significantWords(newText);
+  const correctWords = significantWords(correctText);
+  if (!newWords.size || !correctWords.size) return false;
+  let overlap = 0;
+  newWords.forEach((w) => { if (correctWords.has(w)) overlap++; });
+  return overlap / newWords.size > 0.5;
+}
+
 async function rewriteDistractor(
   gigaKey: string,
   gigaScope: string,
@@ -39,10 +65,14 @@ async function rewriteDistractor(
 Правильный ответ: "${correctText}"
 Текущий неправильный вариант ответа: "${distractorText}"
 
-Перепиши этот НЕПРАВИЛЬНЫЙ вариант так, чтобы:
-- он остался явно неверным по содержанию (не должен становиться правильным или синонимом правильного ответа);
-- он был примерно такой же длины и стиля изложения, как правильный ответ — не в одно слово, если правильный ответ развёрнутый, и наоборот, не разворачивай в абзац, если правильный ответ короткий;
-- звучал правдоподобно, как настоящий отвлекающий вариант в тесте, а не абсурд.
+Единственная проблема с текущим неправильным вариантом — его длина/стиль резко отличается от правильного ответа, из-за чего правильный ответ угадывается визуально. Смысл менять не нужно.
+
+Разверни (или, наоборот, сократи) формулировку ИМЕННО ЭТОЙ уже существующей неверной идеи «${distractorText}» до объёма и стиля правильного ответа. Строго запрещено:
+- придумывать новый критерий/идею с нуля вместо исходной;
+- заимствовать формулировки, критерии или суть из правильного ответа;
+- делать результат синонимичным или близким по смыслу к правильному ответу.
+
+Результат должен остаться той же по сути неверной мыслью, что и «${distractorText}», просто изложенной подробнее/короче и в похожем стиле.
 
 Ответь только новым текстом варианта ответа, без кавычек, без нумерации, без пояснений от себя.`;
 
@@ -95,21 +125,32 @@ serve(async (req) => {
     if (error) throw error;
 
     let totalFlagged = 0;
+    let needsManualReview = 0;
     const batch: { topicId: string; questionIndex: number }[] = [];
     const rowByTopic = new Map<string, any>();
 
+    // Вопросы, для которых предыдущий прогон не смог безопасно подобрать
+    // замену (ИИ придумал вариант, слишком похожий на правильный ответ),
+    // помечаются полем _quizFixSkip и больше не попадают в автопрогон —
+    // иначе цикл в scripts/fix-quiz-options.sh застрял бы на них навсегда,
+    // раз за разом получая один и тот же непригодный результат.
     (rows || []).forEach((row: any) => {
       rowByTopic.set(row.topic_id, row);
       (row.questions || []).forEach((q: any, index: number) => {
         if (findObviousOptions(q)) {
           totalFlagged++;
-          if (batch.length < limit) batch.push({ topicId: row.topic_id, questionIndex: index });
+          if (q._quizFixSkip) {
+            needsManualReview++;
+          } else if (batch.length < limit) {
+            batch.push({ topicId: row.topic_id, questionIndex: index });
+          }
         }
       });
     });
 
     const workingQuestions = new Map<string, any[]>();
     const processed: any[] = [];
+    let resolvedCount = 0;
 
     for (const item of batch) {
       const questions = workingQuestions.get(item.topicId)
@@ -128,10 +169,13 @@ serve(async (req) => {
         if (!opt) continue;
         try {
           const newText = await rewriteDistractor(gigaKey, gigaScope, q.question, correctOpt?.text || '', opt.text);
-          if (newText) {
-            changes.push({ optionId, oldText: opt.text, newText });
-            if (!dryRun) opt.text = newText;
+          if (!newText) continue;
+          if (tooSimilarToCorrect(newText, correctOpt?.text || '')) {
+            changes.push({ optionId, oldText: opt.text, newText, skipped: true, error: 'Слишком похоже на правильный ответ — пропущено, нужна ручная правка.' });
+            continue;
           }
+          changes.push({ optionId, oldText: opt.text, newText });
+          if (!dryRun) opt.text = newText;
         } catch (e) {
           changes.push({ optionId, oldText: opt.text, error: e.message });
         }
@@ -139,6 +183,17 @@ serve(async (req) => {
 
       if (changes.length) {
         processed.push({ topicId: item.topicId, questionIndex: item.questionIndex, question: q.question, changes });
+      }
+
+      // Если после попытки вопрос всё ещё "очевиден" (часть вариантов не
+      // удалось безопасно переписать), помечаем его — иначе следующий
+      // прогон снова выберет тот же вопрос с тем же результатом.
+      if (!dryRun) {
+        if (findObviousOptions(q)) {
+          q._quizFixSkip = true;
+        } else if (changes.length) {
+          resolvedCount++;
+        }
       }
     }
 
@@ -152,11 +207,32 @@ serve(async (req) => {
       }
     }
 
+    // Пересчитываем итоговое состояние по факту (а не арифметикой по
+    // предварительным цифрам) — так надёжнее: берём мутированные вопросы
+    // из workingQuestions для тронутых тем, остальное — как было.
+    let finalTotalFlagged = 0;
+    let finalNeedsManualReview = 0;
+    (rows || []).forEach((row: any) => {
+      const questions = workingQuestions.get(row.topic_id) || row.questions;
+      (questions || []).forEach((q: any) => {
+        if (findObviousOptions(q)) {
+          finalTotalFlagged++;
+          if (q._quizFixSkip) finalNeedsManualReview++;
+        }
+      });
+    });
+
+    // Именно на remainingFlagged завязан цикл в scripts/fix-quiz-options.sh —
+    // когда оно доходит до 0, автопрогон закончен (needsManualReview
+    // показывает, сколько вопросов остались нетронутыми и ждут ручной
+    // правки в админке).
     return new Response(JSON.stringify({
       dryRun,
       totalFlagged,
       processedCount: processed.length,
-      remainingFlagged: Math.max(totalFlagged - processed.length, 0),
+      resolvedCount,
+      needsManualReview: finalNeedsManualReview,
+      remainingFlagged: dryRun ? Math.max(totalFlagged - processed.length, 0) : Math.max(finalTotalFlagged - finalNeedsManualReview, 0),
       processed
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
