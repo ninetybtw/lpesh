@@ -144,10 +144,25 @@ function initAiChat() {
     });
   }
 
+  function formatBotText(text) {
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    return escaped
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
+
   function addMessage(text, who) {
     const msg = document.createElement('div');
     msg.className = `ai-chat__msg ai-chat__msg--${who}`;
-    msg.textContent = text;
+    if (who === 'bot') {
+      msg.innerHTML = formatBotText(text);
+    } else {
+      msg.textContent = text;
+    }
     body.appendChild(msg);
     body.scrollTop = body.scrollHeight;
     return msg;
@@ -251,7 +266,7 @@ function initAiChat() {
       const result = advanced
         ? await LexPrepApi.askAiConsultantPro(text, history, attachment)
         : await LexPrepApi.askAiConsultant(text, history);
-      pending.textContent = result.reply;
+      pending.innerHTML = formatBotText(result.reply);
       history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
       saveHistory();
       if (typeof result.remaining === 'number' && result.remaining <= 2) {
