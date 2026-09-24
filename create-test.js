@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }))
       });
 
-      alert('Тест отправлен на модерацию — как только его одобрят, он появится во вкладке «Тесты» этой темы у всех.');
+      await LexPrepDialog.alert('Тест отправлен на модерацию — как только его одобрят, он появится во вкладке «Тесты» этой темы у всех.');
       window.location.href = `app.html?discipline=${encodeURIComponent(disciplineSelect.value)}&topic=${encodeURIComponent(topicSelect.value)}&view=test`;
     } catch (err) {
       alert('Не удалось отправить тест: ' + err.message);

@@ -22,7 +22,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { verifyNotificationToken, PERIOD_DAYS } from '../_shared/tbank.ts';
+import { verifyNotificationToken, PERIOD_DAYS, TIER_TITLES, PERIOD_TITLES } from '../_shared/tbank.ts';
 
 serve(async (req) => {
   try {
@@ -87,6 +87,11 @@ serve(async (req) => {
           // раз оно только что применилось.
           pending_plan_tier: null,
           pending_plan_billing_period: null,
+          // Подписка продлена/изменилась — старые отметки "уже
+          // напомнили за 3/1 день" относились к прежней дате истечения,
+          // сбрасываем, чтобы напоминания сработали заново перед новой.
+          plan_expiry_notice_3d_sent: false,
+          plan_expiry_notice_1d_sent: false,
           ...(rebillId ? { tbank_rebill_id: rebillId } : {})
         })
         .eq('id', payment.user_id);
@@ -102,6 +107,16 @@ serve(async (req) => {
         })
         .eq('id', payment.id);
       if (updatePaymentErr) throw updatePaymentErr;
+
+      const expiresLabel = new Date(newExpiresAt).toLocaleDateString('ru-RU');
+      const { error: notifyErr } = await adminClient.from('notifications').insert({
+        user_id: payment.user_id,
+        type: 'plan_activated',
+        title: `Поздравляем, вы оформили тариф «${TIER_TITLES[payment.plan_tier] || payment.plan_tier}»!`,
+        body: `Оплата (${PERIOD_TITLES[payment.billing_period] || payment.billing_period}) прошла успешно. Подписка активна до ${expiresLabel}.`,
+        link: 'profile.html#subscription'
+      });
+      if (notifyErr) console.error('[payments-notification] не удалось создать уведомление:', notifyErr.message);
 
       console.log('[payments-notification] подписка продлена:', payment.user_id, payment.plan_tier, payment.billing_period, 'до', newExpiresAt);
     } else if (status === 'REJECTED' || status === 'DEADLINE_EXPIRED') {

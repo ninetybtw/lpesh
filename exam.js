@@ -225,8 +225,8 @@ function initExam() {
     }
   });
 
-  finishBtn.addEventListener('click', () => {
-    if (confirm('Завершить экзамен досрочно? Неотвеченные вопросы будут засчитаны как неверные.')) {
+  finishBtn.addEventListener('click', async () => {
+    if (await LexPrepDialog.confirm('Завершить экзамен досрочно? Неотвеченные вопросы будут засчитаны как неверные.')) {
       finishExam();
     }
   });

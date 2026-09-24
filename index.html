@@ -50,7 +50,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260923160000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
   </head>
   <body>
@@ -723,8 +723,9 @@
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
     <script src="api.js?v=20260923180000"></script>
+    <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260923180000"></script>
+    <script src="script.js?v=20260924150000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');
@@ -859,10 +860,11 @@
             const priceEl = card.querySelector('.price-card__price:not([hidden])');
             const priceText = priceEl ? priceEl.textContent.trim() : '';
             const expiresDate = new Date(user.planExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-            const confirmed = window.confirm(
+            const confirmed = await LexPrepDialog.confirm(
               `Сейчас у вас тариф «${TIER_TITLES[currentTier]}» до ${expiresDate}. Перейти на «${TIER_TITLES[planTier]}»?\n\n` +
               `После окончания оплаченного периода «${TIER_TITLES[currentTier]}» ваш тариф станет «${TIER_TITLES[planTier]}», ` +
-              `дальше будет списываться ${priceText}.`
+              `дальше будет списываться ${priceText}.`,
+              'Подтвердите смену тарифа'
             );
             if (!confirmed) return;
 

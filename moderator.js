@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const preview = test.questions.map((q, i) => `${i + 1}. ${q.question}\n${q.options.map((o, oi) => `${test_correct(q, oi) ? '✓' : ' '} ${o}`).join('\n')}`).join('\n\n');
         alert(preview);
       } else if (btn.dataset.testAction === 'publish') {
-        if (!confirm('Опубликовать этот тест? Он станет виден всем в теме.')) return;
+        if (!(await LexPrepDialog.confirm('Опубликовать этот тест? Он станет виден всем в теме.'))) return;
         await LexPrepApi.moderatorSetTestStatus(id, 'published');
         await LexPrepApi.logAdminAction('publish-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await LexPrepApi.logAdminAction('reject-test', { targetUserId: test && test.userId, targetLabel: test && test.title, details: comment.trim() });
         await loadTests();
       } else if (btn.dataset.testAction === 'delete') {
-        if (!confirm('Удалить этот тест безвозвратно?')) return;
+        if (!(await LexPrepDialog.confirm('Удалить этот тест безвозвратно?'))) return;
         await LexPrepApi.deleteUserTest(id);
         await LexPrepApi.logAdminAction('delete-test', { targetUserId: test && test.userId, targetLabel: test && test.title });
         await loadTests();
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = article.body;
         alert(container.textContent.trim());
       } else if (btn.dataset.articleAction === 'publish') {
-        if (!confirm('Опубликовать эту статью? Она станет видна всем в каталоге.')) return;
+        if (!(await LexPrepDialog.confirm('Опубликовать эту статью? Она станет видна всем в каталоге.'))) return;
         await LexPrepApi.moderatorSetArticleStatus(id, 'published');
         await LexPrepApi.logAdminAction('publish-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await LexPrepApi.logAdminAction('reject-article', { targetUserId: article && article.userId, targetLabel: article && article.title, details: comment.trim() });
         await loadArticles();
       } else if (btn.dataset.articleAction === 'delete') {
-        if (!confirm('Удалить эту статью безвозвратно?')) return;
+        if (!(await LexPrepDialog.confirm('Удалить эту статью безвозвратно?'))) return;
         await LexPrepApi.deleteUserArticle(id);
         await LexPrepApi.logAdminAction('delete-article', { targetUserId: article && article.userId, targetLabel: article && article.title });
         await loadArticles();
@@ -354,13 +354,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         await LexPrepApi.logAdminAction('grant-coins', { targetUserId: userId, targetLabel: user.email, details: `${amount > 0 ? '+' : ''}${amount} (было ${user.bonusCoins})` });
       } else if (action === 'toggle-ban') {
         if (user.isBanned) {
-          if (!confirm(`Разблокировать ${user.name}?`)) return;
+          if (!(await LexPrepDialog.confirm(`Разблокировать ${user.name}?`))) return;
           await LexPrepApi.adminSetBanned(userId, false);
           await LexPrepApi.logAdminAction('unban', { targetUserId: userId, targetLabel: user.email });
         } else {
           const reason = prompt(`Причина блокировки ${user.name} (необязательно):`, '');
           if (reason === null) return;
-          if (!confirm(`Заблокировать ${user.name}? Аккаунт будет выходить из сессии автоматически.`)) return;
+          if (!(await LexPrepDialog.confirm(`Заблокировать ${user.name}? Аккаунт будет выходить из сессии автоматически.`))) return;
           await LexPrepApi.adminSetBanned(userId, true, reason);
           await LexPrepApi.logAdminAction('ban', { targetUserId: userId, targetLabel: user.email, details: reason || 'без причины' });
         }

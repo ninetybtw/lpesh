@@ -31,6 +31,67 @@ import { tbankInit, tbankCharge, PRICES_KOPECKS, TIER_TITLES, PERIOD_TITLES, typ
 const PUBLIC_API_BASE = 'https://api.lexprep.ru';
 const PUBLIC_SITE_BASE = 'https://lexprep.ru';
 
+// Напоминания об истечении подписки — за 3 дня и за 1 день. Считаем по
+// календарным дням (UTC), а не по точным 72/24 часам — иначе при
+// суточном cron легко "проскочить" нужный день из-за времени срабатывания.
+// Каждое напоминание шлётся ровно один раз за период — флаг
+// plan_expiry_notice_*_sent сбрасывается при продлении/оплате
+// (см. payments-notification), так что для новой даты истечения
+// напоминания снова сработают.
+async function sendExpiryReminders(adminClient: ReturnType<typeof createClient>) {
+  const { data: profiles, error } = await adminClient
+    .from('profiles')
+    .select('id, plan_tier, plan_expires_at, plan_auto_renew, plan_billing_period, plan_expiry_notice_3d_sent, plan_expiry_notice_1d_sent')
+    .in('plan_tier', ['pro', 'max'])
+    .eq('is_banned', false)
+    .not('plan_expires_at', 'is', null)
+    .gt('plan_expires_at', new Date().toISOString());
+  if (error) {
+    console.error('[payments-autocharge] не удалось получить профили для напоминаний:', error.message);
+    return;
+  }
+
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  for (const profile of profiles || []) {
+    try {
+      const expiresAt = new Date(profile.plan_expires_at);
+      const expiresDayStart = new Date(expiresAt);
+      expiresDayStart.setUTCHours(0, 0, 0, 0);
+      const daysLeft = Math.round((expiresDayStart.getTime() - todayStart.getTime()) / (24 * 60 * 60 * 1000));
+
+      const tierLabel = TIER_TITLES[profile.plan_tier] || profile.plan_tier;
+      const dateLabel = expiresAt.toLocaleDateString('ru-RU');
+      const renewNote = profile.plan_auto_renew
+        ? `Автопродление включено — спишется ${PRICES_KOPECKS[profile.plan_tier]?.[profile.plan_billing_period || 'monthly'] / 100 || ''} ₽.`
+        : 'Автопродление выключено — после этой даты тариф станет «Базовым».';
+
+      if (daysLeft === 3 && !profile.plan_expiry_notice_3d_sent) {
+        await adminClient.from('notifications').insert({
+          user_id: profile.id,
+          type: 'plan_expiry_reminder',
+          title: `Тариф «${tierLabel}» истекает через 3 дня`,
+          body: `Действует до ${dateLabel}. ${renewNote}`,
+          link: 'profile.html#subscription'
+        });
+        await adminClient.from('profiles').update({ plan_expiry_notice_3d_sent: true }).eq('id', profile.id);
+      } else if (daysLeft === 1 && !profile.plan_expiry_notice_1d_sent) {
+        await adminClient.from('notifications').insert({
+          user_id: profile.id,
+          type: 'plan_expiry_reminder',
+          title: `Тариф «${tierLabel}» истекает завтра`,
+          body: `Действует до ${dateLabel}. ${renewNote}`,
+          link: 'profile.html#subscription'
+        });
+        await adminClient.from('profiles').update({ plan_expiry_notice_1d_sent: true }).eq('id', profile.id);
+      }
+    } catch (e) {
+      console.error('[payments-autocharge] ошибка напоминания для', profile.id, e?.message);
+    }
+  }
+}
+
 serve(async (req) => {
   try {
     const expectedSecret = Deno.env.get('AUTOCHARGE_SECRET')!;
@@ -47,6 +108,8 @@ serve(async (req) => {
     const vatTag = Deno.env.get('TBANK_VAT') || 'none';
 
     const adminClient = createClient(supabaseUrl, serviceKey);
+
+    await sendExpiryReminders(adminClient);
 
     const windowEnd = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const { data: dueProfiles, error: findErr } = await adminClient

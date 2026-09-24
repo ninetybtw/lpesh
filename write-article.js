@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         authorName: user.name || 'Аноним'
       });
 
-      alert('Статья отправлена на модерацию — как только её одобрят, она появится в общем каталоге.');
+      await LexPrepDialog.alert('Статья отправлена на модерацию — как только её одобрят, она появится в общем каталоге.');
       window.location.href = 'article.html';
     } catch (err) {
       alert('Не удалось отправить статью: ' + err.message);

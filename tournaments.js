@@ -342,9 +342,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   answerBtn.addEventListener('click', () => lockCurrentAnswer(renderedIndex));
 
-  document.getElementById('tourneyBattleForfeitBtn').addEventListener('click', () => {
+  document.getElementById('tourneyBattleForfeitBtn').addEventListener('click', async () => {
     if (battleFinished) return;
-    if (!confirm('Сдаться в этом матче? Незавершённые вопросы будут засчитаны как неотвеченные.')) return;
+    if (!(await LexPrepDialog.confirm('Сдаться в этом матче? Незавершённые вопросы будут засчитаны как неотвеченные.'))) return;
     finishBattle(currentMatch);
   });
 
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // уже не отвертеться — там просто уходим со страницы, участие
     // остаётся, продолжить можно позже через "Продолжить" в списке.
     if (waitingStage === 'lobby') {
-      if (!confirm('Выйти из очереди на турнир?')) return;
+      if (!(await LexPrepDialog.confirm('Выйти из очереди на турнир?'))) return;
       backBtn.disabled = true;
       try {
         await LexPrepApi.leaveTournamentLobby(currentTypeId);
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       backBtn.disabled = false;
     } else if (waitingStage === 'ready') {
-      if (!confirm('Сдаться в этом матче? Победа будет засчитана сопернику.')) return;
+      if (!(await LexPrepDialog.confirm('Сдаться в этом матче? Победа будет засчитана сопернику.'))) return;
       backBtn.disabled = true;
       try {
         await LexPrepApi.forfeitTournamentMatch(currentMatch.id);

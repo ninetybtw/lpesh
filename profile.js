@@ -282,7 +282,7 @@ function initSubscription() {
     const cancelled = !getUser().planAutoRenew;
     const goingToEnable = cancelled; // сейчас выключено — кнопка "включить"
     if (!goingToEnable) {
-      const confirmed = window.confirm(`Отменить автопродление? Доступ к тарифу «${title}» сохранится до конца оплаченного периода, дальше карта списываться не будет.`);
+      const confirmed = await LexPrepDialog.confirm(`Отменить автопродление? Доступ к тарифу «${title}» сохранится до конца оплаченного периода, дальше карта списываться не будет.`);
       if (!confirmed) return;
     }
     cancelBtn.disabled = true;
@@ -547,7 +547,7 @@ function initMyArticles() {
     list.querySelectorAll('[data-delete-id]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.deleteId;
-        if (!window.confirm('Удалить эту статью? Действие нельзя отменить.')) return;
+        if (!(await LexPrepDialog.confirm('Удалить эту статью? Действие нельзя отменить.'))) return;
         try {
           await LexPrepApi.deleteUserArticle(id);
           render();
@@ -604,7 +604,7 @@ function initMyTests() {
     list.querySelectorAll('[data-delete-id]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.deleteId;
-        if (!window.confirm('Удалить этот тест? Действие нельзя отменить.')) return;
+        if (!(await LexPrepDialog.confirm('Удалить этот тест? Действие нельзя отменить.'))) return;
         try {
           await LexPrepApi.deleteUserTest(id);
           render();
@@ -775,7 +775,7 @@ function initPrivacyModal() {
 function initDangerZone() {
   const deleteBtn = document.getElementById('deleteAccountBtn');
   deleteBtn.addEventListener('click', async () => {
-    const confirmed = window.confirm('Выйти из аккаунта и стереть локальный прогресс в этом браузере? Сама учётная запись (email и пароль) пока останется — удаление аккаунта на сервере появится отдельным шагом.');
+    const confirmed = await LexPrepDialog.confirm('Выйти из аккаунта и стереть локальный прогресс в этом браузере? Сама учётная запись (email и пароль) пока останется — удаление аккаунта на сервере появится отдельным шагом.');
     if (!confirmed) return;
 
     deleteBtn.disabled = true;

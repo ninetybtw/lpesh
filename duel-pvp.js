@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // доигрывал бы матч, не зная, что оппонент уже сдался).
     async function forfeitDuel() {
       if (!battleDuel || battleFinished) return;
-      if (!confirm('Сдаться в этой дуэли? Победа сразу засчитается сопернику.')) return;
+      if (!(await LexPrepDialog.confirm('Сдаться в этой дуэли? Победа сразу засчитается сопернику.'))) return;
       battleFinished = true;
       stopTimers();
       try {

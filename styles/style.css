@@ -1693,3 +1693,74 @@ body.is-moderator [data-moderator] {
   60% { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* ---------------- Стилизованные alert/confirm (см. dialog.js) ---------------- */
+
+.lexprep-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 11, 16, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.lexprep-dialog-overlay.is-open {
+  display: flex;
+}
+
+body.lexprep-dialog-open {
+  overflow: hidden;
+}
+
+.lexprep-dialog {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  animation: lexprep-dialog-in 0.18s ease;
+}
+
+@keyframes lexprep-dialog-in {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.lexprep-dialog__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.lexprep-dialog__body {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-text);
+  white-space: pre-line;
+}
+
+.lexprep-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 480px) {
+  .lexprep-dialog {
+    padding: 18px;
+  }
+  .lexprep-dialog__actions {
+    flex-direction: column-reverse;
+  }
+  .lexprep-dialog__actions .btn {
+    width: 100%;
+  }
+}
