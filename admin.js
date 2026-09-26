@@ -112,11 +112,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
+  function renderUserKpis() {
+    if (typeof AdminUI === 'undefined') return;
+    const now = Date.now();
+    const banned = users.filter(u => u.isBanned).length;
+    const paid = users.filter(u => u.planTier && u.planTier !== 'basic' && u.planExpiresAt && new Date(u.planExpiresAt).getTime() > now);
+    const annual = paid.filter(u => u.planBillingPeriod === 'annual').length;
+    AdminUI.setKpi('users', users.length, banned ? `заблокировано: ${banned}` : 'все активны');
+    AdminUI.setKpi('premium', paid.length, `годовых: ${annual}`);
+  }
+
   async function loadUsers() {
     bodyEl.innerHTML = `<tr><td colspan="6" class="admin-empty">Загрузка…</td></tr>`;
     try {
       users = await LexPrepApi.adminListUsers();
       renderTable(searchEl.value);
+      renderUserKpis();
     } catch (err) {
       bodyEl.innerHTML = `<tr><td colspan="6" class="admin-empty">Не удалось загрузить список: ${escapeHtml(err.message)}</td></tr>`;
     }
@@ -558,7 +569,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let pendingTests = [];
 
   function renderTests(tests) {
-    testsPendingCountEl.textContent = tests.length ? `(${tests.length})` : '';
+    testsPendingCountEl.textContent = tests.length ? String(tests.length) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpiPart('moderation', 'tests', tests.length, p => `тестов ${p.tests || 0} · статей ${p.articles || 0}`);
     if (!tests.length) {
       testsList.innerHTML = '<p class="community-empty">Тестов на модерации нет.</p>';
       return;
@@ -567,12 +579,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="community-item" data-test-id="${t.id}">
         <div class="community-item__head">
           <h3>${escapeHtml(t.title)}</h3>
-          <span class="community-badge community-badge--open">${t.questions.length} вопросов</span>
+          <span class="community-badge community-badge--open">${t.questions.length} ${t.questions.length % 10 === 1 && t.questions.length % 100 !== 11 ? 'вопрос' : [2, 3, 4].includes(t.questions.length % 10) && ![12, 13, 14].includes(t.questions.length % 100) ? 'вопроса' : 'вопросов'}</span>
         </div>
-        <p class="community-item__message">
-          ${escapeHtml(disciplineTitle(t.disciplineId))} → ${escapeHtml(topicTitle(t.disciplineId, t.topicId))}<br>
-          Автор: ${escapeHtml(t.authorName || 'неизвестно')}${t.authorEmail ? ` (${escapeHtml(t.authorEmail)})` : ''}
-        </p>
+        <p class="community-item__message">${escapeHtml(disciplineTitle(t.disciplineId))} → ${escapeHtml(topicTitle(t.disciplineId, t.topicId))}<br>Автор: ${escapeHtml(t.authorName || 'неизвестно')}${t.authorEmail ? ` (${escapeHtml(t.authorEmail)})` : ''}</p>
         <div class="community-item__meta"><span>${formatDateTime(t.createdAt)}</span></div>
         <div class="admin-item-actions">
           <button type="button" class="admin-action-btn" data-test-action="preview">Посмотреть вопросы</button>
@@ -635,7 +644,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let pendingArticles = [];
 
   function renderArticlesQueue(articles) {
-    articlesPendingCountEl.textContent = articles.length ? `(${articles.length})` : '';
+    articlesPendingCountEl.textContent = articles.length ? String(articles.length) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpiPart('moderation', 'articles', articles.length, p => `тестов ${p.tests || 0} · статей ${p.articles || 0}`);
     if (!articles.length) {
       articlesList.innerHTML = '<p class="community-empty">Статей на модерации нет.</p>';
       return;
@@ -646,10 +656,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h3>${escapeHtml(a.title)}</h3>
           <span class="community-badge community-badge--open">${escapeHtml(a.topic)}</span>
         </div>
-        <p class="community-item__message">
-          ${escapeHtml(a.excerpt)}<br>
-          Автор: ${escapeHtml(a.authorName || 'неизвестно')}${a.authorEmail ? ` (${escapeHtml(a.authorEmail)})` : ''}
-        </p>
+        <p class="community-item__message">${escapeHtml(a.excerpt)}<br>Автор: ${escapeHtml(a.authorName || 'неизвестно')}${a.authorEmail ? ` (${escapeHtml(a.authorEmail)})` : ''}</p>
         <div class="community-item__meta"><span>${formatDateTime(a.createdAt)} · ~${a.readTime} мин чтения</span></div>
         <div class="admin-item-actions">
           <button type="button" class="admin-action-btn" data-article-action="preview">Читать текст</button>
@@ -721,7 +728,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderTickets(tickets) {
     const openCount = tickets.filter(t => t.status === 'open').length;
-    ticketsOpenCountEl.textContent = openCount ? `(${openCount})` : '';
+    ticketsOpenCountEl.textContent = openCount ? String(openCount) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpiPart('support', 'tickets', openCount, p => `поддержка ${p.tickets || 0} · сообщения ${p.feedback || 0}`);
 
     if (!tickets.length) {
       ticketsList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
@@ -793,7 +801,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderFeedback(items) {
     const newCount = items.filter(f => f.status === 'new').length;
-    feedbackNewCountEl.textContent = newCount ? `(${newCount})` : '';
+    feedbackNewCountEl.textContent = newCount ? String(newCount) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpiPart('support', 'feedback', newCount, p => `поддержка ${p.tickets || 0} · сообщения ${p.feedback || 0}`);
 
     if (!items.length) {
       feedbackList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
@@ -916,4 +925,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Ошибка: ' + err.message);
     }
   });
+
+  // Очереди модерации и обращения подгружаем сразу (в фоне), чтобы счётчики
+  // во вкладках и плитки сверху были видны без переключения разделов.
+  loadTests();
+  loadArticles();
+  loadTickets();
+  loadFeedback();
 });

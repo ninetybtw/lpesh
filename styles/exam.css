@@ -46,7 +46,7 @@ EXAM.CSS — пробный экзамен: настройка с «живым»
 .exam-setup.is-entering,
 .exam-run.is-entering,
 .exam-results.is-entering {
-  animation: examViewIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: examViewIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
 @keyframes examViewIn {
@@ -1035,7 +1035,7 @@ EXAM.CSS — пробный экзамен: настройка с «живым»
   display: grid;
   gap: 8px;
   padding: 0 16px 16px 56px;
-  animation: examViewIn 0.3s ease both;
+  animation: examViewIn 0.3s ease backwards;
 }
 
 .exam-answer {

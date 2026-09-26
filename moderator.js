@@ -85,7 +85,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const testsPendingCountEl = document.getElementById('modTestsPendingCount');
 
   function renderTests(tests) {
-    testsPendingCountEl.textContent = tests.length ? `(${tests.length})` : '';
+    testsPendingCountEl.textContent = tests.length ? String(tests.length) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpi('tests', tests.length);
 
     if (!tests.length) {
       testsList.innerHTML = '<p class="community-empty">Тестов на модерации нет.</p>';
@@ -95,12 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="community-item" data-test-id="${t.id}">
         <div class="community-item__head">
           <h3>${escapeHtml(t.title)}</h3>
-          <span class="community-badge community-badge--open">${t.questions.length} вопросов</span>
+          <span class="community-badge community-badge--open">${t.questions.length} ${t.questions.length % 10 === 1 && t.questions.length % 100 !== 11 ? 'вопрос' : [2, 3, 4].includes(t.questions.length % 10) && ![12, 13, 14].includes(t.questions.length % 100) ? 'вопроса' : 'вопросов'}</span>
         </div>
-        <p class="community-item__message">
-          ${escapeHtml(disciplineTitle(t.disciplineId))} → ${escapeHtml(topicTitle(t.disciplineId, t.topicId))}<br>
-          Автор: ${escapeHtml(t.authorName || 'неизвестно')}${t.authorEmail ? ` (${escapeHtml(t.authorEmail)})` : ''}
-        </p>
+        <p class="community-item__message">${escapeHtml(disciplineTitle(t.disciplineId))} → ${escapeHtml(topicTitle(t.disciplineId, t.topicId))}<br>Автор: ${escapeHtml(t.authorName || 'неизвестно')}${t.authorEmail ? ` (${escapeHtml(t.authorEmail)})` : ''}</p>
         <div class="community-item__meta"><span>${formatDateTime(t.createdAt)}</span></div>
         <div class="admin-item-actions">
           <button type="button" class="admin-action-btn" data-test-action="preview">Посмотреть вопросы</button>
@@ -173,7 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let articlesLoaded = false;
 
   function renderArticlesQueue(articles) {
-    articlesPendingCountEl.textContent = articles.length ? `(${articles.length})` : '';
+    articlesPendingCountEl.textContent = articles.length ? String(articles.length) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpi('articles', articles.length);
 
     if (!articles.length) {
       articlesList.innerHTML = '<p class="community-empty">Статей на модерации нет.</p>';
@@ -185,10 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h3>${escapeHtml(a.title)}</h3>
           <span class="community-badge community-badge--open">${escapeHtml(a.topic)}</span>
         </div>
-        <p class="community-item__message">
-          ${escapeHtml(a.excerpt)}<br>
-          Автор: ${escapeHtml(a.authorName || 'неизвестно')}${a.authorEmail ? ` (${escapeHtml(a.authorEmail)})` : ''}
-        </p>
+        <p class="community-item__message">${escapeHtml(a.excerpt)}<br>Автор: ${escapeHtml(a.authorName || 'неизвестно')}${a.authorEmail ? ` (${escapeHtml(a.authorEmail)})` : ''}</p>
         <div class="community-item__meta"><span>${formatDateTime(a.createdAt)} · ~${a.readTime} мин чтения</span></div>
         <div class="admin-item-actions">
           <button type="button" class="admin-action-btn" data-article-action="preview">Читать текст</button>
@@ -380,7 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderTickets(tickets) {
     const openCount = tickets.filter(t => t.status === 'open').length;
-    ticketsOpenCountEl.textContent = openCount ? `(${openCount})` : '';
+    ticketsOpenCountEl.textContent = openCount ? String(openCount) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpi('support', openCount, `всего обращений: ${tickets.length}`);
 
     if (!tickets.length) {
       ticketsList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
@@ -452,7 +449,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderFeedback(items) {
     const newCount = items.filter(f => f.status === 'new').length;
-    feedbackNewCountEl.textContent = newCount ? `(${newCount})` : '';
+    feedbackNewCountEl.textContent = newCount ? String(newCount) : '';
+    if (typeof AdminUI !== 'undefined') AdminUI.setKpi('feedback', newCount, `всего сообщений: ${items.length}`);
 
     if (!items.length) {
       feedbackList.innerHTML = '<p class="community-empty">Обращений пока нет.</p>';
@@ -577,4 +575,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadTests();
+  // Остальные очереди — в фоне, чтобы счётчики и плитки были видны сразу.
+  loadArticles();
+  loadTickets();
+  loadFeedback();
 });

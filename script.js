@@ -893,6 +893,9 @@ function applyAuthUi(user) {
   }
 
   initCoinBadge();
+  // Страницам, которым важны данные профиля (тариф, период оплаты), —
+  // сигнал, что они обновились (например, после досверки с сервером).
+  window.dispatchEvent(new CustomEvent('lexprep:user', { detail: user }));
 }
 
 function initAuthState() {

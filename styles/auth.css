@@ -1,267 +1,618 @@
 /* ==========================================================================
-AUTH.CSS — страница входа/регистрации (положить в /styles/ рядом с style.css)
+AUTH.CSS — вход и регистрация: слева фирменная панель с «живыми»
+карточками приложения, справа форма. На планшете и телефоне панель
+превращается в компактный баннер, а форма наезжает на него карточкой.
 ========================================================================== */
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.auth-main {
+  background:
+    radial-gradient(ellipse 50% 40% at 10% 10%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent),
+    radial-gradient(ellipse 40% 40% at 95% 90%, color-mix(in srgb, #ff7a45 8%, transparent), transparent),
+    var(--color-bg-alt);
+}
+
 .auth-section {
-  padding: 56px 24px 96px;
+  display: grid;
+  place-items: center;
   min-height: calc(100vh - 76px);
-  display: flex;
-  align-items: center;
+  min-height: calc(100dvh - 76px);
+  padding: 40px 24px 64px;
 }
 
 .auth-layout {
-  width: 100%;
-  max-width: 980px;
-  margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--color-white);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  width: 100%;
+  max-width: 1080px;
+  border-radius: 32px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  background: var(--color-white);
+  box-shadow: 0 40px 80px -40px rgba(20, 22, 40, 0.35);
   overflow: hidden;
-  min-height: 600px;
+  animation: authIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
-/* ---- LEFT: brand panel ---- */
+@keyframes authIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+}
+
+/* ---------------- Фирменная панель ---------------- */
 .auth-visual {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: #fff;
-  padding: 48px 44px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 22px;
-  min-height: 100%;
-}
-.auth-badge {
-  display: inline-block;
-  align-self: flex-start;
-  padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.18);
+  padding: 44px 44px 40px;
+  overflow: hidden;
+  isolation: isolate;
   color: #fff;
+  background: linear-gradient(150deg, #2a3ecf 0%, #4f46e5 45%, #8c54ff 100%);
+}
+
+.auth-visual__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.auth-visual__bg::after {
+  /* мелкая точечная сетка */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, #000, transparent 75%);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 75%);
+}
+
+.auth-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.auth-orb--1 {
+  top: -120px;
+  right: -110px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(255, 138, 92, 0.55), transparent 65%);
+  animation: orbDrift 14s ease-in-out infinite alternate;
+}
+
+.auth-orb--2 {
+  bottom: -160px;
+  left: -120px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(79, 195, 247, 0.4), transparent 65%);
+  animation: orbDrift 18s ease-in-out -6s infinite alternate-reverse;
+}
+
+@keyframes orbDrift {
+  to {
+    transform: translate(-40px, 50px) scale(1.12);
+  }
+}
+
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  padding: 6px 14px 6px 8px;
   border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
   font-size: 13px;
   font-weight: 700;
 }
+
+.auth-badge .lp-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.auth-visual__top {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .auth-visual__title {
-  font-size: clamp(22px, 2.4vw, 30px);
-  line-height: 1.25;
-  font-weight: 800;
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 900;
+  line-height: 1.15;
   letter-spacing: -0.02em;
-  margin: 0;
 }
+
+.auth-visual__title span {
+  background: linear-gradient(90deg, #ffe27a, #ffb07a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .auth-visual__text {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 15px;
-  line-height: 1.5;
   margin: 0;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
 }
+
+/* «Живые» карточки приложения */
+.auth-showcase {
+  position: relative;
+  height: 190px;
+  margin: 4px 0;
+}
+
+.auth-float {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  color: var(--color-text);
+  background: #ffffff;
+  box-shadow: 0 20px 40px -18px rgba(10, 12, 40, 0.6);
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+[data-theme="dark"] .auth-float {
+  background: #1b1e29;
+}
+
+.auth-float b {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.auth-float small {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.auth-float--level {
+  top: 0;
+  left: 0;
+  animation-delay: -1s;
+}
+
+.auth-float--level img {
+  width: 52px;
+  height: 52px;
+}
+
+.auth-float__bar {
+  display: block;
+  width: 120px;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--color-bg-alt);
+}
+
+.auth-float__bar span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f6bff, #8c54ff, #ff7a45);
+  transform-origin: left;
+  animation: barFill 3.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+@keyframes barFill {
+  0% {
+    transform: scaleX(0.2);
+  }
+  60%,
+  100% {
+    transform: scaleX(0.78);
+  }
+}
+
+.auth-float--card {
+  top: 34px;
+  right: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 230px;
+  transform: rotate(3deg);
+  animation-name: floatCardTilt;
+  animation-delay: -3s;
+}
+
+.auth-float__answer {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.auth-float--xp {
+  bottom: 0;
+  left: 26%;
+  padding: 10px 14px 10px 10px;
+  animation-delay: -4.5s;
+}
+
+.auth-float--xp .lp-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.auth-float--xp b {
+  color: #1fb774;
+}
+
+@keyframes floatCard {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatCardTilt {
+  0%,
+  100% {
+    transform: rotate(3deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-10px);
+  }
+}
+
 .auth-visual__list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin: 4px 0;
+  gap: 12px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
+
 .auth-visual__list li {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 14px;
+  font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
 }
-.auth-visual__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.16);
+
+.auth-visual__list .lp-icon {
   flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
 }
-.auth-visual__icon svg {
-  width: 18px;
-  height: 18px;
-}
+
 .auth-visual__stats {
   display: flex;
-  gap: 32px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: auto;
 }
+
 .auth-stat {
   display: flex;
   flex-direction: column;
-}
-.auth-stat__num {
-  font-size: 26px;
-  font-weight: 800;
-  color: #fff;
-}
-.auth-stat__label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* ---- RIGHT: auth card ---- */
+.auth-stat__num {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.auth-stat__label {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ---------------- Форма ---------------- */
 .auth-card {
-  padding: 48px 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 44px 48px;
 }
-.auth-tabs {
-  display: flex;
-  gap: 6px;
-  background: var(--color-bg-alt);
-  border-radius: 999px;
-  padding: 5px;
-  margin-bottom: 28px;
+
+.auth-card__head {
+  margin-bottom: 22px;
 }
-.auth-tab {
-  flex: 1;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 14.5px;
+
+.auth-card__title {
+  margin: 0 0 6px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.auth-card__sub {
+  margin: 0;
+  font-size: 15px;
   color: var(--color-text-muted);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.25s ease, color 0.25s ease;
 }
+
+.auth-card[data-mode="login"] [data-mode-text="register"],
+.auth-card[data-mode="register"] [data-mode-text="login"] {
+  display: none;
+}
+
+[data-mode-text] {
+  display: inline-block;
+  animation: modeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes modeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Вкладки с плавающим «ползунком» */
+.auth-tabs {
+  position: relative;
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+}
+
+.auth-tabs::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3d5afe, #8c54ff);
+  box-shadow: 0 8px 18px -8px rgba(61, 90, 254, 0.8);
+  transition: transform 0.35s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+
+.auth-card[data-mode="register"] .auth-tabs::before {
+  transform: translateX(100%);
+}
+
+.auth-tab {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
 .auth-tab.is-active {
-  background: var(--color-primary);
   color: #fff;
 }
+
 .auth-panel {
   display: none;
   flex-direction: column;
   gap: 16px;
 }
+
 .auth-panel.is-active {
   display: flex;
+  animation: modeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.auth-panel .form-group {
+
+.auth-panel .form-group,
+.otp-card .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  margin: 0;
+  text-align: left;
 }
-.auth-panel .form-group label {
+
+.auth-panel .form-group label,
+.otp-card .form-group label {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-text);
 }
-.auth-panel .form-input {
+
+.auth-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Поле с иконкой слева и (для пароля) «глазиком» справа */
+.auth-input {
+  position: relative;
+}
+
+.auth-input__icon {
+  position: absolute;
+  top: 25px;
+  left: 15px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.auth-input .form-input {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--color-border);
-  background-color: var(--color-white);
+  height: 50px;
+  padding: 0 14px 0 44px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  background-color: var(--color-bg-alt);
   font-family: inherit;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--color-text);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
-.auth-panel .form-input:focus {
+
+.auth-input .form-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.auth-input .form-input:hover {
+  border-color: var(--color-border);
+}
+
+.auth-input .form-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  background-color: var(--color-white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
-.auth-forgot {
-  align-self: flex-end;
-  font-size: 13px;
+
+.auth-input:focus-within .auth-input__icon {
   color: var(--color-primary);
-  font-weight: 600;
-  margin-top: -8px;
-  text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
 }
-.auth-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 13.5px;
+
+.auth-input .form-input.is-invalid {
+  border-color: #e5484d;
+}
+
+.auth-input:has([data-toggle-password]) .form-input {
+  padding-right: 50px;
+}
+
+.auth-input__toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
-.auth-checkbox input {
-  margin-top: 3px;
-  accent-color: var(--color-primary);
-}
-.auth-checkbox a {
+
+.auth-input__toggle:hover {
   color: var(--color-primary);
-  font-weight: 600;
-  text-decoration: underline;
-}
-.auth-switch {
-  text-align: center;
-  font-size: 14px;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-.auth-switch__link {
-  color: var(--color-primary);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: inherit;
-  font-family: inherit;
-  padding: 0;
-}
-.auth-success {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  margin-top: 20px;
-  padding: 14px 16px;
-  border-radius: var(--radius-sm);
   background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-.auth-success.is-visible {
-  display: flex;
 }
 
-.auth-success p {
-  display: flex;
+.auth-eye {
+  width: 19px;
+  height: 19px;
+}
+
+.auth-eye--closed,
+.auth-input__toggle.is-shown .auth-eye--open {
+  display: none;
+}
+
+.auth-input__toggle.is-shown .auth-eye--closed {
+  display: block;
+}
+
+.auth-forgot {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.auth-forgot:hover {
+  text-decoration: underline;
+}
+
+/* Надёжность пароля */
+.auth-strength {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  margin-top: 2px;
 }
 
-.auth-success__icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.auth-strength span {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background 0.3s ease;
 }
 
-.auth-error {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: rgba(225, 77, 77, 0.1);
-  border: 1px solid rgba(225, 77, 77, 0.3);
-  color: #e5484d;
-  font-size: 13.5px;
-  font-weight: 600;
+.auth-strength em {
+  min-width: 64px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
 }
+
+.auth-strength[data-level="1"] span:nth-child(-n + 1) { background: #e5484d; }
+.auth-strength[data-level="2"] span:nth-child(-n + 2) { background: #f59e0b; }
+.auth-strength[data-level="3"] span:nth-child(-n + 3) { background: #84cc16; }
+.auth-strength[data-level="4"] span:nth-child(-n + 4) { background: #1fb774; }
+.auth-strength[data-level="1"] em { color: #e5484d; }
+.auth-strength[data-level="2"] em { color: #d98e04; }
+.auth-strength[data-level="3"] em { color: #65a30d; }
+.auth-strength[data-level="4"] em { color: #1fb774; }
 
 .password-rules {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px 12px;
-  margin-top: 8px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .password-rules__item {
@@ -271,15 +622,15 @@ AUTH.CSS — страница входа/регистрации (положит�
   font-size: 12.5px;
   font-weight: 600;
   color: var(--color-text-muted);
-  transition: color var(--transition);
+  transition: color 0.2s ease;
 }
 
 .password-rules__item svg {
+  flex-shrink: 0;
   width: 14px;
   height: 14px;
-  flex-shrink: 0;
-  opacity: 0.4;
-  transition: opacity var(--transition), color var(--transition);
+  opacity: 0.35;
+  transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
 .password-rules__item.is-met {
@@ -288,22 +639,248 @@ AUTH.CSS — страница входа/регистрации (положит�
 
 .password-rules__item.is-met svg {
   opacity: 1;
+  transform: scale(1.15);
 }
 
-@media (max-width: 860px) {
-  .auth-layout {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-  .auth-visual {
-    padding: 36px 28px;
-  }
-  .auth-card {
-    padding: 36px 28px;
+/* Промокод — спрятан под «Есть промокод?» */
+.auth-promo summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--color-primary);
+  cursor: pointer;
+  list-style: none;
+}
+
+.auth-promo summary::-webkit-details-marker {
+  display: none;
+}
+
+.auth-promo summary .lp-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.auth-promo[open] summary {
+  margin-bottom: 10px;
+}
+
+.auth-promo[open] .form-group {
+  animation: modeIn 0.3s ease;
+}
+
+/* Галочки согласия */
+.auth-checkbox {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.auth-checkbox input {
+  /* остаётся фокусируемым — браузер покажет подсказку «обязательное поле» */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  opacity: 0;
+}
+
+.auth-checkbox__box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid var(--color-border);
+  background: var(--color-white);
+  color: #fff;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.auth-checkbox__box svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.auth-checkbox input:checked + .auth-checkbox__box {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.auth-checkbox input:checked + .auth-checkbox__box svg {
+  opacity: 1;
+  transform: none;
+}
+
+.auth-checkbox input:focus-visible + .auth-checkbox__box {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.auth-checkbox a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Главная кнопка */
+.auth-submit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #3d5afe, #8c54ff);
+  box-shadow: 0 5px 0 #2a3ecf, 0 16px 28px -14px rgba(61, 90, 254, 0.8);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
+}
+
+.auth-submit:hover {
+  filter: brightness(1.07);
+}
+
+.auth-submit:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #2a3ecf, 0 8px 14px -10px rgba(61, 90, 254, 0.8);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  filter: none;
+}
+
+/* Во время запроса (форма входа/регистрации) — крутилка у текста. */
+.auth-panel .auth-submit:disabled::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: authSpin 0.7s linear infinite;
+}
+
+@keyframes authSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-/* ---- OTP код подтверждения (модальное окно поверх страницы) ---- */
+.auth-switch {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.auth-switch__link {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.auth-success {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-success.is-visible {
+  display: flex;
+  animation: modeIn 0.35s ease;
+}
+
+.auth-success p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.auth-success__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.auth-error {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(225, 77, 77, 0.3);
+  background: rgba(225, 77, 77, 0.1);
+  color: #e5484d;
+  font-size: 13.5px;
+  font-weight: 700;
+  animation: authShake 0.4s ease;
+}
+
+@keyframes authShake {
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.auth-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.auth-secure svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-success);
+}
+
+/* ---------------- Код подтверждения и сброс пароля ---------------- */
 .otp-overlay {
   display: none;
   position: fixed;
@@ -312,8 +889,8 @@ AUTH.CSS — страница входа/регистрации (положит�
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(8, 10, 20, 0.6);
-  backdrop-filter: blur(6px);
+  /* плотная подложка без размытия — фон под ней анимирован */
+  background: rgba(8, 10, 20, 0.66);
   animation: otpOverlayIn 0.25s ease;
 }
 
@@ -323,131 +900,362 @@ AUTH.CSS — страница входа/регистрации (положит�
 
 @keyframes otpOverlayIn {
   from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .otp-form {
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
+}
+
+.otp-overlay > .otp-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
 }
 
 .otp-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  padding: 36px 30px 30px;
-  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  padding: 30px 28px 26px;
+  border-radius: 28px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  text-align: center;
   box-shadow: 0 30px 70px rgba(2, 8, 24, 0.35);
   animation: otpCardIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
-@keyframes otpCardIn {
-  from { opacity: 0; transform: translateY(28px) scale(0.94); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.otp-card form,
+.otp-card #resetStepEmail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
 }
 
-.otp-card button[type="submit"] {
-  margin-top: 18px;
+.otp-card #resetStepEmail {
+  align-items: center;
+}
+
+.otp-card #resetStepEmail form {
+  margin-top: 6px;
+}
+
+.otp-card form[hidden],
+.otp-card #resetStepEmail[hidden] {
+  display: none;
+}
+
+@keyframes otpCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.95);
+  }
 }
 
 .otp-card__handle {
+  display: none;
   width: 40px;
   height: 4px;
+  margin-bottom: 8px;
   border-radius: 999px;
   background: var(--color-border);
-  margin-bottom: 12px;
+}
+
+.otp-card__icon {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: 20px;
+  background: var(--color-primary-light);
+}
+
+.otp-card__icon .lp-icon {
+  width: 38px;
+  height: 38px;
+  animation: otpIconIn 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.15s both;
+}
+
+@keyframes otpIconIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-15deg);
+  }
 }
 
 .otp-card__title {
-  font-size: 22px;
-  font-weight: 800;
   margin: 0;
+  font-size: 23px;
+  font-weight: 900;
+  color: var(--color-text);
 }
 
 .otp-card__text {
-  color: var(--color-text-muted);
+  margin: 0 0 10px;
   font-size: 14px;
-  margin: 0 0 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
 }
 
 .otp-card__text strong {
   color: var(--color-text);
+  word-break: break-all;
+}
+
+.otp-card .auth-submit {
+  margin-top: 10px;
 }
 
 .otp-slots {
   display: flex;
-  gap: 10px;
   justify-content: center;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .otp-slot {
-  width: 46px;
-  height: 56px;
+  width: 48px;
+  height: 58px;
   border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-white);
-  color: var(--color-text);
-  font-size: 24px;
-  font-weight: 800;
-  text-align: center;
+  border: 1.5px solid transparent;
+  background: var(--color-bg-alt);
   font-family: inherit;
-  transition: border-color var(--transition), box-shadow var(--transition), transform 0.15s ease;
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--color-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
 }
 
 .otp-slot:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  background: var(--color-white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 .otp-slot.is-filled {
   border-color: var(--color-primary);
+  background: var(--color-primary-light);
   animation: otpSlotPop 0.18s ease;
 }
 
 @keyframes otpSlotPop {
-  0% { transform: scale(1); }
   40% { transform: scale(1.08); }
-  100% { transform: scale(1); }
 }
 
 .otp-slot.is-error {
   border-color: #e14d4d;
-  animation: otpShake 0.4s ease;
-}
-
-@keyframes otpShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+  animation: authShake 0.4s ease;
 }
 
 .otp-card__hint {
-  color: var(--color-text-muted);
+  margin: 6px 0 0;
   font-size: 14px;
-  margin: 4px 0 0;
+  color: var(--color-text-muted);
 }
 
 .otp-card__error {
-  color: #e14d4d;
-  font-size: 13.5px;
   margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #e14d4d;
 }
 
-@media (max-width: 420px) {
+/* ---------------- Планшет: панель — баннер сверху, форма наезжает ---------------- */
+@media (max-width: 960px) {
+  .auth-section {
+    place-items: start center;
+    padding: 24px 20px 48px;
+  }
+
+  .auth-layout {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .auth-visual {
+    gap: 16px;
+    padding: 30px 28px 78px;
+    border-radius: 28px;
+  }
+
+  .auth-showcase,
+  .auth-visual__stats {
+    display: none;
+  }
+
+  .auth-visual__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .auth-visual__list li {
+    gap: 8px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 12.5px;
+  }
+
+  .auth-visual__list .lp-icon {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border-radius: 50%;
+  }
+
+  .auth-card {
+    position: relative;
+    margin: -52px 14px 0;
+    padding: 30px 28px 26px;
+    border-radius: 26px;
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    box-shadow: 0 30px 60px -30px rgba(20, 22, 40, 0.45);
+  }
+}
+
+/* ---------------- Телефон ---------------- */
+@media (max-width: 560px) {
+  .auth-section {
+    padding: 14px 12px 36px;
+  }
+
+  .auth-visual {
+    padding: 22px 20px 70px;
+    border-radius: 24px;
+  }
+
+  .auth-visual__text,
+  .auth-visual__list {
+    display: none;
+  }
+
+  .auth-visual__title {
+    font-size: 23px;
+  }
+
+  .auth-card {
+    margin: -50px 6px 0;
+    padding: 24px 18px 20px;
+    border-radius: 24px;
+  }
+
+  .auth-card__title {
+    font-size: 25px;
+  }
+
+  .auth-card__sub {
+    font-size: 14px;
+  }
+
+  /* 16px — чтобы iPhone не приближал страницу при фокусе на поле. */
+  .auth-input .form-input,
   .otp-slot {
-    width: 38px;
-    height: 48px;
-    font-size: 20px;
+    font-size: 16px;
   }
+
+  .otp-slot {
+    font-size: 22px;
+  }
+
+  .password-rules {
+    grid-template-columns: 1fr;
+  }
+
+  /* Код подтверждения — шторкой снизу, как в приложениях. */
+  .otp-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .otp-form,
+  .otp-overlay > .otp-card {
+    max-width: none;
+  }
+
+  .otp-card {
+    padding: 14px 20px calc(22px + env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+    border-bottom: none;
+    animation: otpSheetIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+
+  .otp-overlay > .otp-card {
+    max-height: 92dvh;
+  }
+
+  .otp-card__handle {
+    display: block;
+  }
+
+  @keyframes otpSheetIn {
+    from {
+      transform: translateY(100%);
+    }
+  }
+}
+
+@media (max-width: 380px) {
   .otp-slots {
-    gap: 7px;
+    gap: 6px;
   }
+
+  .otp-slot {
+    width: 40px;
+    height: 50px;
+  }
+}
+
+/* Телефон боком: экран низкий — сжимаем отступы. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .auth-section {
+    padding-top: 12px;
+  }
+
+  .auth-visual {
+    padding-bottom: 64px;
+  }
+
+  .auth-visual__text,
+  .auth-visual__list {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-layout,
+  .auth-orb,
+  .auth-float,
+  .auth-float__bar span,
+  .auth-panel.is-active,
+  [data-mode-text],
+  .otp-card,
+  .otp-card__icon .lp-icon {
+    animation: none !important;
+  }
+
+  .auth-tabs::before {
+    transition: none;
+  }
+}
+
+/* Тёмная тема: поля и ячейки кода с рамкой — иначе сливаются с карточкой. */
+[data-theme="dark"] .auth-input .form-input,
+[data-theme="dark"] .otp-slot {
+  border-color: var(--color-border);
 }

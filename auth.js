@@ -11,8 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!tabs.length || !panels.length) return;
 
+  const authCard = document.getElementById('authCard');
+
   function switchTo(name) {
-    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
+    // Заголовок карточки и «ползунок» вкладок следуют за режимом.
+    if (authCard) authCard.dataset.mode = name;
+    tabs.forEach(t => {
+      t.classList.toggle('is-active', t.dataset.tab === name);
+      t.setAttribute('aria-selected', String(t.dataset.tab === name));
+    });
     panels.forEach(p => { p.classList.toggle('is-active', p.dataset.panel === name); p.hidden = false; });
     if (success) success.classList.remove('is-visible');
     const otpOverlay = document.getElementById('otpOverlay');
@@ -29,14 +36,37 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => switchTo(btn.dataset.switch));
   });
 
+  // «Глазик» в поле пароля: показать/скрыть введённое.
+  document.querySelectorAll('[data-toggle-password]').forEach(btn => {
+    const input = btn.parentElement.querySelector('input');
+    if (!input) return;
+    btn.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.classList.toggle('is-shown', show);
+      btn.setAttribute('aria-pressed', String(show));
+      btn.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+      input.focus({ preventScroll: true });
+    });
+  });
+
   const regPasswordInput = document.getElementById('regPassword');
   const passwordRules = document.getElementById('passwordRules');
+  const strength = document.getElementById('regStrength');
+  const strengthLabel = document.getElementById('regStrengthLabel');
+  const STRENGTH_LABELS = ['', 'Слабый', 'Так себе', 'Хороший', 'Надёжный'];
   if (regPasswordInput && passwordRules) {
     regPasswordInput.addEventListener('input', () => {
       const status = getPasswordRuleStatus(regPasswordInput.value);
       passwordRules.querySelectorAll('[data-rule]').forEach(item => {
         item.classList.toggle('is-met', !!status[item.dataset.rule]);
       });
+      // Полоска надёжности: сколько из четырёх правил выполнено.
+      if (strength) {
+        const level = regPasswordInput.value ? Object.values(status).filter(Boolean).length : 0;
+        strength.dataset.level = String(level);
+        if (strengthLabel) strengthLabel.textContent = STRENGTH_LABELS[level];
+      }
     });
   }
 

@@ -320,6 +320,12 @@ function initAiChat() {
       body.scrollTop = body.scrollHeight;
     }
   });
+
+  // Вид кнопки выставляем сразу при загрузке, а не только при первом
+  // открытии чата: у годовой подписки она с порога золотая «Про». После
+  // досверки профиля с сервером (там приходит период оплаты) — ещё раз.
+  applyAdvancedUi(isAdvanced(currentUser()));
+  window.addEventListener('lexprep:user', () => applyAdvancedUi(isAdvanced(currentUser())));
 }
 
 function escapeHtml(str) {

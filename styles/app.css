@@ -2798,6 +2798,22 @@ body {
     box-shadow: 0 0 0 16px rgba(111, 135, 255, 0);
   }
 }
+/* Продвинутый консультант: золотые тень и пульс вместо синих. */
+.ai-chat--advanced .ai-chat__toggle:hover {
+  box-shadow: 0 22px 40px rgba(212, 175, 55, 0.45);
+}
+.ai-chat--advanced .ai-chat__toggle::before {
+  animation-name: fabPulseGold;
+}
+@keyframes fabPulseGold {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.55);
+  }
+  60%,
+  100% {
+    box-shadow: 0 0 0 16px rgba(212, 175, 55, 0);
+  }
+}
 .ai-chat__panel:not([hidden]) {
   transform-origin: bottom right;
   animation: chatIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
