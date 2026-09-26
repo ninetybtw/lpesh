@@ -245,7 +245,8 @@ STYLE.CSS — компоненты и секции страницы
 .hero__orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(72px);
+  /* Мягкость пятна задаёт сам радиальный градиент, без filter: blur —
+     размытие больших слоёв было главной причиной подтормаживаний. */
   opacity: 0.38;
   will-change: transform;
 }
@@ -257,7 +258,7 @@ STYLE.CSS — компоненты и секции страницы
   height: 520px;
   top: -160px;
   right: 2%;
-  background: radial-gradient(circle, var(--color-primary) 0%, transparent 68%);
+  background: radial-gradient(circle, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 45%, transparent) 30%, transparent 70%);
   animation: heroOrbA 19s ease-in-out infinite alternate;
 }
 .hero__orb--2 {
@@ -265,7 +266,7 @@ STYLE.CSS — компоненты и секции страницы
   height: 400px;
   bottom: -170px;
   right: 24%;
-  background: radial-gradient(circle, var(--color-accent) 0%, transparent 68%);
+  background: radial-gradient(circle, var(--color-accent) 0%, color-mix(in srgb, var(--color-accent) 45%, transparent) 30%, transparent 70%);
   animation: heroOrbB 23s ease-in-out infinite alternate;
 }
 .hero__orb--3 {
@@ -273,7 +274,7 @@ STYLE.CSS — компоненты и секции страницы
   height: 380px;
   top: 18%;
   left: -170px;
-  background: radial-gradient(circle, #8c54ff 0%, transparent 68%);
+  background: radial-gradient(circle, #8c54ff 0%, rgba(140, 84, 255, 0.45) 30%, transparent 70%);
   opacity: 0.26;
   animation: heroOrbC 27s ease-in-out infinite alternate;
 }
@@ -304,16 +305,24 @@ STYLE.CSS — компоненты и секции страницы
   mask-image: radial-gradient(ellipse 65% 60% at 60% 40%, #000 10%, transparent 72%);
   opacity: 0.55;
 }
+/* Пятно-«прожектор» двигается через transform (на видеокарте), а не
+   перерисовкой градиента на весь первый экран при каждом движении мыши. */
 .hero__spotlight {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 1120px;
+  height: 1120px;
+  border-radius: 50%;
   background: radial-gradient(
-    560px circle at var(--spot-x, 70%) var(--spot-y, 40%),
+    circle,
     color-mix(in srgb, var(--color-primary) 13%, transparent),
     transparent 62%
   );
   opacity: 0;
+  transform: translate3d(var(--spot-x, 70vw), var(--spot-y, 40vh), 0) translate(-50%, -50%);
   transition: opacity 0.5s ease;
+  will-change: transform;
 }
 .hero.has-spotlight .hero__spotlight {
   opacity: 1;
@@ -389,12 +398,12 @@ STYLE.CSS — компоненты и секции страницы
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: accentFlow 8s linear infinite;
+  animation: accentFlow 8s linear 3;
 }
 .hero__title .accent.hero-word {
   animation:
     heroWordIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i, 0) * 55ms + 120ms) both,
-    accentFlow 8s linear infinite;
+    accentFlow 8s linear 3;
 }
 @keyframes accentFlow {
   to {
@@ -526,19 +535,12 @@ STYLE.CSS — компоненты и секции страницы
   }
 }
 
-@property --beam-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
 .study-card {
   position: relative;
   padding: 22px 22px 20px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
   box-shadow: var(--shadow-lg);
   transition:
     transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -551,31 +553,40 @@ STYLE.CSS — компоненты и секции страницы
     0 24px 60px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-/* Бегущий по рамке световой луч. */
-.study-card::before {
-  content: "";
+/* Бегущий по рамке световой луч: неподвижная маска-рамка, внутри неё
+   крутится (transform) конический градиент — без перерисовки каждый кадр. */
+.study-card__beam {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: conic-gradient(
-    from var(--beam-angle),
-    transparent 0 68%,
-    var(--color-primary) 80%,
-    var(--color-accent) 88%,
-    transparent 96%
-  );
+  overflow: hidden;
+  pointer-events: none;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+}
+.study-card__beam::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  margin: -100% 0 0 -100%;
+  background: conic-gradient(
+    transparent 0 68%,
+    var(--color-primary) 80%,
+    var(--color-accent) 88%,
+    transparent 96%
+  );
   animation: beamSpin 7s linear infinite;
-  pointer-events: none;
 }
 @keyframes beamSpin {
   to {
-    --beam-angle: 360deg;
+    transform: rotate(360deg);
   }
 }
 /* Блик под курсором при наклоне карточки. */
@@ -1069,21 +1080,19 @@ STYLE.CSS — компоненты и секции страницы
   width: 25%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary),
-    #8c54ff,
-    var(--color-accent),
-    var(--color-primary)
-  );
-  background-size: 300% 100%;
-  animation: barFlow 4s linear infinite;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--color-primary), #8c54ff, var(--color-accent));
   transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@keyframes barFlow {
-  to {
-    background-position: 300% 0;
-  }
+/* Блик по полосе — через transform, без перерисовки градиента. */
+.study-progress__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: fillShine 3.2s ease-in-out 1s infinite;
 }
 /* Искры, когда тема пройдена на 100% (создаются в script.js). */
 .study-spark {
@@ -1116,9 +1125,7 @@ STYLE.CSS — компоненты и секции страницы
   display: flex;
   align-items: center;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--color-bg) 96%, transparent);
   box-shadow: var(--shadow-md);
   transition: translate 0.4s ease-out;
 }
@@ -1326,8 +1333,8 @@ STYLE.CSS — компоненты и секции страницы
   .hero__title .accent,
   .hero__title .accent::after,
   .btn--shine::after,
-  .study-card::before,
-  .study-progress__bar,
+  .study-card__beam::before,
+  .study-progress__bar::after,
   .hero-level,
   .hero-level__plus.is-shown,
   .hero-level.is-bump .hero-level__icon {
@@ -3026,12 +3033,6 @@ body.app-surface::before {
     radial-gradient(38vmax 38vmax at 12% 8%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%),
     radial-gradient(30vmax 30vmax at 92% 30%, color-mix(in srgb, #8c54ff 12%, transparent), transparent 70%),
     radial-gradient(34vmax 34vmax at 70% 100%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%);
-  animation: appGlowDrift 26s ease-in-out infinite alternate;
-}
-@keyframes appGlowDrift {
-  to {
-    transform: translate3d(-3vmax, 2vmax, 0) scale(1.06);
-  }
 }
 
 /* Появление элементов по очереди (--stagger ставит LexPrepMotion.stagger).
@@ -3105,10 +3106,10 @@ body.app-surface::before {
   display: none;
 }
 @media (max-width: 760px) {
-  body.is-authed.has-tabbar {
+  body.has-tabbar {
     padding-bottom: calc(84px + env(safe-area-inset-bottom));
   }
-  body.is-authed .tabbar {
+  body.has-tabbar .tabbar {
     position: fixed;
     left: 10px;
     right: 10px;
@@ -3120,23 +3121,14 @@ body.app-surface::before {
     padding: 6px;
     border-radius: 22px;
     border: 1px solid var(--color-border);
-    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    backdrop-filter: blur(18px) saturate(1.4);
+    background: color-mix(in srgb, var(--color-bg) 95%, transparent);
     box-shadow: 0 14px 34px rgba(12, 14, 24, 0.22);
-    animation: tabbarIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s backwards;
   }
-  [data-theme="dark"] body.is-authed .tabbar {
+  [data-theme="dark"] body.has-tabbar .tabbar {
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
   }
-  body.is-authed.has-tabbar #cookieConsentBanner {
+  body.has-tabbar #cookieConsentBanner {
     bottom: calc(86px + env(safe-area-inset-bottom));
-  }
-}
-@keyframes tabbarIn {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
   }
 }
 .tabbar__item {

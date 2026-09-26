@@ -3,6 +3,10 @@ SCRIPT.JS — интерактивность: меню, аккордеон, де
 форма обратной связи
 ========================================================================== */
 initHeroTitle();
+// Нижняя навигация вставляется сразу (скрипт подключён в конце body), а не
+// на DOMContentLoaded — чтобы она была уже в первом кадре страницы и при
+// плавном переходе между страницами не мигала.
+initTabbar();
 
 document.addEventListener('DOMContentLoaded', () => {
   initHeaderScroll();
@@ -20,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initOnlineCounter();
   initLevelUpToast();
   initCatalogStats();
-  initTabbar();
 });
 
 /* ---------------- Живые цифры "N отраслей права" / "N тем в базе" ----------------
@@ -491,16 +494,21 @@ function initRoadmap() {
    Вставляется на страницах с <body data-tabbar>. Видна только на узких
    экранах и только вошедшим (см. .tabbar в style.css) — на десктопе те же
    разделы есть в шапке. */
-const TABBAR_ITEMS = [
-  { href: 'app.html', label: 'Тренажёр', icon: '<path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>' },
-  { href: 'exam.html', label: 'Экзамен', icon: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>' },
-  { href: 'duel.html', label: 'Дуэли', match: ['duel.html', 'tournaments.html'], icon: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/>' },
-  { href: 'rating.html', label: 'Рейтинг', icon: '<path d="M3 21h18"/><rect x="9" y="7" width="6" height="14" rx="1.5"/><rect x="3" y="12" width="6" height="9" rx="1.5"/><rect x="15" y="10" width="6" height="11" rx="1.5"/>' },
-  { href: 'profile.html', label: 'Профиль', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>' }
-];
+
 
 function initTabbar() {
-  if (!document.body.hasAttribute('data-tabbar') || document.querySelector('.tabbar')) return;
+  if (!document.body || !document.body.hasAttribute('data-tabbar') || document.querySelector('.tabbar')) return;
+  // Только вошедшим: гостю разделы приложения всё равно закрыты.
+  let cachedUser = null;
+  try { cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (e) { /* пусто */ }
+  if (!cachedUser) return;
+  const TABBAR_ITEMS = [
+    { href: 'app.html', label: 'Тренажёр', icon: '<path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>' },
+    { href: 'exam.html', label: 'Экзамен', icon: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>' },
+    { href: 'duel.html', label: 'Дуэли', match: ['duel.html', 'tournaments.html'], icon: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/>' },
+    { href: 'rating.html', label: 'Рейтинг', icon: '<path d="M3 21h18"/><rect x="9" y="7" width="6" height="14" rx="1.5"/><rect x="3" y="12" width="6" height="9" rx="1.5"/><rect x="15" y="10" width="6" height="11" rx="1.5"/>' },
+    { href: 'profile.html', label: 'Профиль', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>' }
+  ];
   const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
   const nav = document.createElement('nav');
   nav.className = 'tabbar';
@@ -527,8 +535,11 @@ window.LexPrepMotion = {
   stagger(container, selector, baseDelay) {
     if (!container || prefersReducedMotion()) return;
     const items = selector ? container.querySelectorAll(selector) : container.children;
-    Array.from(items).forEach((el, i) => {
-      el.style.setProperty('--stagger', Math.min(i, 14));
+    // Анимируем только первые элементы: длинные конспекты и списки
+    // остальное всё равно показывают ниже экрана, а десятки одновременных
+    // анимаций на слабых телефонах дают рывки.
+    Array.from(items).slice(0, 14).forEach((el, i) => {
+      el.style.setProperty('--stagger', i);
       if (baseDelay) el.style.setProperty('--stagger-base', `${baseDelay}ms`);
       restartClass(el, 'stagger-in');
     });

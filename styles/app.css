@@ -2171,12 +2171,16 @@ body {
 }
 
 /* ---------------- Уровень и опыт ---------------- */
+/* z-index обязателен: у полосы свой слой (анимация появления), и без него
+   выпадающее окно достижений оказывалось под селектами и панелью темы. */
 .gamify-bar {
-  background: color-mix(in srgb, var(--color-white) 88%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  z-index: 30;
+  background: var(--color-white);
   box-shadow: var(--shadow-sm);
   animation: staggerIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
+}
+.gamify-badges {
+  box-shadow: 0 24px 48px rgba(8, 12, 30, 0.35);
 }
 [data-theme="dark"] .gamify-bar {
   background: rgba(20, 27, 54, 0.62);
@@ -2270,9 +2274,7 @@ body {
   animation: staggerIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s backwards;
 }
 [data-theme="dark"] .panel {
-  background: linear-gradient(180deg, rgba(14, 22, 48, 0.88), rgba(9, 15, 34, 0.93));
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(14, 22, 48, 0.94), rgba(9, 15, 34, 0.96));
 }
 .topic-title {
   font-size: clamp(22px, 3vw, 30px);
@@ -2312,15 +2314,13 @@ body {
   padding: 12px 26px;
   overflow-x: auto;
   scrollbar-width: none;
-  background: rgba(12, 19, 42, 0.96);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: rgb(13, 20, 44);
 }
 .topic-tabs::-webkit-scrollbar {
   display: none;
 }
 [data-theme="light"] .topic-tabs {
-  background: rgba(255, 255, 255, 0.96);
+  background: #fff;
 }
 .topic-tab {
   flex-shrink: 0;
@@ -2666,9 +2666,7 @@ body {
   padding: 10px 10px 10px 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(16, 24, 52, 0.9);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: rgba(16, 24, 52, 0.97);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 [data-theme="light"] .test-actions {
@@ -2902,6 +2900,11 @@ body {
     padding: 8px 10px;
     gap: 6px;
   }
+  .gamify-badges {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
 
   .app-selectors {
     gap: 8px;
@@ -2913,9 +2916,7 @@ body {
     position: fixed;
     inset: 0;
     z-index: 1190;
-    background: rgba(8, 10, 20, 0.5);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    background: rgba(8, 10, 20, 0.6);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;
@@ -3006,10 +3007,10 @@ body {
     padding: 11px 16px;
     font-size: 14px;
   }
-  body.is-authed.has-tabbar .test-actions {
+  body.has-tabbar .test-actions {
     bottom: calc(84px + env(safe-area-inset-bottom));
   }
-  body.is-authed.has-tabbar .ai-chat {
+  body.has-tabbar .ai-chat {
     right: 14px;
     bottom: calc(86px + env(safe-area-inset-bottom));
   }

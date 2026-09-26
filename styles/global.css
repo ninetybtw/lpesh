@@ -65,6 +65,30 @@ body,
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Плавная смена страниц без белой вспышки (Chrome/Edge 126+, Safari 18.2+;
+   остальные браузеры просто переходят как раньше). Шапка и нижняя
+   навигация помечены своими именами — при переходе они стоят на месте,
+   а меняется только содержимое. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.26s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.header {
+  view-transition-name: site-header;
+}
+.tabbar {
+  view-transition-name: app-tabbar;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
 * ,
 *::before,
 *::after {

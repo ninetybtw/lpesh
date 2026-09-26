@@ -1053,16 +1053,15 @@ body.app-surface {
 .profile-hero__blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(24px);
-  opacity: 0.55;
-  mix-blend-mode: screen;
+  opacity: 0.6;
+  will-change: transform;
 }
 .profile-hero__blob--1 {
   width: 220px;
   height: 220px;
   top: -120px;
   left: 8%;
-  background: #6b82ff;
+  background: radial-gradient(circle, #6b82ff 0%, transparent 70%);
   animation: heroOrbA 14s ease-in-out infinite alternate;
 }
 .profile-hero__blob--2 {
@@ -1070,7 +1069,7 @@ body.app-surface {
   height: 180px;
   top: -60px;
   right: 18%;
-  background: #ffb38a;
+  background: radial-gradient(circle, #ffb38a 0%, transparent 70%);
   animation: heroOrbB 17s ease-in-out infinite alternate;
 }
 .profile-hero__blob--3 {
@@ -1078,7 +1077,7 @@ body.app-surface {
   height: 160px;
   top: -40px;
   left: 45%;
-  background: #b392ff;
+  background: radial-gradient(circle, #b392ff 0%, transparent 70%);
   animation: heroOrbC 21s ease-in-out infinite alternate;
 }
 .profile-hero__main {
@@ -1512,9 +1511,7 @@ body.app-surface {
     border-radius: 0;
     border-left: none;
     border-right: none;
-    background: color-mix(in srgb, var(--color-white) 92%, transparent);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    background: var(--color-white);
   }
   .profile-nav::-webkit-scrollbar {
     display: none;
