@@ -2,12 +2,17 @@
 SCRIPT.JS — интерактивность: меню, аккордеон, демо-навигация, hero-анимация,
 форма обратной связи
 ========================================================================== */
+initHeroTitle();
+
 document.addEventListener('DOMContentLoaded', () => {
   initHeaderScroll();
   initMobileNav();
   initSmoothAnchors();
   initAccordion();
-  initHeroMock();
+  initHeroStudy();
+  initHeroBackground();
+  initStatCounters();
+  initRoadmap();
   initFeatureTabs();
   initFeedbackForm();
   initRevealOnScroll();
@@ -36,10 +41,10 @@ function initCatalogStats() {
     client.from('topics').select('*', { count: 'exact', head: true })
   ]).then(([disciplines, topics]) => {
     if (disciplinesEl && typeof disciplines.count === 'number' && disciplines.count > 0) {
-      disciplinesEl.textContent = disciplines.count;
+      setStatNumber(disciplinesEl, disciplines.count);
     }
     if (topicsEl && typeof topics.count === 'number' && topics.count > 0) {
-      topicsEl.textContent = topics.count;
+      setStatNumber(topicsEl, topics.count);
     }
   }).catch(() => {});
 }
@@ -188,47 +193,307 @@ function initAccordion() {
   });
 }
 
-/* ---------------- Hero mock-card: clickable chips + 3D tilt ---------------- */
-function initHeroMock() {
-  const visual = document.querySelector('.hero__visual');
-  const card = document.querySelector('.mock-card');
-  const chips = document.querySelectorAll('.mock-chip');
-  const progressBar = document.querySelector('.mock-progress__bar');
-  const infoBox = document.getElementById('mockInfo');
-  const infoTitle = infoBox ? infoBox.querySelector('.mock-info__title') : null;
-  const infoDesc = infoBox ? infoBox.querySelector('.mock-info__desc') : null;
+/* ---------------- Hero: живое демо темы ----------------
+   Карточка сама проходит шаги Конспект → Практика → Карточки → Тест.
+   Переход к следующему шагу делает не setInterval, а конец CSS-анимации
+   полоски-таймера под активной вкладкой: так пауза при наведении и вне
+   экрана (animation-play-state) останавливает и таймер, и переключение.
+   Опыт в плашке уровня считается по тем же правилам, что в progress.js
+   (+8 за конспект, +2 за карточку, +2 за верный ответ в тесте). */
+function initHeroStudy() {
+  const visual = document.getElementById('heroStudy');
+  if (!visual) return;
+  const card = visual.querySelector('.study-card');
+  const tabs = Array.from(visual.querySelectorAll('[data-study-tab]'));
+  const scenes = Array.from(visual.querySelectorAll('[data-study-scene]'));
+  const progressBar = document.getElementById('studyProgressBar');
+  const progressValue = document.getElementById('studyProgressValue');
+  const progressBox = visual.querySelector('.study-progress');
+  const toast = document.getElementById('heroToast');
+  const toastIcon = document.getElementById('heroToastIcon');
+  const toastTitle = document.getElementById('heroToastTitle');
+  const toastText = document.getElementById('heroToastText');
+  const level = visual.querySelector('.hero-level');
+  const levelValue = document.getElementById('heroLevelValue');
+  const levelBar = document.getElementById('heroLevelBar');
+  const levelPlus = document.getElementById('heroLevelPlus');
+  if (!card || !tabs.length || !scenes.length) return;
 
-  if (chips.length && progressBar) {
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        if (chip.classList.contains('mock-chip--active')) return;
-        chips.forEach(c => c.classList.remove('mock-chip--active'));
-        chip.classList.add('mock-chip--active');
-        const value = chip.dataset.progress || '62';
-        progressBar.style.width = value + '%';
+  const reducedMotion = prefersReducedMotion();
+  // Когда шаг отыгран и пора показать уведомление (мс от начала шага) и
+  // сколько всего длится шаг — подогнано под анимации сцен в style.css.
+  const TIMING = {
+    notes: { toastAt: 1700, duration: 4800 },
+    practice: { toastAt: 1800, duration: 4800 },
+    cards: { toastAt: 3000, duration: 5600 },
+    test: { toastAt: 2100, duration: 5200 }
+  };
+  const xpThreshold = (lvl) => Math.round(100 * (lvl - 1) * lvl / 2);
+  let xp = 1452; // уровень 5, почти следующий — через пару кругов демо будет «новый уровень»
+  let current = -1;
+  let toastTimer = null;
 
-        if (infoBox && infoTitle && infoDesc) {
-          infoBox.classList.remove('mock-info--enter');
-          void infoBox.offsetWidth; // перезапуск CSS-анимации
-          infoTitle.textContent = chip.textContent.trim();
-          infoDesc.textContent = chip.dataset.desc || '';
-          infoBox.classList.add('mock-info--enter');
-        }
+  function renderLevel(animateBump) {
+    let lvl = 1;
+    while (xpThreshold(lvl + 1) <= xp) lvl++;
+    const from = xpThreshold(lvl);
+    const to = xpThreshold(lvl + 1);
+    const prevLevel = levelValue ? Number(levelValue.textContent) : lvl;
+    if (levelValue) levelValue.textContent = lvl;
+    if (levelBar) levelBar.style.width = Math.max(3, Math.round((xp - from) / (to - from) * 100)) + '%';
+    if (level && animateBump) {
+      restartClass(level, 'is-bump');
+      if (lvl > prevLevel) {
+        level.classList.add('is-levelup');
+        setTimeout(() => level.classList.remove('is-levelup'), 2200);
+      }
+    }
+  }
+
+  function awardXp(amount) {
+    if (!amount) return;
+    xp += amount;
+    if (levelPlus) {
+      levelPlus.textContent = `+${amount} XP`;
+      restartClass(levelPlus, 'is-shown');
+    }
+    renderLevel(true);
+  }
+
+  function showToast(scene) {
+    if (!toast) return;
+    toastIcon.textContent = scene.dataset.toastIcon || '';
+    toastTitle.textContent = scene.dataset.toastTitle || '';
+    toastText.textContent = scene.dataset.toastText || '';
+    toast.classList.add('is-visible');
+    awardXp(Number(scene.dataset.xp) || 0);
+  }
+
+  function burstSparks() {
+    if (!progressBox || reducedMotion) return;
+    const colors = ['var(--color-primary)', 'var(--color-accent)', '#8c54ff', 'var(--color-success)'];
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement('span');
+      spark.className = 'study-spark';
+      const angle = (-160 + Math.random() * 140) * Math.PI / 180;
+      const dist = 26 + Math.random() * 34;
+      spark.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+      spark.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+      spark.style.setProperty('--spark-color', colors[i % colors.length]);
+      spark.style.animationDelay = `${Math.random() * 120}ms`;
+      spark.addEventListener('animationend', () => spark.remove());
+      progressBox.appendChild(spark);
+    }
+  }
+
+  function activate(index, { withToast = true } = {}) {
+    if (index === current) return;
+    current = index;
+    const tab = tabs[index];
+    const key = tab.dataset.studyTab;
+    const scene = scenes.find(s => s.dataset.studyScene === key);
+
+    tabs.forEach(t => {
+      const isActive = t === tab;
+      t.classList.toggle('is-active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    scenes.forEach(s => {
+      const isActive = s === scene;
+      s.classList.toggle('is-active', isActive);
+      // is-played снимаем только у сцены, которая сейчас начнётся заново —
+      // уходящая сцена досматривается в своём конечном состоянии.
+      if (isActive) restartClass(s, 'is-played');
+    });
+
+    const timing = TIMING[key] || { toastAt: 1800, duration: 5000 };
+    visual.style.setProperty('--study-duration', `${timing.duration}ms`);
+
+    const progress = Number(tab.dataset.progress) || 0;
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (progressValue) countTo(progressValue, progress, 700);
+    if (progress === 100) setTimeout(burstSparks, reducedMotion ? 0 : 900);
+
+    if (toast) {
+      toast.classList.remove('is-visible');
+      clearTimeout(toastTimer);
+      if (withToast && scene) {
+        toastTimer = setTimeout(() => showToast(scene), reducedMotion ? 0 : timing.toastAt);
+      }
+    }
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => activate(i));
+    const timer = tab.querySelector('.study-tab__timer');
+    if (timer) {
+      timer.addEventListener('animationend', () => {
+        if (tab.classList.contains('is-active')) activate((i + 1) % tabs.length);
+      });
+    }
+  });
+
+  renderLevel(false);
+  // Демо стартует, когда карточка реально видна (на телефонах она ниже
+  // первого экрана), и не раньше, чем отыграет анимация появления hero.
+  // До старта видна статичная сцена конспекта из разметки. Вне экрана
+  // таймер шага стоит на паузе.
+  let started = false;
+  const readyAt = performance.now() + (reducedMotion ? 0 : 700);
+  const start = () => {
+    if (started) return;
+    started = true;
+    activate(0);
+    if (!reducedMotion) visual.classList.add('is-playing');
+  };
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => {
+      const visible = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+      visual.classList.toggle('is-paused', !visible);
+      if (visible && !started) setTimeout(start, Math.max(0, readyAt - performance.now()));
+    }, { threshold: [0, 0.3] }).observe(visual);
+  } else {
+    setTimeout(start, readyAt - performance.now());
+  }
+
+  // Наклон карточки, блик и параллакс плашек — только для мыши.
+  if (!reducedMotion && window.matchMedia('(pointer: fine)').matches) {
+    let frame = 0;
+    visual.addEventListener('mousemove', (e) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = visual.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = `rotateY(${x * 9}deg) rotateX(${-y * 9}deg)`;
+        const cardRect = card.getBoundingClientRect();
+        card.style.setProperty('--glare-x', `${e.clientX - cardRect.left}px`);
+        card.style.setProperty('--glare-y', `${e.clientY - cardRect.top}px`);
+        visual.style.setProperty('--px', x.toFixed(3));
+        visual.style.setProperty('--py', y.toFixed(3));
       });
     });
-  }
-
-  if (visual && card && window.matchMedia('(pointer: fine)').matches) {
-    visual.addEventListener('mousemove', (e) => {
-      const rect = visual.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      card.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
-    });
+    visual.addEventListener('mouseenter', () => visual.classList.add('is-hovered'));
     visual.addEventListener('mouseleave', () => {
+      cancelAnimationFrame(frame);
+      visual.classList.remove('is-hovered');
       card.style.transform = '';
+      visual.style.setProperty('--px', '0');
+      visual.style.setProperty('--py', '0');
     });
   }
+}
+
+/* Мягкий «прожектор» за курсором на фоне первого экрана. */
+function initHeroBackground() {
+  const hero = document.getElementById('hero');
+  if (!hero || prefersReducedMotion() || !window.matchMedia('(pointer: fine)').matches) return;
+  let frame = 0;
+  hero.addEventListener('mousemove', (e) => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      const rect = hero.getBoundingClientRect();
+      hero.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
+      hero.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+    });
+  });
+  hero.addEventListener('mouseenter', () => hero.classList.add('has-spotlight'));
+  hero.addEventListener('mouseleave', () => hero.classList.remove('has-spotlight'));
+}
+
+/* Разбивает заголовок первого экрана на слова, чтобы они появлялись по
+   очереди (задержка — через --i, см. .hero-word в style.css). Акцентный
+   фрагмент анимируется целиком, иначе ломается градиентный текст. */
+function initHeroTitle() {
+  const title = document.querySelector('.hero__title');
+  if (!title || title.classList.contains('is-split') || prefersReducedMotion()) return;
+  let index = 0;
+  Array.from(title.childNodes).forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const frag = document.createDocumentFragment();
+      node.textContent.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(document.createTextNode(part));
+          return;
+        }
+        const word = document.createElement('span');
+        word.className = 'hero-word';
+        word.style.setProperty('--i', index++);
+        word.textContent = part;
+        frag.appendChild(word);
+      });
+      node.replaceWith(frag);
+    } else if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('accent')) {
+      node.classList.add('hero-word');
+      node.style.setProperty('--i', index++);
+    }
+  });
+  title.classList.add('is-split');
+}
+
+/* Цифры под первым экраном набегают от нуля. Если initCatalogStats успеет
+   получить реальные числа раньше, чем стартует анимация, она подхватит их
+   вместо зашитых в HTML (см. setStatNumber). */
+function initStatCounters() {
+  if (prefersReducedMotion()) return;
+  document.querySelectorAll('.hero__stats .stat__num').forEach(el => {
+    const target = parseInt(el.textContent, 10);
+    if (!Number.isFinite(target)) return;
+    el.dataset.countTarget = target;
+    el.dataset.countPending = '1';
+    el.textContent = '0';
+    setTimeout(() => {
+      delete el.dataset.countPending;
+      countTo(el, Number(el.dataset.countTarget), 1400);
+    }, 900);
+  });
+}
+
+function setStatNumber(el, value) {
+  if (el.dataset.countPending === '1') {
+    el.dataset.countTarget = value;
+  } else {
+    countTo(el, value, 900);
+  }
+}
+
+function countTo(el, target, duration) {
+  cancelAnimationFrame(el._countFrame);
+  const from = parseInt(el.textContent, 10) || 0;
+  if (from === target || prefersReducedMotion()) {
+    el.textContent = target;
+    return;
+  }
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (target - from) * eased);
+    if (t < 1) el._countFrame = requestAnimationFrame(step);
+  };
+  el._countFrame = requestAnimationFrame(step);
+}
+
+/* «Как проходит подготовка»: линия дорисовывается, шаги загораются по
+   очереди — запускается тем же reveal-наблюдателем (класс is-visible). */
+function initRoadmap() {
+  document.querySelectorAll('.roadmap__step').forEach((step, i) => {
+    step.style.setProperty('--step', i);
+  });
+  document.querySelectorAll('.feature-tabs__item').forEach((item, i) => {
+    item.style.setProperty('--item', i);
+  });
+}
+
+function restartClass(el, className) {
+  el.classList.remove(className);
+  void el.offsetWidth; // перезапуск CSS-анимации
+  el.classList.add(className);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 /* ---------------- Возможности: вкладки с превью ---------------- */
