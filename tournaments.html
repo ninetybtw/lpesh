@@ -28,12 +28,13 @@
     <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/app.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/app.css?v=20260927010000" />
     <link rel="stylesheet" href="./styles/exam.css?v=20260926190000" />
     <link rel="stylesheet" href="./styles/duel.css?v=20260923180000" />
-    <link rel="stylesheet" href="./styles/tournaments.css?v=20260923180000" />
+    <link rel="stylesheet" href="./styles/tournaments.css?v=20260926230000" />
+    <link rel="stylesheet" href="./styles/arena.css?v=20260927010000" />
   </head>
-  <body data-tabbar>
+  <body class="arena-body" data-tabbar>
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
         <a href="index.html" class="logo">
@@ -85,74 +86,74 @@
       </div>
     </header>
 
-    <main class="exam-page">
-      <div class="container exam-container">
+    <main class="arena-page">
+      <div class="container arena-container">
         <!-- LIST -->
-        <section class="exam-card" data-tourney-view="list">
-          <div class="eyebrow">LexPrep / Турниры</div>
-          <h1 class="exam-title">Турниры на выбывание</h1>
-          <p class="topic-desc">
-            Реальные соперники, сетка на выбывание. Проиграл матч раунда — выбыл из турнира. Дошёл до финала и
-            победил — чемпион. Как только лобби набирает нужное число игроков, сетка стартует автоматически.
-          </p>
+        <section data-tourney-view="list">
+          <div class="arena-page-head">
+            <span class="arena-page-head__eyebrow">Турниры</span>
+            <h1 class="arena-page-head__title">Турниры на выбывание</h1>
+            <p class="arena-page-head__text">
+              Реальные соперники, сетка на выбывание: проиграл матч — выбыл, дошёл до конца — чемпион.
+              Сетка стартует сама, как только лобби заполнится.
+            </p>
+          </div>
 
-          <div class="tourney-list" id="tourneyList"></div>
+          <div class="event-list" id="tourneyList"></div>
+
+          <div class="arena-card arena-howto">
+            <h2 class="arena-card__title">Как это работает</h2>
+            <ol class="arena-howto__steps">
+              <li><span aria-hidden="true">🎟️</span><b>Вступи в лобби</b><small>Ждём, пока наберутся игроки</small></li>
+              <li><span aria-hidden="true">🤝</span><b>Жми «Готов»</b><small>Матч стартует, когда готовы оба</small></li>
+              <li><span aria-hidden="true">⚡</span><b>Побеждай</b><small>Общий таймер на каждый вопрос</small></li>
+              <li><span aria-hidden="true">👑</span><b>Забирай приз</b><small>Монеты чемпиону сетки</small></li>
+            </ol>
+          </div>
         </section>
 
-        <!-- WAITING (лобби набирается / ждём готовности соперника / ждём следующий матч) -->
-        <section class="exam-card" data-tourney-view="waiting" hidden>
-          <div class="exam-results__summary">
-            <div class="eyebrow">Турнир</div>
-            <h1 class="exam-title" id="tourneyWaitingTitle">Ждём...</h1>
-            <p class="topic-desc" id="tourneyWaitingMsg"></p>
+        <!-- WAITING (лобби / готовность / между раундами) -->
+        <section class="arena-card" data-tourney-view="waiting" hidden>
+          <div class="lobby">
+            <div id="tourneyWaitingStage"></div>
+            <h1 class="lobby__title" id="tourneyWaitingTitle">Ждём…</h1>
+            <p class="lobby__text" id="tourneyWaitingMsg"></p>
           </div>
-          <div class="exam-results__actions">
-            <button class="btn btn--primary" type="button" id="tourneyReadyBtn" hidden>Готов</button>
+          <div class="arena-result__actions">
+            <button class="arena-cta arena-cta--compact" type="button" id="tourneyReadyBtn" hidden>Готов!</button>
             <button class="btn btn--outline" type="button" id="tourneyWaitingBackBtn">К списку турниров</button>
           </div>
+          <div class="arena-section" id="tourneyBracketWrap" hidden>
+            <h2 class="arena-card__title">Сетка турнира</h2>
+            <div class="bracket" id="tourneyBracket"></div>
+          </div>
         </section>
 
-        <!-- BRACKET / BATTLE -->
-        <section class="exam-card" data-tourney-view="battle" hidden>
-          <div class="duel-vs">
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar" id="tourneyPlayerAvatar">U</span>
-              <span class="duel-vs__name" id="tourneyPlayerName">Ты</span>
-              <span class="duel-vs__score" id="tourneyPlayerScore">0</span>
-            </div>
-            <div class="duel-vs__mid">
-              <span class="duel-vs__vs">VS</span>
-              <span class="exam-running__progress" id="tourneyProgress"></span>
-            </div>
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar">🧑</span>
-              <span class="duel-vs__name" id="tourneyOpponentName">Соперник</span>
-              <span class="duel-vs__score" id="tourneyOpponentScore">?</span>
-            </div>
-          </div>
-
-          <div class="exam-running__topic" id="tourneyTopicLabel"></div>
-
-          <div class="question" id="tourneyQuestionBox"></div>
-          <div class="duel-round-result" id="tourneyRoundResult" hidden></div>
-
-          <div class="exam-running__actions duel-running__actions">
+        <!-- BATTLE -->
+        <section class="arena-battle" data-tourney-view="battle" hidden>
+          <div id="tourneyHud"></div>
+          <span id="tourneyProgress" hidden></span>
+          <span id="tourneyTopicLabel" hidden></span>
+          <div class="question arena-question" id="tourneyQuestionBox"></div>
+          <div class="duel-round-result arena-feedback" id="tourneyRoundResult" hidden></div>
+          <div class="arena-actions">
             <button class="btn btn--ghost profile-danger-text" type="button" id="tourneyBattleForfeitBtn">Сдаться</button>
-            <button class="btn btn--primary" type="button" id="tourneyAnswerBtn">Ответить</button>
+            <button class="arena-cta arena-cta--compact" type="button" id="tourneyAnswerBtn">Ответить</button>
           </div>
         </section>
 
         <!-- RESULTS -->
-        <section class="exam-card" data-tourney-view="results" hidden>
-          <div class="exam-results__summary">
-            <div class="eyebrow">Итог турнира</div>
-            <h1 class="exam-title" id="tourneyResultTitle"></h1>
-            <p class="topic-desc" id="tourneyResultMsg"></p>
+        <section class="arena-card arena-card--result" data-tourney-view="results" hidden>
+          <div id="tourneyResult"></div>
+          <h1 class="visually-hidden" id="tourneyResultTitle"></h1>
+          <p class="arena-card__text" id="tourneyResultMsg"></p>
+          <div class="arena-section" id="tourneyResultBracketWrap" hidden>
+            <h2 class="arena-card__title">Сетка турнира</h2>
+            <div class="bracket" id="tourneyResultBracket"></div>
           </div>
-
-          <div class="exam-results__actions">
-            <button class="btn btn--primary" type="button" id="tourneyBackBtn">К списку турниров</button>
-            <a href="app.html" class="btn btn--outline">Вернуться в тренажёр</a>
+          <div class="arena-result__actions">
+            <button class="arena-cta arena-cta--compact" type="button" id="tourneyBackBtn">К списку турниров</button>
+            <a href="app.html" class="btn btn--outline">В тренажёр</a>
           </div>
         </section>
       </div>
@@ -162,14 +163,15 @@
     <script src="progress.js?v=20260926190000"></script>
     <script src="plan.js?v=20260923180000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923180000"></script>
+    <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
     <script src="script.js?v=20260926220000"></script>
     <script src="duel-engine.js?v=20260913000000"></script>
-    <script src="tournaments.js?v=20260924150000"></script>
+    <script src="arena.js?v=20260927010000"></script>
+    <script src="tournaments.js?v=20260927010000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>
