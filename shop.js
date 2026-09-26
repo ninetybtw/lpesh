@@ -258,14 +258,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         <article class="shop-plan shop-plan--${item.grantsTier} ${state}" data-item="${item.id}">
           ${alreadyActive ? '<span class="shop-plan__ribbon">Активен</span>' : ''}
           ${!alreadyActive && !alreadyHigher && !meetsRequirement ? `<span class="shop-plan__lock" title="Нужен тариф «${escapeHtml(PLAN_TITLES[item.requiresTier])}»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>` : ''}
-          <div class="shop-plan__top">
-            <span class="shop-plan__icon">${shopIcon(item.grantsTier === 'max' ? 'crown' : 'star')}</span>
-            <div>
-              <span class="shop-plan__tier">${escapeHtml(PLAN_TITLES[item.grantsTier])}</span>
-              <h3 class="shop-plan__title">${escapeHtml(item.title)}</h3>
+          <div class="shop-plan__head">
+            <div class="shop-plan__top">
+              <span class="shop-plan__icon">${shopIcon(item.grantsTier === 'max' ? 'crown' : 'star')}</span>
+              <div>
+                <span class="shop-plan__tier">${escapeHtml(PLAN_TITLES[item.grantsTier])}</span>
+                <h3 class="shop-plan__title">${escapeHtml(item.title)}</h3>
+              </div>
             </div>
+            <p class="shop-plan__desc">${escapeHtml(item.desc)}</p>
           </div>
-          <p class="shop-plan__desc">${escapeHtml(item.desc)}</p>
           <ul class="shop-plan__features">
             ${planFeatures(item.grantsTier).map(f => `<li>${escapeHtml(f)}</li>`).join('')}
           </ul>

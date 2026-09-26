@@ -476,13 +476,15 @@ opacity, без размытия.
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.shop-plan::before {
-  /* цветная шапка карточки */
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: -1;
-  height: 120px;
+/* Цветная шапка карточки — отдельный блок по высоте содержимого, чтобы
+   описание любой длины помещалось внутри, а список шёл ниже с отступом. */
+.shop-plan__head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: -22px -22px 6px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--plan-a) 18%, var(--color-border));
   background:
     radial-gradient(circle at 85% -20%, color-mix(in srgb, var(--plan-b) 45%, transparent), transparent 60%),
     linear-gradient(135deg, color-mix(in srgb, var(--plan-a) 18%, transparent), transparent 80%);
@@ -503,6 +505,7 @@ opacity, без размытия.
   display: flex;
   align-items: center;
   gap: 12px;
+  padding-right: 34px; /* место под ленту «Активен» / замок */
 }
 
 .shop-plan__icon {
@@ -543,6 +546,8 @@ opacity, без размытия.
 }
 
 .shop-plan__desc {
+  margin: 0;
+  padding-right: 24px;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--color-text-muted);
@@ -550,8 +555,8 @@ opacity, без размытия.
 
 .shop-plan__features {
   display: grid;
-  gap: 7px;
-  margin: 2px 0 4px;
+  gap: 9px;
+  margin: 10px 0 6px;
   padding: 0;
   list-style: none;
 }
@@ -1019,6 +1024,11 @@ body.has-tabbar .shop-toast {
   .shop-plan {
     padding: 18px;
     border-radius: 22px;
+  }
+
+  .shop-plan__head {
+    margin: -18px -18px 4px;
+    padding: 18px 18px 16px;
   }
 
   /* Бустер — компактной строкой: иконка, текст, цена справа. */
