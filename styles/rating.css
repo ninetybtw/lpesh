@@ -170,7 +170,12 @@ RATING.CSS — страница рейтинга: моё место, пьеде�
 }
 
 .rating-me__goal-icon {
+  display: inline-flex;
   font-size: 20px;
+}
+.rating-me__goal-icon .lp-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .rating-me__goal--league {
@@ -263,9 +268,20 @@ RATING.CSS — страница рейтинга: моё место, пьеде�
 
 .podium__crown {
   position: absolute;
-  top: -22px;
+  top: -26px;
+  display: flex;
   font-size: 24px;
   animation: crownBob 2.6s ease-in-out 1.4s infinite;
+}
+
+.podium__crown .lp-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.rating-row__medal {
+  width: 28px;
+  height: 28px;
 }
 
 .podium__avatar {
@@ -540,6 +556,8 @@ RATING.CSS — страница рейтинга: моё место, пьеде�
 }
 
 .rating-row__place {
+  display: flex;
+  justify-content: center;
   font-size: 14px;
   font-weight: 800;
   color: var(--color-text-muted);

@@ -2388,8 +2388,13 @@ body {
   );
 }
 .note-box h3::before {
-  content: "💡";
+  content: "";
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
   margin-right: 8px;
+  vertical-align: -0.25em;
+  background: url("../assets/icons/lightbulb.svg") center / contain no-repeat;
 }
 
 /* Полоса прогресса чтения под шапкой. */

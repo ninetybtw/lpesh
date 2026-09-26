@@ -2,7 +2,17 @@
 SCRIPT.JS — интерактивность: меню, аккордеон, демо-навигация, hero-анимация,
 форма обратной связи
 ========================================================================== */
+// Цветные SVG-иконки из assets/icons вместо эмодзи: одинаково выглядят на
+// всех устройствах и подходят по стилю. Возвращает HTML-строку <img>.
+window.LexPrepIcon = function (name, className) {
+  const safe = String(name || '').replace(/[^a-z0-9-]/gi, '');
+  return `<img class="lp-icon${className ? ' ' + className : ''}" src="assets/icons/${safe}.svg" alt="" aria-hidden="true" draggable="false" />`;
+};
+
 initHeroTitle();
+// Меню профиля дооформляем сразу (скрипт в конце body) — чтобы при первом
+// открытии не было скачка вёрстки.
+enhanceProfileDropdown();
 // Нижняя навигация вставляется сразу (скрипт подключён в конце body), а не
 // на DOMContentLoaded — чтобы она была уже в первом кадре страницы и при
 // плавном переходе между страницами не мигала.
@@ -10,6 +20,7 @@ initTabbar();
 
 document.addEventListener('DOMContentLoaded', () => {
   initHeaderScroll();
+  initHeaderNav();
   initMobileNav();
   initSmoothAnchors();
   initAccordion();
@@ -99,7 +110,17 @@ function showLevelUpToast(detail) {
 function initCoinBadge() {
   const countEl = document.getElementById('coinCount');
   if (!countEl || typeof LexPrepProgress === 'undefined' || typeof LexPrepProgress.getCoins !== 'function') return;
-  countEl.textContent = LexPrepProgress.getCoins();
+  const value = String(LexPrepProgress.getCoins());
+  const prev = countEl.dataset.value;
+  countEl.textContent = value;
+  countEl.dataset.value = value;
+  // Монетка подпрыгивает, когда баланс изменился (выигрыш, покупка).
+  const btn = countEl.closest('.shop-btn');
+  if (btn && prev !== undefined && prev !== value) {
+    btn.classList.remove('is-bump');
+    void btn.offsetWidth;
+    btn.classList.add('is-bump');
+  }
 }
 
 /* ---------------- Online users counter (demo, no real backend/websocket yet) ---------------- */
@@ -137,6 +158,171 @@ function initHeaderScroll() {
   };
   toggle();
   window.addEventListener('scroll', toggle, { passive: true });
+}
+
+/* ---------------- Навигация в шапке: активный раздел ----------------
+   Подсвечиваем текущую страницу «пилюлей», которая плавно переезжает к
+   пункту под курсором. На главной ссылки — якоря, там подсветка следует
+   за секцией, которую сейчас читают. */
+function initHeaderNav() {
+  const list = document.querySelector('.header .nav__list');
+  if (!list) return;
+  const links = Array.from(list.querySelectorAll('.nav__link'));
+  if (!links.length) return;
+
+  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  // Страницы-«дочки» подсвечивают родительский раздел.
+  const PARENT = { 'create-test.html': 'app.html', 'write-article.html': 'article.html' };
+  const current = PARENT[page] || page;
+  let active = links.find(a => {
+    const href = a.getAttribute('href') || '';
+    return !href.startsWith('#') && href.split('#')[0].toLowerCase() === current;
+  }) || null;
+
+  const indicator = document.createElement('span');
+  indicator.className = 'nav__indicator no-anim';
+  indicator.setAttribute('aria-hidden', 'true');
+  list.prepend(indicator);
+  list.classList.add('has-indicator');
+
+  function moveTo(link, instant) {
+    if (!link) {
+      indicator.classList.remove('is-visible');
+      return;
+    }
+    indicator.classList.toggle('no-anim', !!instant);
+    // Позиция относительно самой «капсулы» (у ссылки offsetParent — её li).
+    const x = link.getBoundingClientRect().left - list.getBoundingClientRect().left - list.clientLeft;
+    indicator.style.width = `${link.offsetWidth}px`;
+    indicator.style.transform = `translateX(${x}px)`;
+    indicator.classList.add('is-visible');
+  }
+
+  function setActive(link) {
+    links.forEach(a => {
+      a.classList.toggle('is-active', a === link);
+      if (a === link) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    active = link;
+  }
+
+  setActive(active);
+  moveTo(active, true);
+  requestAnimationFrame(() => indicator.classList.remove('no-anim'));
+
+  links.forEach(a => a.addEventListener('mouseenter', () => moveTo(a)));
+  list.addEventListener('mouseleave', () => moveTo(active));
+  window.addEventListener('resize', () => moveTo(active, true));
+  // Шрифт мог догрузиться после первого замера — пересчитываем ширину.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveTo(active, true));
+
+  // Главная: подсветка следует за секцией на экране.
+  const anchors = links.filter(a => (a.getAttribute('href') || '').startsWith('#'));
+  if (!anchors.length || !('IntersectionObserver' in window)) return;
+  const sections = anchors
+    .map(a => ({ link: a, el: document.querySelector(a.getAttribute('href')) }))
+    .filter(x => x.el);
+  const visible = new Map();
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => visible.set(e.target, e.isIntersecting ? e.intersectionRatio : 0));
+    let best = null;
+    let bestRatio = 0;
+    sections.forEach(x => {
+      const r = visible.get(x.el) || 0;
+      if (r > bestRatio) { best = x.link; bestRatio = r; }
+    });
+    if (best !== active) {
+      setActive(best);
+      if (!list.matches(':hover')) moveTo(best);
+    }
+  }, { rootMargin: '-80px 0px -45% 0px', threshold: [0, 0.15, 0.4, 0.7] });
+  sections.forEach(x => observer.observe(x.el));
+}
+
+/* ---------------- Меню профиля: карточка с уровнем, иконки, группы ---------------- */
+function enhanceProfileDropdown() {
+  // Константы внутри функции: она вызывается в самом начале файла, раньше,
+  // чем выполнились бы объявления const ниже по коду.
+  const PROFILE_MENU_ICONS = {
+    'admin.html': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    'moderator.html': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    'profile.html#info': '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    'profile.html#subscription': '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+    'profile.html#stats': '<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="5" width="3" height="13" rx="1"/><rect x="16" y="13" width="3" height="5" rx="1"/>',
+    'profile.html#articles': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+    'profile.html#tests': '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>',
+    'profile.html#referral': '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8C10 8 7 7.5 7 5.5S10 4 12 8zm0 0c2 0 5-.5 5-2.5S14 4 12 8z"/>',
+    'support.html': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
+    'suggestions.html': '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    'profile.html#settings': '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
+  };
+  // Перед этими пунктами — разделитель (группы: аккаунт / моё / помощь / выход).
+  const PROFILE_MENU_BREAKS = ['profile.html#info', 'profile.html#articles', 'support.html', 'logout'];
+  const dropdown = document.getElementById('profileDropdown');
+  if (!dropdown || dropdown.dataset.enhanced) return;
+  dropdown.dataset.enhanced = '1';
+  dropdown.setAttribute('role', 'menu');
+
+  dropdown.querySelectorAll('.profile-dropdown__item').forEach(item => {
+    const key = item.id === 'logoutBtn' ? 'logout' : (item.getAttribute('href') || '');
+    const path = PROFILE_MENU_ICONS[key];
+    if (path) {
+      item.insertAdjacentHTML('afterbegin',
+        `<span class="profile-dropdown__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`);
+    }
+    if (PROFILE_MENU_BREAKS.includes(key)) {
+      const sep = document.createElement('div');
+      sep.className = 'profile-dropdown__sep';
+      // Первый разделитель нужен только если сверху есть пункты модерации.
+      if (key === 'profile.html#info') sep.setAttribute('data-moderator', '');
+      item.before(sep);
+    }
+  });
+
+  const head = document.createElement('a');
+  head.className = 'profile-dropdown__head';
+  head.href = 'profile.html';
+  head.id = 'profileDropdownHead';
+  dropdown.prepend(head);
+}
+
+function renderProfileHead(user) {
+  const head = document.getElementById('profileDropdownHead');
+  const meta = document.getElementById('profileMeta');
+  if (!user) return;
+  const g = typeof LexPrepProgress !== 'undefined' && LexPrepProgress.getGamification ? LexPrepProgress.getGamification() : null;
+  const name = user.name || 'Профиль';
+  const initial = escapeHtmlText(name.trim().charAt(0).toUpperCase() || 'U');
+  if (meta) {
+    meta.hidden = !g;
+    meta.innerHTML = g ? `<img src="assets/badges/${g.rankIcon}" alt="" />Ур. ${g.level}` : '';
+  }
+  if (!head) return;
+  const avatarStyle = user.avatar ? ` style="background-image:url('${String(user.avatar).replace(/['"()\\]/g, '')}')"` : '';
+  head.innerHTML = `
+    <span class="profile-dropdown__avatar"${avatarStyle}>${user.avatar ? '' : initial}</span>
+    <span class="profile-dropdown__who">
+      <strong>${escapeHtmlText(name)}</strong>
+      ${user.email ? `<small>${escapeHtmlText(user.email)}</small>` : ''}
+      ${g ? `
+        <span class="profile-dropdown__level">
+          <span class="profile-dropdown__level-row">
+            <span><img src="assets/badges/${g.rankIcon}" alt="" />Ур. ${g.level} · ${escapeHtmlText(g.rankName)}</span>
+            <span>${g.xpIntoLevel}/${g.xpForNextLevel} XP</span>
+          </span>
+          <span class="profile-dropdown__bar"><span style="--p: ${(g.progressPercent / 100).toFixed(3)}"></span></span>
+        </span>` : ''}
+    </span>`;
+}
+
+function escapeHtmlText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /* ---------------- Mobile burger menu ---------------- */
@@ -266,7 +452,7 @@ function initHeroStudy() {
 
   function showToast(scene) {
     if (!toast) return;
-    toastIcon.textContent = scene.dataset.toastIcon || '';
+    toastIcon.innerHTML = scene.dataset.toastIcon ? LexPrepIcon(scene.dataset.toastIcon) : '';
     toastTitle.textContent = scene.dataset.toastTitle || '';
     toastText.textContent = scene.dataset.toastText || '';
     toast.classList.add('is-visible');
@@ -703,6 +889,7 @@ function applyAuthUi(user) {
         avatarEl.classList.add(`avatar-frame--${equippedFrame}`);
       }
     }
+    renderProfileHead(user);
   }
 
   initCoinBadge();
@@ -717,11 +904,24 @@ function initAuthState() {
   const profileBtn = document.getElementById('profileBtn');
   const dropdown = document.getElementById('profileDropdown');
   if (profileBtn && dropdown) {
+    const setOpen = (open) => {
+      dropdown.classList.toggle('is-open', open);
+      profileBtn.setAttribute('aria-expanded', String(open));
+    };
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      dropdown.classList.toggle('is-open');
+      const open = !dropdown.classList.contains('is-open');
+      // Уровень/опыт могли измениться, пока человек занимался, — обновляем.
+      if (open) renderProfileHead(JSON.parse(localStorage.getItem('lexprep_user') || 'null'));
+      setOpen(open);
     });
-    document.addEventListener('click', () => dropdown.classList.remove('is-open'));
+    document.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dropdown.classList.contains('is-open')) {
+        setOpen(false);
+        profileBtn.focus();
+      }
+    });
   }
 
   const logoutBtn = document.getElementById('logoutBtn');

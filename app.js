@@ -555,6 +555,10 @@ function initApp() {
     const tabsWereStuck = !animate && prevTabs && prevTabs.getBoundingClientRect().top <= stickyTopOffset() + 2;
 
     const locked = LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA);
+    // Вкладку судебной практики показываем только там, где она есть:
+    // у многих предметов её нет вовсе, и пустая заглушка только путает.
+    const hasPractice = Boolean(activeTopic.practice);
+    if (!hasPractice && activeView === 'practice') activeView = 'notes';
 
     contentView.innerHTML = `
       <div class="breadcrumbs">
@@ -578,7 +582,7 @@ function initApp() {
         <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
         <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
         <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
-        <button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>
+        ${hasPractice ? `<button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>` : ''}
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
         ${LexPrepPlan.getLimits().pdfExport ? `
           <button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>
@@ -605,9 +609,9 @@ function initApp() {
         ` : `<p class="topic-desc">Для этой темы карточки пока не добавлены.</p>`}
       </div>
 
-      <div data-view-panel="practice" ${activeView === 'practice' ? '' : 'hidden'}>
-        ${activeTopic.practice ? activeTopic.practice : '<p class="topic-desc">Судебная практика по теме появится позже — раздел в разработке.</p>'}
-      </div>
+      ${hasPractice ? `<div data-view-panel="practice" ${activeView === 'practice' ? '' : 'hidden'}>
+        ${activeTopic.practice}
+      </div>` : ''}
 
       <div class="notepad" data-view-panel="notepad" ${activeView === 'notepad' ? '' : 'hidden'}>
         <p class="topic-desc">Заметки видны только тебе и сохраняются в этом браузере.</p>

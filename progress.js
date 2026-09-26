@@ -172,6 +172,11 @@ const LexPrepProgress = (function () {
     checkLevelUp();
   }
 
+  // История пробных экзаменов (новые в конце) — для сводки на странице экзамена.
+  function getExamAttempts() {
+    return load().examAttempts.slice();
+  }
+
   function recordExamAttempt(score, total, topics, wrongEntries) {
     const data = load();
     data.examAttempts.push({ date: Date.now(), score, total, topics });
@@ -321,13 +326,13 @@ const LexPrepProgress = (function () {
   /* ---------------- Levels, ranks (Femida tiers), XP ---------------- */
 
   const RANKS = [
-    { key: 'plain', name: 'Новичок', minLevel: 1, maxLevel: 4, icon: 'themis-standard.svg' },
-    { key: 'bronze', name: 'Студент', minLevel: 5, maxLevel: 9, icon: 'themis-bronze.svg' },
-    { key: 'gold', name: 'Уверенный', minLevel: 10, maxLevel: 14, icon: 'themis-gold.svg' },
-    { key: 'platinum', name: 'Практик', minLevel: 15, maxLevel: 19, icon: 'themis-platinum.svg' },
-    { key: 'diamond', name: 'Знаток', minLevel: 20, maxLevel: 24, icon: 'themis-diamond.svg' },
-    { key: 'ruby', name: 'Эксперт', minLevel: 25, maxLevel: 29, icon: 'themis-ruby.svg' },
-    { key: 'sapphire', name: 'Мастер LexPrep', minLevel: 30, maxLevel: Infinity, icon: 'themis-sapphire.svg' }
+    { key: 'plain', name: 'Новичок', minLevel: 1, maxLevel: 4, icon: 'themis-standard.svg?v=2' },
+    { key: 'bronze', name: 'Студент', minLevel: 5, maxLevel: 9, icon: 'themis-bronze.svg?v=2' },
+    { key: 'gold', name: 'Уверенный', minLevel: 10, maxLevel: 14, icon: 'themis-gold.svg?v=2' },
+    { key: 'platinum', name: 'Практик', minLevel: 15, maxLevel: 19, icon: 'themis-platinum.svg?v=2' },
+    { key: 'diamond', name: 'Знаток', minLevel: 20, maxLevel: 24, icon: 'themis-diamond.svg?v=2' },
+    { key: 'ruby', name: 'Эксперт', minLevel: 25, maxLevel: 29, icon: 'themis-ruby.svg?v=2' },
+    { key: 'sapphire', name: 'Мастер LexPrep', minLevel: 30, maxLevel: Infinity, icon: 'themis-sapphire.svg?v=2' }
   ];
 
   function xpThreshold(level) {
@@ -716,6 +721,7 @@ const LexPrepProgress = (function () {
     recordTestAttempt,
     recordTheoryView,
     recordExamAttempt,
+    getExamAttempts,
     getWeakQuestions,
     getStats,
     findTopic,

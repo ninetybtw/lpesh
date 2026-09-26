@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <div class="rating-me__goals">
         <div class="rating-me__goal">
-          <span class="rating-me__goal-icon" aria-hidden="true">${ahead ? '🎯' : '👑'}</span>
+          <span class="rating-me__goal-icon" aria-hidden="true">${LexPrepIcon(ahead ? 'target' : 'crown')}</span>
           <span>${ahead
             ? `До <strong>#${ahead.place}</strong> — ещё <strong>${formatXp(ahead.xp - myEntry.xp + 1)} XP</strong>`
             : 'Ты на первом месте — держи планку!'}</span>
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     podiumEl.innerHTML = order.map(entry => `
       <div class="podium podium--${entry.place} ${entry.isCurrentUser ? 'is-you' : ''}">
         <div class="podium__person">
-          ${entry.place === 1 ? '<span class="podium__crown" aria-hidden="true">👑</span>' : ''}
+          ${entry.place === 1 ? `<span class="podium__crown" aria-hidden="true">${LexPrepIcon('crown')}</span>` : ''}
           ${ratingAvatar(entry, 'podium__avatar', frameFor(entry))}
           <span class="podium__name">${escapeHtml(entry.name)}</span>
           <span class="podium__xp">${formatXp(entry.xp)} XP</span>
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* ---------- Список ---------- */
   function rowHtml(entry) {
-    const medal = entry.place <= 3 ? ['🥇', '🥈', '🥉'][entry.place - 1] : `#${entry.place}`;
+    const medal = entry.place <= 3 ? LexPrepIcon(`medal-${entry.place}`, 'rating-row__medal') : `#${entry.place}`;
     return `
       <div class="rating-row ${entry.isCurrentUser ? 'is-you' : ''}" data-place="${entry.place}">
         <span class="rating-row__place">${medal}</span>

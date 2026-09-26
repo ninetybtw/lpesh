@@ -29,9 +29,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const WAGER_PRESETS = [10, 25, 50, 100];
   const BOTS = {
-    easy: { emoji: '🐣', name: 'Бот-стажёр', power: 1, hint: 'Ошибается часто' },
-    medium: { emoji: '🤖', name: 'Бот-юрист', power: 2, hint: 'Честный соперник' },
-    hard: { emoji: '👾', name: 'Бот-судья', power: 3, hint: 'Почти не ошибается' }
+    easy: { icon: 'bot-easy', name: 'Бот-стажёр', power: 1, hint: 'Ошибается часто' },
+    medium: { icon: 'bot-medium', name: 'Бот-юрист', power: 2, hint: 'Честный соперник' },
+    hard: { icon: 'bot-hard', name: 'Бот-судья', power: 3, hint: 'Почти не ошибается' }
   };
   const RATING_DELTA = { win: 18, loss: -12, draw: 2 };
 
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const diff = DuelEngine.DIFFICULTIES[key];
     return `
       <button type="button" class="bot-card bot-card--${key} ${difficultySelect.value === key ? 'is-active' : ''}" data-bot="${key}">
-        <span class="bot-card__avatar" aria-hidden="true">${bot.emoji}</span>
+        <span class="bot-card__avatar" aria-hidden="true">${Arena.icon(bot.icon)}</span>
         <span class="bot-card__name">${esc(bot.name)}</span>
         <span class="bot-card__level">${esc(diff.label)}</span>
         <span class="bot-card__power" aria-label="Сила ${bot.power} из 3">
@@ -135,12 +135,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderWagerHint() {
     const wager = Math.floor(Number(wagerInput.value)) || 0;
-    wagerHint.textContent = wager > 0 ? `Победа: +${wager} 🪙 · ничья: ставка вернётся` : '';
+    wagerHint.innerHTML = wager > 0 ? `Победа: +${wager} ${Arena.icon('coin')} · ничья: ставка вернётся` : '';
     document.querySelectorAll('[data-wager]').forEach(b => b.classList.toggle('is-active', Number(b.dataset.wager) === wager));
   }
 
   const presetsEl = document.getElementById('duelWagerPresets');
-  presetsEl.innerHTML = WAGER_PRESETS.map(v => `<button type="button" class="arena-chip" data-wager="${v}">${v} 🪙</button>`).join('');
+  presetsEl.innerHTML = WAGER_PRESETS.map(v => `<button type="button" class="arena-chip" data-wager="${v}">${v} ${Arena.icon('coin')}</button>`).join('');
   presetsEl.querySelectorAll('[data-wager]').forEach(btn => {
     btn.addEventListener('click', () => {
       wagerInput.value = btn.dataset.wager;
@@ -237,8 +237,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     mePlayer = Arena.me(user);
     botPlayer = {
       name: bot.name,
-      emoji: bot.emoji,
-      meta: `${DuelEngine.DIFFICULTIES[difficulty].label} · ставка ${wager} 🪙`,
+      icon: bot.icon,
+      meta: `${DuelEngine.DIFFICULTIES[difficulty].label} · ставка ${Arena.coins(wager)}`,
       tone: 'red'
     };
 
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       timer: false
     });
 
-    await Arena.vsIntro({ left: mePlayer, right: botPlayer, title: 'Дуэль', subtitle: `${questions.length} раундов · ставка ${wager} 🪙` });
+    await Arena.vsIntro({ left: mePlayer, right: botPlayer, title: 'Дуэль', subtitle: `${questions.length} раундов · ставка ${Arena.coins(wager)}` });
     showView('battle');
     renderQuestion();
   }
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       hud.status('left', playerCorrect ? 'верно!' : 'мимо', playerCorrect ? 'ok' : 'bad');
       if (playerCorrect) {
         hud.hit('left');
-        hud.pop('left', playerStreak >= 2 ? `🔥 ×${playerStreak}` : '+1', 'ok');
+        hud.pop('left', playerStreak >= 2 ? `×${playerStreak}` : '+1', 'ok', playerStreak >= 2 ? 'flame' : null);
       } else {
         hud.miss('left');
       }
@@ -364,8 +364,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       leftScore: playerScore,
       rightScore: botScore,
       rewards: [
-        { icon: '🪙', label: 'монет', value: coinsDelta, tone: coinsDelta > 0 ? 'up' : coinsDelta < 0 ? 'down' : 'neutral' },
-        { icon: '📈', label: `рейтинг · ${stats.rating}`, value: RATING_DELTA[outcome], tone: RATING_DELTA[outcome] >= 0 ? 'up' : 'down' }
+        { icon: 'coin', label: 'монет', value: coinsDelta, tone: coinsDelta > 0 ? 'up' : coinsDelta < 0 ? 'down' : 'neutral' },
+        { icon: 'chart-up', label: `рейтинг · ${stats.rating}`, value: RATING_DELTA[outcome], tone: RATING_DELTA[outcome] >= 0 ? 'up' : 'down' }
       ]
     });
 

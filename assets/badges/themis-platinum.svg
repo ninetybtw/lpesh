@@ -1,56 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 132" width="120" height="132" role="img" aria-label="Значок Фемиды — Платиновая">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Значок Фемиды — Практик">
   <defs>
-    
-    <linearGradient id="ring-platinum" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#e7edf5"/>
-      <stop offset="100%" stop-color="#8391a8"/>
-    </linearGradient>
-    <radialGradient id="inner-platinum" cx="0.35" cy="0.3" r="0.8">
-      <stop offset="0%" stop-color="#c7d1e0"/>
-      <stop offset="100%" stop-color="#6d7a92"/>
-    </radialGradient>
-    <linearGradient id="metal-platinum" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="45%" stop-color="#dbe4f0"/>
-      <stop offset="100%" stop-color="#9aa8bf"/>
-    </linearGradient>
-    <radialGradient id="glow-platinum" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#dce6f5" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#dce6f5" stop-opacity="0"/>
-    </radialGradient>
-    
-  </defs>
-  <circle cx="60" cy="60" r="52" fill="url(#glow-platinum)" opacity="0.55"/>
-  <circle cx="60" cy="66" r="54" fill="url(#ring-platinum)" stroke="#3f4a5c" stroke-width="3"/>
-  <circle cx="60" cy="66" r="46" fill="none" stroke="#3f4a5c" stroke-width="1.4" opacity="0.55"/>
-  <circle cx="60" cy="66" r="46" fill="url(#inner-platinum)"/>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#95a3bd"/></linearGradient>
+    <linearGradient id="ring2" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#95a3bd"/></linearGradient>
+    <radialGradient id="disc" cx=".5" cy=".38" r=".62"><stop offset="0" stop-color="#3c4a66"/><stop offset="1" stop-color="#161c2b"/></radialGradient>
+    <radialGradient id="spot" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="m" gradientUnits="userSpaceOnUse" x1="30" y1="18" x2="86" y2="100"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#e4eaf5"/><stop offset="1" stop-color="#a3b0c8"/></linearGradient></defs>
+  <path d="M52.6 112.7A53.2 53.2 0 0 1 14.9 31.8" fill="none" stroke="#4a5570" stroke-width="1.2" stroke-linecap="round"/><ellipse cx="46.6" cy="113.6" rx="2.30" ry="5.00" transform="rotate(72.0 46.6 113.6)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="31.6" cy="107.3" rx="2.16" ry="4.70" transform="rotate(89.0 31.6 107.3)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="19.0" cy="96.9" rx="2.02" ry="4.40" transform="rotate(106.0 19.0 96.9)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="10.0" cy="83.3" rx="1.89" ry="4.10" transform="rotate(123.0 10.0 83.3)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="5.3" cy="67.7" rx="1.75" ry="3.80" transform="rotate(140.0 5.3 67.7)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="5.5" cy="51.4" rx="1.61" ry="3.50" transform="rotate(157.0 5.5 51.4)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="10.4" cy="35.8" rx="1.47" ry="3.20" transform="rotate(174.0 10.4 35.8)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><g transform="translate(120 0) scale(-1 1)"><path d="M52.6 112.7A53.2 53.2 0 0 1 14.9 31.8" fill="none" stroke="#4a5570" stroke-width="1.2" stroke-linecap="round"/><ellipse cx="46.6" cy="113.6" rx="2.30" ry="5.00" transform="rotate(72.0 46.6 113.6)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="31.6" cy="107.3" rx="2.16" ry="4.70" transform="rotate(89.0 31.6 107.3)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="19.0" cy="96.9" rx="2.02" ry="4.40" transform="rotate(106.0 19.0 96.9)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="10.0" cy="83.3" rx="1.89" ry="4.10" transform="rotate(123.0 10.0 83.3)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="5.3" cy="67.7" rx="1.75" ry="3.80" transform="rotate(140.0 5.3 67.7)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="5.5" cy="51.4" rx="1.61" ry="3.50" transform="rotate(157.0 5.5 51.4)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/><ellipse cx="10.4" cy="35.8" rx="1.47" ry="3.20" transform="rotate(174.0 10.4 35.8)" fill="#e4eaf5" stroke="#4a5570" stroke-width=".8"/></g>
   
-    <g fill="url(#metal-platinum)" stroke="#0b1220" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-      <!-- finial -->
-      <circle cx="60" cy="26" r="5" />
-      <!-- vertical pole -->
-      <rect x="57" y="30" width="6" height="46" rx="2" />
-      <!-- crossbeam -->
-      <rect x="26" y="38" width="68" height="5" rx="2.5" />
-      <!-- beam pivot -->
-      <circle cx="60" cy="40.5" r="4.5" fill="#ffffff" stroke="#0b1220" stroke-width="1.5"/>
-      <!-- left chain -->
-      <path d="M30 41 L22 62" stroke="#0b1220" stroke-width="2" fill="none"/>
-      <path d="M38 41 L30 62" stroke="#0b1220" stroke-width="2" fill="none"/>
-      <!-- right chain -->
-      <path d="M90 41 L98 62" stroke="#0b1220" stroke-width="2" fill="none"/>
-      <path d="M82 41 L90 62" stroke="#0b1220" stroke-width="2" fill="none"/>
-      <!-- left pan -->
-      <path d="M16 62 Q26 74 36 62" fill="none" stroke="#0b1220" stroke-width="3"/>
-      <path d="M16 62 Q26 72 36 62 L34 63 Q26 70 18 63 Z" fill="url(#metal-platinum)" stroke="none"/>
-      <!-- right pan -->
-      <path d="M84 62 Q94 74 104 62" fill="none" stroke="#0b1220" stroke-width="3"/>
-      <path d="M84 62 Q94 72 104 62 L102 63 Q94 70 86 63 Z" fill="url(#metal-platinum)" stroke="none"/>
-      <!-- base plinth -->
-      <path d="M42 76 H78 L84 88 H36 Z" />
-      <rect x="30" y="88" width="60" height="7" rx="2.5" />
-    </g>
-    
+  <circle cx="60" cy="60" r="50" fill="url(#ring)" stroke="#3a4560" stroke-width="2.4"/>
+  <circle cx="60" cy="60" r="45.5" fill="url(#ring2)"/>
+  <circle cx="60" cy="60" r="42" fill="url(#disc)" stroke="#3a4560" stroke-width="1.6"/>
+  <ellipse cx="60" cy="54" rx="30" ry="34" fill="url(#spot)"/>
   
-  <text x="60" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#3f4a5c" letter-spacing="0.5">ПЛАТИНОВАЯ</text>
+  <g transform="translate(60 60.6) scale(.9) translate(-57.5 -58.5)">
+  <!-- постамент -->
+  <rect x="41" y="95" width="38" height="5" rx="1.6" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <rect x="46" y="89.5" width="28" height="5.6" rx="1" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <rect x="43.5" y="86.5" width="33" height="3.4" rx="1.2" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <!-- меч: остриём вниз, упирается в постамент -->
+  <path d="M77.6 62.5h3v20l-1.5 4-1.5-4z" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M79.1 63.5v18.5" stroke="#fff" stroke-opacity=".7" stroke-width=".7"/>
+  <rect x="74.3" y="60.6" width="9.6" height="2.4" rx="1.1" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <rect x="78.1" y="55.5" width="2" height="5.4" rx=".8" fill="#3a4560"/>
+  <circle cx="79.1" cy="54.6" r="1.6" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <!-- рука с мечом -->
+  <path d="M67 45.5c4.6 2.3 9 6.5 11.6 11.3" fill="none" stroke="#3a4560" stroke-width="5.6" stroke-linecap="round"/>
+  <path d="M67 45.5c4.6 2.3 9 6.5 11.6 11.3" fill="none" stroke="url(#m)" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="79" cy="58" r="2.3" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <!-- одеяние (хитон) -->
+  <path d="M51.3 44.4C54 41.6 57 40.6 60 40.6s6 1 8.7 3.8l-1.6 12c1.7 9 4.4 19.6 7.4 30.1-3 1.5-6 1.5-8.4.2-2.2 1.2-5 1.4-7.1.3-2.1 1.1-4.9.9-7.1-.3-2.4 1.3-5.4 1.3-8.4-.2 3-10.5 5.7-21.1 7.4-30.1z" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M56.6 58.5c-1.1 9-2.4 18-4.6 27M60 59v27.4M63.4 58.5c1.1 9 2.4 18 4.6 27" stroke="#3a4560" stroke-opacity=".55" stroke-width=".9" fill="none" stroke-linecap="round"/>
+  <path d="M52.3 45.5c5.5 3 10.4 7 14 11.5" stroke="#3a4560" stroke-opacity=".55" stroke-width=".9" fill="none" stroke-linecap="round"/>
+  <path d="M53.1 56.2c4.5 1.7 9.3 1.7 13.8 0" stroke="#dce3f0" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M53.1 56.2c4.5 1.7 9.3 1.7 13.8 0" stroke="#3a4560" stroke-opacity=".6" stroke-width=".6" fill="none"/>
+  <!-- поднятая рука с весами -->
+  <path d="M53 45.6c-5.8-2.4-10.2-8.3-12.4-16" fill="none" stroke="#3a4560" stroke-width="5.6" stroke-linecap="round"/>
+  <path d="M53 45.6c-5.8-2.4-10.2-8.3-12.4-16" fill="none" stroke="url(#m)" stroke-width="3.6" stroke-linecap="round"/>
+  <!-- весы -->
+  <path d="M30 24.5l-4.6 11M30 24.5l4.6 11M51 24.5l-4.6 11M51 24.5l4.6 11" stroke="#3a4560" stroke-width=".9" fill="none"/>
+  <rect x="28.5" y="22.8" width="24" height="2.4" rx="1.2" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M24 35.3h12c0 3.1-2.7 5-6 5s-6-1.9-6-5z" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M45 35.3h12c0 3.1-2.7 5-6 5s-6-1.9-6-5z" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M40.5 20.2v2.8" stroke="#3a4560" stroke-width="1.4" stroke-linecap="round"/>
+  <circle cx="40.5" cy="19.2" r="1.7" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle cx="40.5" cy="28.6" r="2.4" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <!-- голова: волосы, повязка, лента -->
+  <rect x="58.2" y="36" width="3.6" height="5.4" rx="1.2" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle cx="60" cy="23.8" r="3.1" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle cx="60" cy="31" r="6" fill="url(#m)" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M54.2 29.8c.4-3.6 2.8-5.9 5.8-5.9s5.4 2.3 5.8 5.9c-1.9-1.3-3.8-1.9-5.8-1.9s-3.9.6-5.8 1.9z" fill="#3a4560" fill-opacity=".45"/>
+  <path d="M65.6 30.2c2.6-.6 5.2.2 7 2.3-1.9-.1-3.3.4-4.6 1.4 0-1.4-.8-2.6-2.4-3.7z" fill="#dce3f0" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <rect x="53.8" y="29.3" width="12.4" height="3.3" rx="1.4" fill="#dce3f0" stroke="#3a4560" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M56.4 26.8c.9-1.2 2.2-1.8 3.6-1.8" stroke="#fff" stroke-opacity=".8" stroke-width="1" fill="none" stroke-linecap="round"/>
+</g>
+  <path d="M14.6 45.3A47.7 47.7 0 0 1 43.7 15.2" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  
 </svg>

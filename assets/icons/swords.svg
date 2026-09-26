@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"><defs><linearGradient id="bl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#dbe3ee"/><stop offset="1" stop-color="#94a3b8"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset="0.45" stop-color="#ffc93c"/><stop offset="1" stop-color="#e08a0b"/></linearGradient><linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b4533a"/><stop offset="1" stop-color="#7c2d12"/></linearGradient></defs>
+<g transform="translate(24 17.5) rotate(-40) translate(-24 -15)"><path d="M24 1.5 27.4 6.8v22.7h-6.8V6.8z" fill="url(#bl)"/>
+<path d="M24 7v21.5" stroke="#fff" stroke-opacity=".8" stroke-width="1.2"/>
+<path d="M24 7v21.5" stroke="#7b8aa3" stroke-opacity=".5" stroke-width="1" transform="translate(1.6 0)"/>
+<rect x="14.5" y="29" width="19" height="4.6" rx="2.3" fill="url(#g)"/>
+<rect x="21.9" y="33.4" width="4.2" height="8" rx="1.4" fill="url(#gr)"/>
+<circle cx="24" cy="43.2" r="3.1" fill="url(#g)"/></g>
+<g transform="translate(24 17.5) rotate(40) translate(-24 -15)"><path d="M24 1.5 27.4 6.8v22.7h-6.8V6.8z" fill="url(#bl)"/>
+<path d="M24 7v21.5" stroke="#fff" stroke-opacity=".8" stroke-width="1.2"/>
+<path d="M24 7v21.5" stroke="#7b8aa3" stroke-opacity=".5" stroke-width="1" transform="translate(1.6 0)"/>
+<rect x="14.5" y="29" width="19" height="4.6" rx="2.3" fill="url(#g)"/>
+<rect x="21.9" y="33.4" width="4.2" height="8" rx="1.4" fill="url(#gr)"/>
+<circle cx="24" cy="43.2" r="3.1" fill="url(#g)"/></g>
+</svg>

@@ -267,3 +267,16 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+/* Цветные SVG-иконки (assets/icons) вместо эмодзи — см. LexPrepIcon в script.js */
+.lp-icon {
+  display: inline-block;
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
+  vertical-align: -0.28em;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}

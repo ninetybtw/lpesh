@@ -30,7 +30,22 @@ const Arena = (function () {
     } catch (e) { /* не поддерживается — не страшно */ }
   }
 
-  // Игрок для экранов арены: { name, avatar, emoji, meta, rankIcon, tone }.
+  // Цветная SVG-иконка из assets/icons (см. LexPrepIcon в script.js).
+  function icon(name, className) {
+    if (typeof LexPrepIcon === 'function') return LexPrepIcon(name, className);
+    return `<img class="lp-icon ${className || ''}" src="assets/icons/${esc(name)}.svg" alt="" aria-hidden="true" />`;
+  }
+
+  // «10 монет», «1 монета», «3 монеты».
+  function coins(n) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    const word = abs > 10 && abs < 20 ? 'монет' : last === 1 ? 'монета' : last >= 2 && last <= 4 ? 'монеты' : 'монет';
+    return `${n} ${word}`;
+  }
+
+  // Игрок для экранов арены: { name, avatar, icon, meta, rankIcon, tone }.
+  // icon — аватар-иконка (боты), имя файла из assets/icons.
   // tone: 'blue' (ты) или 'red' (соперник) — цвет стороны.
   function levelInfo(xp) {
     if (typeof LexPrepProgress === 'undefined' || typeof xp !== 'number') return null;
@@ -65,7 +80,7 @@ const Arena = (function () {
 
   function avatarHtml(p, className) {
     const cls = `arena-avatar arena-avatar--${p.tone || 'blue'} ${className || ''}`;
-    if (p.emoji) return `<span class="${cls} arena-avatar--emoji">${p.emoji}</span>`;
+    if (p.icon) return `<span class="${cls} arena-avatar--icon">${icon(p.icon)}</span>`;
     if (p.avatar) return `<span class="${cls}" style="background-image:url(${esc(p.avatar)})"></span>`;
     return `<span class="${cls}">${initial(p.name)}</span>`;
   }
@@ -256,15 +271,15 @@ const Arena = (function () {
       miss(side) {
         restart(q(`[data-side="${side}"]`), 'is-miss');
       },
-      // Всплывающий текст над аватаром стороны: «+1», «🔥 ×3», «Мимо».
-      pop(side, text, tone) {
+      // Всплывающий текст над аватаром стороны: «+1», «×3» с огоньком, «Мимо».
+      pop(side, text, tone, iconName) {
         if (reduced()) return;
         const anchor = q(`[data-side="${side}"] .arena-avatar`);
         if (!anchor) return;
         const r = anchor.getBoundingClientRect();
         const el = document.createElement('span');
         el.className = `arena-pop arena-pop--${tone || 'ok'}`;
-        el.textContent = text;
+        el.innerHTML = `${iconName ? icon(iconName) : ''}${esc(text)}`;
         el.style.left = `${r.left + r.width / 2}px`;
         el.style.top = `${r.top - 6}px`;
         el.addEventListener('animationend', () => el.remove());
@@ -316,21 +331,22 @@ const Arena = (function () {
 
   /* ---------------- Баннер итога ---------------- */
   const OUTCOME = {
-    win: { icon: '🏆', title: 'Победа!', tone: 'win' },
-    loss: { icon: '💔', title: 'Поражение', tone: 'loss' },
-    draw: { icon: '🤝', title: 'Ничья', tone: 'draw' },
-    champion: { icon: '👑', title: 'Чемпион!', tone: 'win' },
-    wait: { icon: '⏳', title: 'Ждём соперника', tone: 'draw' },
-    out: { icon: '🛡️', title: 'Выбывание', tone: 'loss' }
+    win: { icon: 'trophy', title: 'Победа!', tone: 'win' },
+    loss: { icon: 'heart-broken', title: 'Поражение', tone: 'loss' },
+    draw: { icon: 'scales', title: 'Ничья', tone: 'draw' },
+    champion: { icon: 'crown', title: 'Чемпион!', tone: 'win' },
+    wait: { icon: 'hourglass', title: 'Ждём соперника', tone: 'draw' },
+    out: { icon: 'shield', title: 'Выбывание', tone: 'loss' }
   };
 
-  // rewards: [{ icon, label, value, tone }]; value — число (набегает) или строка.
+  // rewards: [{ icon, label, value, tone }]; icon — имя из assets/icons,
+  // value — число (набегает) или строка.
   function resultHtml({ outcome, title, subtitle, left, right, leftScore, rightScore, rewards }) {
     const o = OUTCOME[outcome] || OUTCOME.draw;
     return `
       <div class="arena-result arena-result--${o.tone}">
         <div class="arena-result__burst" aria-hidden="true"></div>
-        <div class="arena-result__icon">${o.icon}</div>
+        <div class="arena-result__icon">${icon(o.icon)}</div>
         <h1 class="arena-result__title">${esc(title || o.title)}</h1>
         ${subtitle ? `<p class="arena-result__subtitle">${esc(subtitle)}</p>` : ''}
         ${left && right ? `
@@ -343,7 +359,7 @@ const Arena = (function () {
           <div class="arena-result__rewards">
             ${rewards.map(r => `
               <div class="arena-reward arena-reward--${r.tone || 'neutral'}">
-                <span class="arena-reward__icon">${r.icon}</span>
+                <span class="arena-reward__icon">${icon(r.icon)}</span>
                 <span class="arena-reward__value" ${typeof r.value === 'number' ? `data-count-to="${r.value}"` : ''}>${typeof r.value === 'number' ? (r.value > 0 ? '+0' : '0') : esc(r.value)}</span>
                 <span class="arena-reward__label">${esc(r.label)}</span>
               </div>`).join('')}
@@ -390,7 +406,7 @@ const Arena = (function () {
   }
 
   return {
-    esc, reduced, wait, vibrate, me, fromProfile, avatarHtml, fighterHtml, rankBadge,
+    esc, icon, coins, reduced, wait, vibrate, me, fromProfile, avatarHtml, fighterHtml, rankBadge,
     vsIntro, flash, buildHud, revealAnswers, questionHtml, animateIn,
     resultHtml, playResult, loadProfiles, levelInfo
   };

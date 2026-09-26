@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const TOURNAMENT_TYPES = [
-    { id: 'quick', emoji: '⚡', title: 'Быстрый турнир', desc: 'Короткая сетка на вечер — четыре игрока, два раунда.', size: 4, questions: 5, prize: 150 },
-    { id: 'weekly', emoji: '🏆', title: 'Турнир недели', desc: 'Большая сетка — восемь игроков, три раунда до чемпиона.', size: 8, questions: 10, prize: 320 }
+    { id: 'quick', icon: 'lightning', title: 'Быстрый турнир', desc: 'Короткая сетка на вечер — четыре игрока, два раунда.', size: 4, questions: 5, prize: 150 },
+    { id: 'weekly', icon: 'trophy', title: 'Турнир недели', desc: 'Большая сетка — восемь игроков, три раунда до чемпиона.', size: 8, questions: 10, prize: 320 }
   ];
 
   const esc = Arena.esc;
@@ -81,9 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function buildList() {
     listEl.innerHTML = TOURNAMENT_TYPES.map(t => `
-      <div class="event-card event-card--${t.id}" data-tourney-card="${t.id}" data-emoji="${t.emoji}">
+      <div class="event-card event-card--${t.id}" data-tourney-card="${t.id}">
+        ${Arena.icon(t.icon, 'event-card__watermark')}
         <div class="event-card__top">
-          <span class="event-card__icon" aria-hidden="true">${t.emoji}</span>
+          <span class="event-card__icon" aria-hidden="true">${Arena.icon(t.icon)}</span>
           <span class="event-card__badge" data-badge>${t.size} игроков</span>
         </div>
         <div>
@@ -91,9 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="event-card__desc">${esc(t.desc)}</div>
         </div>
         <div class="event-card__facts">
-          <span class="event-fact">👥 <b>${t.size}</b> игроков</span>
-          <span class="event-fact">🎯 <b>${t.questions}</b> вопросов в матче</span>
-          <span class="event-fact">🪙 <b>${t.prize}</b> чемпиону</span>
+          <span class="event-fact">${Arena.icon('users')} <b>${t.size}</b> игроков</span>
+          <span class="event-fact">${Arena.icon('target')} <b>${t.questions}</b> вопросов в матче</span>
+          <span class="event-fact">${Arena.icon('coin')} <b>${t.prize}</b> чемпиону</span>
         </div>
         <button class="event-card__btn" type="button" disabled>Загрузка…</button>
       </div>
@@ -155,9 +156,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const allowance = tournamentAllowance();
       cardState[t.id] = { mode: 'join' };
       btn.disabled = !allowance.allowed;
-      btn.textContent = !allowance.allowed
-        ? allowance.label
-        : (allowance.usesTicket ? 'Участвовать (билет сверх лимита)' : '⚔️ Участвовать');
+      if (!allowance.allowed) btn.textContent = allowance.label;
+      else if (allowance.usesTicket) btn.textContent = 'Участвовать (билет сверх лимита)';
+      else btn.innerHTML = `${Arena.icon('swords')} Участвовать`;
     }
   }
 
@@ -184,7 +185,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let lockedIndex = -1;
   let battleChosen = [];
   let stageSignature = '';
-  let bracketSignature = '';
+  // Итог показываем один раз на турнир: иначе каждый опрос сервера заново
+  // перерисовывал баннер и сетку с анимацией — экран «мелькал».
+  let resultShownKey = '';
+  // Опросы не должны накладываться: новый не стартует, пока идёт прошлый.
+  let refreshInFlight = false;
 
   let progressPollTimer = null;
   let myProgress = 0;
@@ -211,7 +216,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function enterTournamentFlow(typeId) {
     currentTypeId = typeId;
     stageSignature = '';
-    bracketSignature = '';
+    resultShownKey = '';
+    bracketEl.dataset.signature = '';
     stopTimers();
     await refreshTournamentFlow();
     pollTimer = setInterval(refreshTournamentFlow, 2000);
@@ -228,9 +234,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ids = [];
     matches.forEach(m => ids.push(m.player1Id, m.player2Id));
     await ensureProfiles(ids);
-    const signature = JSON.stringify([matches, tournament.status, tournament.winnerId, tournament.currentRound]);
-    if (target === bracketEl && signature === bracketSignature) return;
-    if (target === bracketEl) bracketSignature = signature;
+    // Перерисовываем сетку только если в ней что-то изменилось.
+    const signature = JSON.stringify([matches, tournament.status, tournament.winnerId, tournament.currentRound, profileCache.size]);
+    if (target.dataset.signature === signature) return;
+    const firstRender = !target.dataset.signature;
+    target.dataset.signature = signature;
 
     const totalRounds = Math.round(Math.log2(tournament.size || 2));
     const rounds = [];
@@ -272,16 +280,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('') + (tournament.status === 'completed' && tournament.winnerId ? `
       <div class="bracket__round">
         <div class="bracket__round-title">Чемпион</div>
-        <div class="bracket-champion"><span aria-hidden="true">👑</span><span>${esc(shortName(tournament.winnerId))}</span></div>
+        <div class="bracket-champion"><span aria-hidden="true">${Arena.icon('crown')}</span><span>${esc(shortName(tournament.winnerId))}</span></div>
       </div>` : '');
     if (wrap) wrap.hidden = false;
-    if (window.LexPrepMotion && target.dataset.animated !== '1') {
-      target.dataset.animated = '1';
+    if (firstRender && window.LexPrepMotion) {
       LexPrepMotion.stagger(target, '.bracket-match, .bracket-champion');
     }
   }
 
   async function refreshTournamentFlow() {
+    if (refreshInFlight) return;
+    refreshInFlight = true;
+    try {
+      await refreshTournamentFlowOnce();
+    } finally {
+      refreshInFlight = false;
+    }
+  }
+
+  async function refreshTournamentFlowOnce() {
     let state;
     try {
       state = await LexPrepApi.getMyTournamentState(currentTypeId);
@@ -332,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       waitingTitleEl.textContent = roundName(tournament.currentRound, tournament.size);
       waitingMsgEl.textContent = 'Ждём, пока доиграют остальные пары и сформируется следующий матч…';
       setStage(`between-${tournament.currentRound}`, `
-        <div class="lobby__hourglass" aria-hidden="true">⏳</div>
+        <div class="lobby__hourglass" aria-hidden="true">${Arena.icon('hourglass')}</div>
         <span class="arena-page-head__eyebrow">Ты прошёл дальше!</span>`);
       renderBracket(tournament, bracketEl, bracketWrap);
       return;
@@ -547,7 +564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     hud.status('left', correct ? 'верно!' : 'мимо', correct ? 'ok' : 'bad');
     if (correct) {
       hud.hit('left');
-      hud.pop('left', myStreak >= 2 ? `🔥 ×${myStreak}` : '+1', 'ok');
+      hud.pop('left', myStreak >= 2 ? `×${myStreak}` : '+1', 'ok', myStreak >= 2 ? 'flame' : null);
     } else {
       hud.miss('left');
     }
@@ -581,7 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     waitingTitleEl.textContent = 'Матч завершён';
     waitingMsgEl.textContent = `Твой результат: ${battleScore} из ${battleQuestions.length}. Отправляем и ждём соперника…`;
     setStage(`sent-${match.id}`, `
-      <div class="lobby__hourglass" aria-hidden="true">📨</div>
+      <div class="lobby__hourglass lobby__hourglass--mail" aria-hidden="true">${Arena.icon('envelope')}</div>
       <div class="lobby__counter">${battleScore}<span>/ ${battleQuestions.length}</span></div>`);
 
     try {
@@ -599,6 +616,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resultBracketEl = document.getElementById('tourneyResultBracket');
 
   function showEliminated(tournament, eliminatedRound) {
+    const key = `out-${tournament.id}-${eliminatedRound}`;
+    if (resultShownKey === key) return;
+    resultShownKey = key;
     showView('results');
     document.getElementById('tourneyResultTitle').textContent = `Выбывание — ${roundName(eliminatedRound, tournament.size)}`;
     document.getElementById('tourneyResultMsg').textContent = '';
@@ -608,11 +628,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       subtitle: `${roundName(eliminatedRound, tournament.size)}: в этот раз соперник оказался сильнее. Спасибо за игру!`
     });
     Arena.playResult(resultEl, 'out');
-    resultBracketEl.dataset.animated = '';
+    resultBracketEl.dataset.signature = '';
     renderBracket(tournament, resultBracketEl, resultBracketWrap);
   }
 
   function showFinalResult(tournament, eliminatedRound) {
+    const key = `final-${tournament.id}-${tournament.winnerId}`;
+    if (resultShownKey === key) return;
+    resultShownKey = key;
     showView('results');
     const titleEl = document.getElementById('tourneyResultTitle');
     const msgEl = document.getElementById('tourneyResultMsg');
@@ -625,7 +648,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         outcome: 'champion',
         title: 'Чемпион!',
         subtitle: 'Вся сетка пройдена — ты лучший в этом турнире.',
-        rewards: [{ icon: '🪙', label: 'монет на баланс', value: tournament.prizeCoins, tone: 'up' }]
+        rewards: [{ icon: 'coin', label: 'монет на баланс', value: tournament.prizeCoins, tone: 'up' }]
       });
       Arena.playResult(resultEl, 'champion');
       LexPrepApi.me().then(fresh => {
@@ -644,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       Arena.playResult(resultEl, 'out');
     }
-    resultBracketEl.dataset.animated = '';
+    resultBracketEl.dataset.signature = '';
     renderBracket(tournament, resultBracketEl, resultBracketWrap);
   }
 

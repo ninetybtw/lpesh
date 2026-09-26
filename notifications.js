@@ -37,16 +37,22 @@ RLS разрешает только user_id = auth.uid()):
     return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   }
 
+  // Цветные SVG-иконки из assets/icons (раньше были эмодзи).
   const TYPE_ICONS = {
-    levelup: '⭐',
-    xp: '✨',
-    subscription: '💳',
-    subscription_expiring: '⏰',
-    rating_top: '🏆',
-    announcement: '📣',
-    promo: '🎁',
-    info: '🔔'
+    levelup: 'star',
+    xp: 'sparkles',
+    subscription: 'card',
+    subscription_expiring: 'alarm',
+    rating_top: 'trophy',
+    announcement: 'megaphone',
+    promo: 'gift',
+    info: 'bell'
   };
+
+  function typeIcon(type) {
+    const name = TYPE_ICONS[type] || TYPE_ICONS.info;
+    return `<img class="lp-icon" src="assets/icons/${name}.svg" alt="" aria-hidden="true" />`;
+  }
 
   function buildWidget() {
     const profileMenu = document.getElementById('profileMenu');
@@ -102,7 +108,7 @@ RLS разрешает только user_id = auth.uid()):
       }
       listEl.innerHTML = cache.map(n => `
         <a class="notif-item ${n.isRead ? '' : 'is-unread'}" href="${n.link ? escapeHtml(n.link) : '#'}" data-id="${n.id}">
-          <span class="notif-item__icon">${TYPE_ICONS[n.type] || TYPE_ICONS.info}</span>
+          <span class="notif-item__icon">${typeIcon(n.type)}</span>
           <span class="notif-item__body">
             <span class="notif-item__title">${escapeHtml(n.title)}</span>
             ${n.body ? `<span class="notif-item__text">${escapeHtml(n.body)}</span>` : ''}

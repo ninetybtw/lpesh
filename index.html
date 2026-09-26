@@ -49,9 +49,9 @@
     <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
-    <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
-    <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
+    <link rel="stylesheet" href="./styles/global.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
   <body>
     <!-- HEADER -->
@@ -88,9 +88,13 @@
           >
 
           <div class="profile-menu" data-auth="user" id="profileMenu">
-            <button class="profile-btn" id="profileBtn" type="button">
+            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
               <span class="profile-btn__avatar" id="profileAvatar">U</span>
-              <span class="profile-btn__name" id="profileName">Профиль</span>
+              <span class="profile-btn__text">
+                <span class="profile-btn__name" id="profileName">Профиль</span>
+                <span class="profile-btn__meta" id="profileMeta" hidden></span>
+              </span>
+              <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
 
             <div class="profile-dropdown" id="profileDropdown">
@@ -192,7 +196,7 @@
               <div class="study-card">
                 <span class="study-card__beam" aria-hidden="true"></span>
                 <div class="study-card__head">
-                  <span class="study-card__subject-icon" aria-hidden="true">⚖️</span>
+                  <span class="study-card__subject-icon" aria-hidden="true"><img class="lp-icon" src="assets/icons/scales.svg" alt="" /></span>
                   <span class="study-card__subject">
                     <small>Гражданское право</small>
                     <strong>Договор купли-продажи</strong>
@@ -216,7 +220,7 @@
                 </div>
 
                 <div class="study-stage">
-                  <div class="study-scene study-scene--notes is-active" data-study-scene="notes" data-xp="8" data-toast-icon="📖" data-toast-title="+8 опыта" data-toast-text="за прочитанный конспект">
+                  <div class="study-scene study-scene--notes is-active" data-study-scene="notes" data-xp="8" data-toast-icon="book-open" data-toast-title="+8 опыта" data-toast-text="за прочитанный конспект">
                     <p class="scene-notes__text">
                       По договору купли-продажи продавец обязуется
                       <mark class="scene-notes__mark">передать вещь в собственность</mark>
@@ -228,7 +232,7 @@
                     </div>
                   </div>
 
-                  <div class="study-scene study-scene--practice" data-study-scene="practice" data-xp="0" data-toast-icon="⚖️" data-toast-title="Практика по теме" data-toast-text="кейсы уже привязаны к конспекту">
+                  <div class="study-scene study-scene--practice" data-study-scene="practice" data-xp="0" data-toast-icon="scales" data-toast-title="Практика по теме" data-toast-text="кейсы уже привязаны к конспекту">
                     <div class="scene-case">
                       <span class="scene-case__label">Судебный кейс</span>
                       <p class="scene-case__text">
@@ -242,7 +246,7 @@
                     </div>
                   </div>
 
-                  <div class="study-scene study-scene--cards" data-study-scene="cards" data-xp="4" data-toast-icon="🧠" data-toast-title="+4 опыта" data-toast-text="повторим эти карточки через 3 дня">
+                  <div class="study-scene study-scene--cards" data-study-scene="cards" data-xp="4" data-toast-icon="brain" data-toast-title="+4 опыта" data-toast-text="повторим эти карточки через 3 дня">
                     <div class="scene-flip">
                       <div class="scene-flip__inner">
                         <div class="scene-flip__face scene-flip__face--front">
@@ -262,7 +266,7 @@
                     </div>
                   </div>
 
-                  <div class="study-scene study-scene--test" data-study-scene="test" data-xp="18" data-toast-icon="✅" data-toast-title="9 из 10 верно" data-toast-text="+18 опыта · тема закрыта">
+                  <div class="study-scene study-scene--test" data-study-scene="test" data-xp="18" data-toast-icon="check" data-toast-title="9 из 10 верно" data-toast-text="+18 опыта · тема закрыта">
                     <p class="scene-test__q">Если в договоре не указано количество товара, договор…</p>
                     <ul class="scene-test__options">
                       <li>заключён, количество определит суд</li>
@@ -285,7 +289,7 @@
             </div>
 
             <div class="hero-level" aria-hidden="true">
-              <img class="hero-level__icon" src="assets/badges/themis-bronze.svg" alt="" />
+              <img class="hero-level__icon" src="assets/badges/themis-bronze.svg?v=2" alt="" />
               <span class="hero-level__body">
                 <span class="hero-level__title">Уровень <span id="heroLevelValue">5</span> · Студент</span>
                 <span class="hero-level__track"><span class="hero-level__bar" id="heroLevelBar"></span></span>
@@ -294,7 +298,7 @@
             </div>
 
             <div class="hero-toast" id="heroToast" aria-hidden="true">
-              <span class="hero-toast__icon" id="heroToastIcon">📖</span>
+              <span class="hero-toast__icon" id="heroToastIcon"><img class="lp-icon" src="assets/icons/book-open.svg" alt="" /></span>
               <span class="hero-toast__body">
                 <strong id="heroToastTitle">+8 опыта</strong>
                 <small id="heroToastText">за прочитанный конспект</small>
@@ -397,9 +401,9 @@
                   проверкой модераторами.
                 </p>
                 <div class="feature-visual feature-visual--sources">
-                  <span class="feature-visual__source">📘 От редакции</span>
-                  <span class="feature-visual__source">🤖 От ИИ</span>
-                  <span class="feature-visual__source">👥 От студентов</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/book-open.svg" alt="" /> От редакции</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/bot-medium.svg" alt="" /> От ИИ</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/users.svg" alt="" /> От студентов</span>
                 </div>
               </div>
               <div class="feature-tabs__panel" data-feature-panel="practice" style="--tab-accent: #8c54ff">
@@ -431,7 +435,7 @@
                   получай бонусы к подписке.
                 </p>
                 <div class="feature-visual feature-visual--reward">
-                  <span>🪙</span>
+                  <span><img class="lp-icon" src="assets/icons/coin.svg" alt="" /></span>
                   <strong>+250 монет</strong>
                 </div>
               </div>
@@ -862,8 +866,8 @@
     <script src="vendor/supabase-js.min.js"></script>
     <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
-    <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260926220000"></script>
+    <script src="notifications.js?v=20260927030000"></script>
+    <script src="script.js?v=20260927030000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');

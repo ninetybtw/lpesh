@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa2ff"/><stop offset="1" stop-color="#2a3ecf"/></linearGradient><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f5a623"/></linearGradient></defs>
+<path d="M15.5 9h17c0 8.2-5.8 11.8-6.3 15 .5 3.2 6.3 6.8 6.3 15h-17c0-8.2 5.8-11.8 6.3-15-.5-3.2-6.3-6.8-6.3-15z" fill="#dbeafe" fill-opacity=".75" stroke="#93b4fd" stroke-width="1.2"/>
+<path d="M18.3 13h11.4c-.9 4.6-4.2 6.6-5.7 9.3-1.5-2.7-4.8-4.7-5.7-9.3z" fill="url(#s)"/>
+<rect x="23.4" y="22" width="1.2" height="10" rx=".6" fill="#f5a623"/>
+<path d="M17 38.3c1.2-4.6 4.2-7.1 7-7.1s5.8 2.5 7 7.1z" fill="url(#s)"/>
+<path d="M18.6 11.5c.4 3 1.8 5 3.4 6.6" stroke="#fff" stroke-opacity=".8" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<rect x="11" y="5" width="26" height="4.6" rx="2.3" fill="url(#f)"/>
+<rect x="11" y="38.4" width="26" height="4.6" rx="2.3" fill="url(#f)"/>
+</svg>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"><defs><radialGradient id="o" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd45e"/><stop offset="1" stop-color="#ff5a2e"/></radialGradient><radialGradient id="i" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe27a"/></radialGradient></defs>
+<path d="M24.00 3.00L27.38 12.49L33.65 8.98L33.07 16.14L42.53 15.54L35.88 22.29L40.63 26.39L34.92 28.98L39.87 37.75L30.49 34.10L29.32 42.13L24.00 36.00L19.09 40.72L17.51 34.10L8.45 37.48L13.08 28.98L6.12 26.57L12.12 22.29L5.85 15.71L14.93 16.14L14.01 8.45L20.62 12.49Z" fill="url(#o)" stroke="#e8471f" stroke-width="1" stroke-linejoin="round"/>
+<path d="M28.28 12.25L28.73 18.84L33.63 19.51L30.99 23.69L35.16 28.06L29.16 28.73L28.23 33.06L24.31 30.99L19.72 35.75L19.27 29.16L13.80 28.75L17.01 24.31L14.37 20.49L18.84 19.27L18.93 13.12L23.69 17.01Z" fill="url(#i)"/>
+</svg>

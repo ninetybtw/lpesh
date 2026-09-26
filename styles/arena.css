@@ -119,8 +119,14 @@ body.arena-body::before {
   border: 2px dashed var(--color-border);
 }
 
-.arena-avatar--emoji {
-  font-size: 1.35em;
+.arena-avatar--icon {
+  background: radial-gradient(circle at 50% 35%, #ffffff, #e3e8ff);
+}
+
+.arena-avatar--icon .lp-icon {
+  width: 72%;
+  height: 72%;
+  vertical-align: middle;
 }
 
 .arena-avatar--sm {
@@ -147,17 +153,6 @@ body.arena-body::before {
   font-size: 36px;
 }
 
-.arena-avatar--xl.arena-avatar--emoji {
-  font-size: 46px;
-}
-
-.arena-avatar--lg.arena-avatar--emoji {
-  font-size: 32px;
-}
-
-.arena-avatar--md.arena-avatar--emoji {
-  font-size: 24px;
-}
 
 .arena-rank {
   position: absolute;
@@ -370,6 +365,11 @@ body.arena-body::before {
   transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
+.arena-mode__icon .lp-icon {
+  width: 32px;
+  height: 32px;
+}
+
 .arena-mode__text {
   display: flex;
   flex-direction: column;
@@ -510,6 +510,11 @@ body.arena-body::before {
   font-size: 34px;
   background: var(--color-white);
   box-shadow: var(--shadow-sm);
+}
+
+.bot-card__avatar .lp-icon {
+  width: 72%;
+  height: 72%;
 }
 
 .bot-card__name {
@@ -863,11 +868,15 @@ body.vs-intro-open {
 .vs-intro__row {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(10px, 6vw, 70px);
+  /* Три колонки: бойцы по краям одинаковой ширины, VS строго по центру
+     экрана и на высоте центра аватаров (а не всего блока с подписями). */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  justify-items: center;
+  gap: clamp(8px, 4vw, 48px);
   width: 100%;
+  max-width: 720px;
   padding: 0 14px;
   animation: vsShake 0.45s ease 0.95s;
 }
@@ -913,8 +922,8 @@ body.vs-intro-open {
   position: relative;
   display: grid;
   place-items: center;
-  width: 90px;
-  height: 90px;
+  width: 88px;
+  height: 88px;
   flex-shrink: 0;
 }
 
@@ -930,6 +939,9 @@ body.vs-intro-open {
 
 .vs-intro__vs span {
   position: relative;
+  /* Курсив визуально уводит буквы вправо — компенсируем. */
+  padding-right: 0.08em;
+  line-height: 1;
   font-size: 50px;
   font-weight: 900;
   font-style: italic;
@@ -1196,6 +1208,8 @@ body.vs-intro-open {
 }
 
 .arena-hud__vs {
+  padding-right: 0.08em;
+  line-height: 1.1;
   font-size: 24px;
   font-weight: 900;
   font-style: italic;
@@ -1355,9 +1369,11 @@ body.vs-intro-open {
 }
 
 .arena-hud__side.is-hit::after {
-  content: "💥";
+  content: "";
   position: absolute;
-  font-size: 26px;
+  width: 34px;
+  height: 34px;
+  background: url("../assets/icons/burst.svg") center / contain no-repeat;
   pointer-events: none;
   animation: hitBoom 0.55s ease forwards;
 }
@@ -1448,6 +1464,9 @@ body.vs-intro-open {
 .arena-pop {
   position: fixed;
   z-index: 3850;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   white-space: nowrap;
   font-size: 19px;
   font-weight: 900;
@@ -1682,9 +1701,18 @@ body.vs-intro-open {
 
 .arena-result__icon {
   position: relative;
+  display: grid;
+  place-items: center;
+  height: 88px;
   font-size: 68px;
   line-height: 1.1;
   animation: trophyIn 0.8s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.arena-result__icon .lp-icon {
+  width: 88px;
+  height: 88px;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25));
 }
 
 @keyframes trophyIn {
@@ -1738,7 +1766,7 @@ body.vs-intro-open {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 12px;
   max-width: 460px;
   margin: 22px auto 0;
@@ -1766,6 +1794,7 @@ body.vs-intro-open {
 .arena-result__nums {
   display: flex;
   align-items: center;
+  height: 60px;
   gap: 8px;
   font-size: 46px;
   font-weight: 900;
@@ -1818,7 +1847,14 @@ body.vs-intro-open {
 }
 
 .arena-reward__icon {
+  display: grid;
+  place-items: center;
   font-size: 22px;
+}
+
+.arena-reward__icon .lp-icon {
+  width: 30px;
+  height: 30px;
 }
 
 .arena-reward__value {
@@ -2232,6 +2268,11 @@ body.vs-intro-open {
   font-size: 32px;
 }
 
+.arena-empty__icon .lp-icon {
+  width: 52px;
+  height: 52px;
+}
+
 /* ---------------- Экран готовности (VS) ---------------- */
 .arena-card--ready {
   text-align: center;
@@ -2247,10 +2288,11 @@ body.vs-intro-open {
 }
 
 .arena-ready {
+  --ready-avatar: 88px;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 10px;
   padding: 24px 10px;
   overflow: hidden;
@@ -2274,8 +2316,16 @@ body.vs-intro-open {
   animation: fighterInRight 0.6s cubic-bezier(0.2, 1.2, 0.3, 1) both;
 }
 
+.arena-ready__vs {
+  display: grid;
+  place-items: center;
+  height: var(--ready-avatar);
+}
+
 .arena-ready__vs span {
   display: inline-block;
+  padding-right: 0.08em;
+  line-height: 1;
   font-size: 40px;
   font-weight: 900;
   font-style: italic;
@@ -2359,15 +2409,14 @@ body.vs-intro-open {
   background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.06) 0 12px, transparent 12px 28px);
 }
 
-.event-card::after {
-  content: attr(data-emoji);
+.event-card__watermark.lp-icon {
   position: absolute;
-  right: -16px;
-  bottom: -30px;
+  right: -18px;
+  bottom: -26px;
   z-index: -1;
-  font-size: 150px;
-  line-height: 1;
-  opacity: 0.16;
+  width: 170px;
+  height: 170px;
+  opacity: 0.2;
   transform: rotate(-12deg);
 }
 
@@ -2394,6 +2443,11 @@ body.vs-intro-open {
   border-radius: 18px;
   font-size: 30px;
   background: rgba(255, 255, 255, 0.18);
+}
+
+.event-card__icon .lp-icon {
+  width: 36px;
+  height: 36px;
 }
 
 .event-card__badge {
@@ -2428,6 +2482,9 @@ body.vs-intro-open {
 }
 
 .event-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 6px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -2564,6 +2621,9 @@ body.vs-intro-open {
   display: grid;
   grid-auto-columns: minmax(150px, 1fr);
   text-align: left;
+  /* Без этого при появлении карточек матчей (сдвиг по вертикали) на миг
+     появлялась вертикальная прокрутка — сетка «мелькала». */
+  overflow-y: hidden;
   grid-auto-flow: column;
   gap: 18px;
   padding: 4px 2px 10px;
@@ -2677,7 +2737,13 @@ body.vs-intro-open {
 }
 
 .bracket-champion span:first-child {
+  display: flex;
   font-size: 30px;
+}
+
+.bracket-champion .lp-icon {
+  width: 38px;
+  height: 38px;
 }
 
 /* «Игровой режим»: во время боя и на итогах остаются только табло,
@@ -2891,6 +2957,10 @@ body.arena-in-game .arena-modes {
     padding: 18px 4px;
   }
 
+  .arena-ready {
+    --ready-avatar: 70px;
+  }
+
   .arena-ready .arena-avatar--xl {
     width: 70px;
     height: 70px;
@@ -3010,8 +3080,14 @@ body.arena-in-game .arena-modes {
 }
 
 .arena-howto__steps span {
-  margin-bottom: 4px;
+  display: flex;
+  margin-bottom: 6px;
   font-size: 24px;
+}
+
+.arena-howto__steps .lp-icon {
+  width: 34px;
+  height: 34px;
 }
 
 .arena-howto__steps b {
@@ -3029,6 +3105,26 @@ body.arena-in-game .arena-modes {
   margin-bottom: 6px;
   font-size: 46px;
   animation: hourglassFlip 2.4s ease-in-out infinite;
+}
+
+.lobby__hourglass .lp-icon {
+  display: block;
+  width: 60px;
+  height: 60px;
+}
+
+.lobby__hourglass--mail {
+  animation: mailFloat 1.8s ease-in-out infinite;
+}
+
+@keyframes mailFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(4deg);
+  }
 }
 
 @keyframes hourglassFlip {

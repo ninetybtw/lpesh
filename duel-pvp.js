@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTopicOptions();
 
     function ratingChip(value) {
-      return `<span aria-hidden="true">⚔️</span><b>${value}</b><span>рейтинг PvP</span>`;
+      return `${Arena.icon('swords')}<b>${value}</b><span>рейтинг PvP</span>`;
     }
 
     function renderStats() {
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!others.length) {
         openListEl.innerHTML = `
           <div class="arena-empty">
-            <span class="arena-empty__icon" aria-hidden="true">🏟️</span>
+            <span class="arena-empty__icon" aria-hidden="true">${Arena.icon('arena')}</span>
             <p>Пока никто не бросил вызов — создай свой, и соперник найдётся.</p>
           </div>`;
         return;
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       openListEl.innerHTML = others.map(d => {
         const meta = [
           d.challengerLevel ? `Ур. ${d.challengerLevel}` : '',
-          d.challengerRating ? `⚔️ ${d.challengerRating}` : ''
+          d.challengerRating ? `PvP ${d.challengerRating}` : ''
         ].filter(Boolean).join(' · ');
         const player = playerFor(d.challengerId, d.challengerName || 'Игрок', meta);
         return `
@@ -139,12 +139,12 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="challenge-card__name">${escapeHtml(player.name)}</div>
               <div class="challenge-card__meta">${escapeHtml(meta || player.meta || '')}</div>
               <div class="challenge-card__tags">
-                <span class="arena-tag">📚 ${escapeHtml(disciplineLabel(d.discipline))}</span>
-                <span class="arena-tag">🎯 ${d.questionCount} раундов</span>
+                <span class="arena-tag">${Arena.icon('books')} ${escapeHtml(disciplineLabel(d.discipline))}</span>
+                <span class="arena-tag">${Arena.icon('target')} ${d.questionCount} раундов</span>
                 <span class="arena-tag arena-tag--muted">${formatDateTime(d.createdAt)}</span>
               </div>
             </div>
-            <button type="button" class="arena-accept" data-accept="${d.id}">⚔️ Принять</button>
+            <button type="button" class="arena-accept" data-accept="${d.id}">${Arena.icon('swords')} Принять</button>
           </div>
         `;
       }).join('');
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!fullList.length) {
         myListEl.innerHTML = `
           <div class="arena-empty">
-            <span class="arena-empty__icon" aria-hidden="true">⚔️</span>
+            <span class="arena-empty__icon" aria-hidden="true">${Arena.icon('swords')}</span>
             <p>Ты ещё не создавал и не принимал дуэли.</p>
           </div>`;
         return;
@@ -201,8 +201,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="search-card__info">
                 <div class="search-card__title">Ищем соперника…</div>
                 <div class="challenge-card__tags">
-                  <span class="arena-tag">📚 ${escapeHtml(disciplineLabel(d.discipline))}</span>
-                  <span class="arena-tag">🎯 ${d.questionCount} раундов</span>
+                  <span class="arena-tag">${Arena.icon('books')} ${escapeHtml(disciplineLabel(d.discipline))}</span>
+                  <span class="arena-tag">${Arena.icon('target')} ${d.questionCount} раундов</span>
                 </div>
               </div>
               <button type="button" class="arena-link-btn" data-cancel="${d.id}">Отменить</button>
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           action = `<button type="button" class="arena-accept" data-play="${d.id}">▶ Играть</button>`;
           state = 'is-live';
         } else if (d.status === 'accepted' && myPlayed) {
-          action = `<span class="arena-tag arena-tag--wait">⏳ ждём соперника</span>`;
+          action = `<span class="arena-tag arena-tag--wait">${Arena.icon('hourglass')} ждём соперника</span>`;
         }
 
         let resultLine = '';
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isChallenger = duel.challengerId === user.id;
       const oppId = isChallenger ? duel.opponentId : duel.challengerId;
       const oppName = (isChallenger ? duel.opponentName : duel.challengerName) || 'Соперник';
-      const meta = !isChallenger && duel.challengerRating ? `⚔️ ${duel.challengerRating}` : '';
+      const meta = !isChallenger && duel.challengerRating ? `PvP ${duel.challengerRating}` : '';
       return { id: oppId, player: playerFor(oppId, oppName, meta) };
     }
 
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       battleFinished = false;
       renderedIndex = -1;
       lockedIndex = -1;
-      mePlayer = Arena.me(user, user.duelRating ? `⚔️ ${user.duelRating}` : undefined);
+      mePlayer = Arena.me(user, user.duelRating ? `PvP ${user.duelRating}` : undefined);
       const opp = opponentOf(duel);
       oppPlayer = opp.player;
       showPvpView('ready');
@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       hud.status('left', correct ? 'верно!' : 'мимо', correct ? 'ok' : 'bad');
       if (correct) {
         hud.hit('left');
-        hud.pop('left', myStreak >= 2 ? `🔥 ×${myStreak}` : '+1', 'ok');
+        hud.pop('left', myStreak >= 2 ? `×${myStreak}` : '+1', 'ok', myStreak >= 2 ? 'flame' : null);
       } else {
         hud.miss('left');
       }
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           leftScore: myScore,
           rightScore: oppScore,
           rewards: [
-            { icon: '⚔️', label: 'рейтинг PvP', value: myDelta || 0, tone: (myDelta || 0) >= 0 ? 'up' : 'down' }
+            { icon: 'swords', label: 'рейтинг PvP', value: myDelta || 0, tone: (myDelta || 0) >= 0 ? 'up' : 'down' }
           ]
         });
         Arena.playResult(detailsEl, outcome);
