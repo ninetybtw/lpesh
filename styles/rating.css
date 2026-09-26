@@ -1,92 +1,556 @@
 /* ==========================================================================
-RATING.CSS — страница рейтинга
+RATING.CSS — страница рейтинга: моё место, пьедестал топ-3, фильтр по
+лигам и список участников.
 ========================================================================== */
 
 .rating-page {
   min-height: 100vh;
-  background: var(--color-bg-alt);
 }
 
 .rating-shell {
-  padding: 40px 0 72px;
+  padding: 36px 0 72px;
 }
 
-.rating-demo-note {
-  margin: 14px 0 24px;
-  padding: 14px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: rgba(212, 175, 55, 0.1);
-  color: var(--color-text);
-  font-size: 13px;
-  line-height: 1.6;
+.rating-head {
+  margin-bottom: 22px;
+  animation: staggerIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
-.rating-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
+.rating-head .page-title {
+  margin-bottom: 8px;
+  font-size: clamp(28px, 4vw, 38px);
 }
 
-.rating-legend__item {
+.rating-head .topic-desc {
+  max-width: 640px;
+  font-size: 15px;
+}
+
+/* ---------------- Моё место ---------------- */
+.rating-me {
+  position: relative;
+  margin-bottom: 26px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 60%),
+    radial-gradient(120% 140% at 100% 100%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 60%),
+    var(--color-white);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: staggerIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s backwards;
+}
+
+.rating-me[hidden] {
+  display: none;
+}
+
+.rating-me__top {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 12px 6px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-white);
-  font-size: 12px;
+  gap: 14px;
+}
+
+.rating-me__place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), #8c54ff);
+  color: #fff;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+.rating-me__place-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.rating-me__place-num {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-me__avatar,
+.rating-row__avatar,
+.podium__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5f7bff, #8c54ff);
+  color: #fff;
+  font-weight: 800;
+}
+
+.rating-me__avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 20px;
+}
+
+.rating-me__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rating-me__name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-me__league {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text-muted);
 }
 
-.rating-legend__icon {
-  width: 24px;
-  height: 24px;
+.rating-me__league img {
+  width: 22px;
+  height: 22px;
 }
 
+.rating-me__xp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.rating-me__xp strong {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-me__xp span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.rating-me__goals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.rating-me__goal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.rating-me__goal strong {
+  color: var(--color-text);
+}
+
+.rating-me__goal-icon {
+  font-size: 20px;
+}
+
+.rating-me__goal--league {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.rating-me__goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rating-me__goal-row img {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.rating-me__bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  overflow: hidden;
+}
+
+.rating-me__bar span {
+  position: relative;
+  display: block;
+  width: var(--w);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), #8c54ff, var(--color-accent));
+  overflow: hidden;
+  animation: barGrow 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s backwards;
+}
+
+.rating-me__bar span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.5) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: fillShine 3.4s ease-in-out 1.6s infinite;
+}
+
+.rating-me__find {
+  margin-top: 12px;
+  width: 100%;
+}
+
+@keyframes barGrow {
+  from {
+    width: 0;
+  }
+}
+
+/* ---------------- Пьедестал ---------------- */
+.rating-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+
+.rating-podium[hidden] {
+  display: none;
+}
+
+.podium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.podium__person {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+  animation: podiumPersonIn 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
+}
+
+.podium__crown {
+  position: absolute;
+  top: -22px;
+  font-size: 24px;
+  animation: crownBob 2.6s ease-in-out 1.4s infinite;
+}
+
+.podium__avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  border: 3px solid var(--color-white);
+  box-shadow: var(--shadow-md);
+}
+
+.podium--1 .podium__avatar {
+  width: 72px;
+  height: 72px;
+  font-size: 28px;
+  border-color: #f5c542;
+  box-shadow: 0 0 0 4px rgba(245, 197, 66, 0.25), var(--shadow-md);
+}
+
+.podium--2 .podium__avatar {
+  border-color: #c3c9d6;
+}
+
+.podium--3 .podium__avatar {
+  border-color: #d08a4f;
+}
+
+.podium__name {
+  max-width: 100%;
+  margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.podium__xp {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.podium__stand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding-top: 12px;
+  border-radius: 18px 18px 8px 8px;
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  overflow: hidden;
+  transform-origin: bottom center;
+  animation: podiumRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.podium__stand::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: podiumShine 4.5s ease-in-out 2s infinite;
+}
+
+.podium--1 .podium__stand {
+  height: 128px;
+  background: linear-gradient(180deg, rgba(245, 197, 66, 0.35), rgba(245, 197, 66, 0.06));
+  animation-delay: 0.45s;
+}
+
+.podium--2 .podium__stand {
+  height: 96px;
+  background: linear-gradient(180deg, rgba(195, 201, 214, 0.35), rgba(195, 201, 214, 0.06));
+  animation-delay: 0.25s;
+}
+
+.podium--3 .podium__stand {
+  height: 76px;
+  background: linear-gradient(180deg, rgba(208, 138, 79, 0.35), rgba(208, 138, 79, 0.06));
+  animation-delay: 0.1s;
+}
+
+.podium--1 .podium__person {
+  animation-delay: 0.75s;
+}
+
+.podium--2 .podium__person {
+  animation-delay: 0.55s;
+}
+
+.podium--3 .podium__person {
+  animation-delay: 0.4s;
+}
+
+.podium__badge {
+  width: 30px;
+  height: 30px;
+}
+
+.podium__place {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text);
+  opacity: 0.8;
+}
+
+.podium.is-you .podium__name::after {
+  content: " · ты";
+  color: var(--color-primary);
+}
+
+.podium.is-flash .podium__avatar {
+  animation: youFlash 1.2s ease;
+}
+
+@keyframes podiumRise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes podiumPersonIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.8);
+  }
+}
+
+@keyframes podiumShine {
+  0%,
+  70% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes crownBob {
+  50% {
+    transform: translateY(-4px) rotate(-8deg);
+  }
+}
+
+/* ---------------- Фильтр по лигам ---------------- */
+.rating-legend {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  animation: staggerIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards;
+}
+
+.rating-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.rating-legend__item {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform 0.15s ease;
+}
+
+.rating-legend__item[data-league="all"] {
+  padding-left: 12px;
+}
+
+.rating-legend__item:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.rating-legend__item:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rating-legend__item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rating-legend__item.is-active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary), #8c54ff);
+  color: #fff;
+}
+
+.rating-legend__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.rating-legend__count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.rating-legend__item.is-active .rating-legend__count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* ---------------- Список ---------------- */
 .rating-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rating-row {
   display: grid;
-  grid-template-columns: 40px 44px 1fr auto auto auto;
+  grid-template-columns: 44px 44px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 10px 16px 10px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: var(--color-white);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rating-row:hover {
+  transform: translateX(3px);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .rating-row.is-you {
   border-color: var(--color-primary);
-  background: var(--color-primary-light);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 16%, var(--color-white)), var(--color-white));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.rating-row.is-flash {
+  animation: youFlash 1.2s ease;
+}
+
+@keyframes youFlash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 0%, transparent);
+  }
+  30%,
+  60% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
 }
 
 .rating-row__place {
   font-size: 14px;
   font-weight: 800;
   color: var(--color-text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .rating-row__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
   font-size: 15px;
-  font-weight: 800;
-  flex-shrink: 0;
 }
 
 .rating-row__info {
@@ -113,65 +577,168 @@ RATING.CSS — страница рейтинга
   vertical-align: middle;
 }
 
-.rating-row__university {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rating-row__league {
+.rating-row__meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .rating-row__badge {
-  width: 26px;
-  height: 26px;
-}
-
-.rating-row__league-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  display: none;
-}
-
-.rating-row__level {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--color-text-muted);
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
+}
+
+.rating-row__dot {
+  opacity: 0.6;
 }
 
 .rating-row__xp {
-  font-size: 13px;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--color-primary);
-  flex-shrink: 0;
-  min-width: 64px;
-  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-@media (min-width: 720px) {
-  .rating-row__league-name {
-    display: inline;
+.rating-row__xp small {
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+}
+
+/* Заглушка, пока грузится список. */
+.rating-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rating-skeleton__row {
+  height: 62px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--color-white) 25%, var(--color-bg-alt) 50%, var(--color-white) 75%);
+  background-size: 200% 100%;
+  border: 1px solid var(--color-border);
+  animation: skeletonShimmer 1.3s linear infinite;
+}
+
+@keyframes skeletonShimmer {
+  to {
+    background-position: -200% 0;
   }
 }
 
+/* ---------------- Телефон ---------------- */
 @media (max-width: 640px) {
-  .rating-row {
-    grid-template-columns: 32px 36px 1fr;
-    row-gap: 6px;
+  .rating-shell {
+    padding: 20px 0 32px;
   }
 
-  .rating-row__league,
-  .rating-row__level,
-  .rating-row__xp {
-    grid-column: 3;
-    justify-self: start;
+  .rating-shell .container {
+    padding: 0 12px;
+  }
+
+  .rating-head .topic-desc {
+    font-size: 14px;
+  }
+
+  .rating-me {
+    padding: 16px;
+  }
+
+  .rating-me__top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .rating-me__avatar {
+    display: none;
+  }
+
+  .rating-me__place {
+    min-width: 64px;
+  }
+
+  .rating-me__goals {
+    grid-template-columns: 1fr;
+  }
+
+  .rating-podium {
+    gap: 8px;
+  }
+
+  .podium__avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 19px;
+  }
+
+  .podium--1 .podium__avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .podium__name {
+    font-size: 12.5px;
+  }
+
+  .podium--1 .podium__stand {
+    height: 108px;
+  }
+
+  .podium--2 .podium__stand {
+    height: 82px;
+  }
+
+  .podium--3 .podium__stand {
+    height: 64px;
+  }
+
+  .rating-legend {
+    margin: 0 -12px 14px;
+    padding: 0 12px 4px;
+  }
+
+  .rating-row {
+    grid-template-columns: 30px 38px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 9px 12px 9px 8px;
+  }
+
+  .rating-row__avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .rating-row:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-head,
+  .rating-me,
+  .rating-me__bar span,
+  .rating-me__bar span::after,
+  .podium__person,
+  .podium__crown,
+  .podium__stand,
+  .podium__stand::after,
+  .rating-legend,
+  .rating-row.is-flash,
+  .podium.is-flash .podium__avatar,
+  .rating-skeleton__row {
+    animation: none !important;
   }
 }

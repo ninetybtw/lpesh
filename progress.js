@@ -724,6 +724,7 @@ const LexPrepProgress = (function () {
     getGamification,
     getAchievements,
     getLevelInfo,
+    xpThreshold,
     getCoins,
     spendCoins,
     addCoins,

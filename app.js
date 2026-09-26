@@ -295,11 +295,16 @@ function initAiChat() {
     clearAttachment();
     sending = true;
     const pending = addMessage('Печатает…', 'bot');
+    pending.classList.add('is-typing');
+    pending.setAttribute('aria-label', 'Консультант печатает');
+    pending.innerHTML = '<span></span><span></span><span></span>';
 
     try {
       const result = advanced
         ? await LexPrepApi.askAiConsultantPro(text, history, attachment)
         : await LexPrepApi.askAiConsultant(text, history);
+      pending.classList.remove('is-typing');
+      pending.removeAttribute('aria-label');
       pending.innerHTML = formatBotText(result.reply);
       history.push({ role: 'user', content: text }, { role: 'assistant', content: result.reply });
       saveHistory();
@@ -307,6 +312,8 @@ function initAiChat() {
         addMessage(`Осталось запросов сегодня: ${result.remaining} из ${result.limit}.`, 'bot');
       }
     } catch (err) {
+      pending.classList.remove('is-typing');
+      pending.removeAttribute('aria-label');
       pending.textContent = err.message;
     } finally {
       sending = false;
@@ -349,6 +356,8 @@ function initApp() {
   let cardPos = 0;
   let cardFlipped = false;
   let cardMode = 'text';
+  let skipCardEnter = false;
+  let cardFlipping = false;
   let voiceAnswerResult = null;
   let voiceTranscript = '';
   let voiceError = '';
@@ -418,6 +427,24 @@ function initApp() {
   function closeSelectMenus() {
     if (disciplineSelectMenu) disciplineSelectMenu.hidden = true;
     if (topicSelectMenu) topicSelectMenu.hidden = true;
+    syncSheetState();
+  }
+
+  // На телефоне выпадающие списки дисциплины/темы показываются шторкой
+  // снизу (см. .app-select__menu в app.css) — под ней затемнение и
+  // заблокированная прокрутка страницы.
+  function syncSheetState() {
+    const open = !disciplineSelectMenu.hidden || !topicSelectMenu.hidden;
+    document.body.classList.toggle('sheet-open', open);
+  }
+
+  function openSelectMenu(menu) {
+    menu.hidden = false;
+    syncSheetState();
+    // Прокручиваем только сам список (не страницу) к выбранному пункту.
+    const active = menu.querySelector('.item-btn.is-active');
+    if (active) menu.scrollTop = Math.max(0, active.offsetTop - menu.clientHeight / 2 + active.offsetHeight / 2);
+    if (window.LexPrepMotion) LexPrepMotion.stagger(menu, '.item-btn');
   }
 
   // Дисциплина и тема — два выпадающих списка над контентом (а не
@@ -425,7 +452,7 @@ function initApp() {
   // а переключение темы не сворачивает/разворачивает соседние панели.
   function renderSelectors() {
     disciplineSelectValue.textContent = activeDiscipline.title;
-    disciplineSelectMenu.innerHTML = DATA.map(d => {
+    disciplineSelectMenu.innerHTML = '<div class="app-select__sheet-head">Дисциплина</div>' + DATA.map(d => {
       const progress = LexPrepProgress.getDisciplineProgress(d);
       const locked = LexPrepPlan.isDisciplineLocked(d.id, DATA);
       return `
@@ -450,7 +477,7 @@ function initApp() {
     });
 
     topicSelectValue.textContent = activeTopic.title;
-    topicSelectMenu.innerHTML = activeDiscipline.topics.map(t => {
+    topicSelectMenu.innerHTML = `<div class="app-select__sheet-head">${escapeHtml(activeDiscipline.title)}</div>` + activeDiscipline.topics.map(t => {
       const progress = LexPrepProgress.getTopicProgress(t.id, t);
       return `
       <button type="button" class="item-btn ${t.id === activeTopic.id ? 'is-active' : ''}" data-topic="${t.id}">
@@ -507,11 +534,25 @@ function initApp() {
     });
 
     searchResults.hidden = false;
+    if (window.LexPrepMotion) LexPrepMotion.stagger(searchResults, '.item-btn');
+  }
+
+  // Примерное время чтения конспекта (~170 слов в минуту).
+  function readingMinutes(html) {
+    const text = String(html || '').replace(/<[^>]+>/g, ' ');
+    const words = text.split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.round(words / 170));
   }
 
   function renderContent(animate) {
     if (animate === undefined) animate = true;
     contentView.classList.remove('content-fade-in');
+
+    // Если вкладки сейчас «прилипли» к шапке (человек дочитал конспект
+    // далеко вниз), после переключения вида возвращаем его к началу
+    // панели — иначе новый вид откроется где-то посередине.
+    const prevTabs = contentView.querySelector('.topic-tabs');
+    const tabsWereStuck = !animate && prevTabs && prevTabs.getBoundingClientRect().top <= stickyTopOffset() + 2;
 
     const locked = LexPrepPlan.isDisciplineLocked(activeDiscipline.id, DATA);
 
@@ -526,9 +567,14 @@ function initApp() {
 
       <h1 class="topic-title">${escapeHtml(activeTopic.title)}</h1>
       <p class="topic-desc">${escapeHtml(activeTopic.description)}</p>
+      <div class="topic-meta">
+        ${activeTopic.theory ? `<span class="topic-meta__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>≈ ${readingMinutes(activeTopic.theory)} мин чтения</span>` : ''}
+        ${activeTopic.cards && activeTopic.cards.length ? `<span class="topic-meta__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>${activeTopic.cards.length} карточек</span>` : ''}
+        ${activeTopic.test && activeTopic.test.length ? `<span class="topic-meta__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>${activeTopic.test.length} вопросов</span>` : ''}
+      </div>
 
       <div class="content-body ${locked ? 'is-blurred' : ''}">
-      <div class="topic-tabs">
+      <div class="topic-tabs" role="tablist">
         <button class="topic-tab ${activeView === 'notes' ? 'is-active' : ''}" type="button" data-view="notes">Конспект</button>
         <button class="topic-tab ${activeView === 'cards' ? 'is-active' : ''}" type="button" data-view="cards">Карточки</button>
         <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
@@ -539,7 +585,7 @@ function initApp() {
         ` : ''}
       </div>
 
-      <div data-view-panel="notes" ${activeView === 'notes' ? '' : 'hidden'}>
+      <div class="theory-view" data-view-panel="notes" ${activeView === 'notes' ? '' : 'hidden'}>
         ${activeTopic.theory}
       </div>
 
@@ -611,6 +657,25 @@ function initApp() {
       void contentView.offsetWidth;
       contentView.classList.add('content-fade-in');
     }
+
+    const tabsEl = contentView.querySelector('.topic-tabs');
+    const activeTabEl = tabsEl && tabsEl.querySelector('.topic-tab.is-active');
+    if (tabsEl && activeTabEl) {
+      // На телефоне вкладки — горизонтальная лента: держим активную по центру.
+      tabsEl.scrollLeft = activeTabEl.offsetLeft - (tabsEl.clientWidth - activeTabEl.offsetWidth) / 2;
+      if (tabsWereStuck) {
+        window.scrollTo({ top: window.scrollY + tabsEl.getBoundingClientRect().top - stickyTopOffset() });
+      }
+    }
+    const activePanel = contentView.querySelector(`[data-view-panel="${activeView}"]`);
+    if (activePanel && window.LexPrepMotion) {
+      if (animate && activeView === 'notes') {
+        LexPrepMotion.stagger(activePanel, ':scope > :not(.theory), :scope > .theory > *', 120);
+      } else if (!animate) {
+        activePanel.classList.add('view-panel-in');
+      }
+    }
+    updateReadingProgress();
 
     if (activeView === 'notes' && !locked && activeTopic.theory) {
       LexPrepProgress.recordTheoryView(activeTopic.id);
@@ -780,11 +845,27 @@ function initApp() {
       </div>
 
       <div class="test-actions">
+        <span class="test-actions__progress"><strong data-answered>0</strong> из ${questions.length} отвечено</span>
         <button class="btn btn--primary" type="button" data-check-test>Проверить ответы</button>
       </div>
 
       <div class="summary" data-summary-box></div>
     `;
+
+    const answeredEl = container.querySelector('[data-answered]');
+    const updateAnswered = () => {
+      const answered = questions.filter((_, qIndex) => container.querySelector(`input[name="q-${qIndex}"]:checked`)).length;
+      if (answeredEl) answeredEl.textContent = answered;
+      container.querySelector('.test-actions').classList.toggle('is-complete', answered === questions.length);
+    };
+    // Контейнер теста переиспользуется при повторном открытии —
+    // слушатель вешаем один раз, а считает он всегда по текущему рендеру.
+    container._updateAnswered = updateAnswered;
+    if (!container._answeredBound) {
+      container._answeredBound = true;
+      container.addEventListener('change', () => container._updateAnswered && container._updateAnswered());
+    }
+    if (window.LexPrepMotion) LexPrepMotion.stagger(container.querySelector('.questions-wrap'), '.question');
 
     const checkBtn = container.querySelector('[data-check-test]');
     checkBtn.addEventListener('click', () => {
@@ -812,6 +893,12 @@ function initApp() {
         const resultBox = container.querySelector(`[data-result="${qIndex}"]`);
         const isCorrect = chosen.length > 0 && chosen.length === correct.length && chosen.every((v, i) => v === correct[i]);
         const correctText = correct.map(i => q.options[i]).join('; ');
+        container.querySelectorAll(`input[name="q-${qIndex}"]`).forEach(input => {
+          const label = input.closest('.answer');
+          const value = Number(input.value);
+          label.classList.toggle('is-correct-option', correct.includes(value));
+          label.classList.toggle('is-wrong-option', input.checked && !correct.includes(value));
+        });
         const explanationLine = showExplanations ? `<br><strong>Почему:</strong> ${escapeHtml(q.explanation || '')}` : '';
 
         if (isCorrect) {
@@ -835,13 +922,33 @@ function initApp() {
       renderSelectors();
       renderGamifyBar();
 
+      const verdict = percent >= 90 ? 'Отлично — тема усвоена!' : percent >= 70 ? 'Хороший результат' : percent >= 50 ? 'Неплохо, но есть пробелы' : 'Стоит повторить тему';
+      const ringTone = percent >= 70 ? 'good' : percent >= 50 ? 'mid' : 'bad';
       summaryBox.classList.add('is-visible');
       summaryBox.innerHTML = `
-        <h3>Итог теста</h3>
-        <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
-        <p>Результат: <strong>${percent}%</strong>.</p>
-        <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест. В вопросах с несколькими вариантами засчитывается только полностью верный набор ответов.</p>
+        <div class="summary__layout">
+          <div class="score-ring score-ring--${ringTone}" style="--p: ${percent}">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="score-ring__track" cx="60" cy="60" r="52" />
+              <circle class="score-ring__fill" cx="60" cy="60" r="52" pathLength="100" />
+            </svg>
+            <span class="score-ring__value"><strong data-score-percent>0</strong>%</span>
+          </div>
+          <div class="summary__text">
+            <h3>${verdict}</h3>
+            <p>Правильных ответов: <strong>${score}</strong> из <strong>${total}</strong>.</p>
+            <p>Результат: <strong>${percent}%</strong>.</p>
+            <p class="summary__note">Если результат ниже 70%, лучше ещё раз пройти теорию и затем перепройти тест. В вопросах с несколькими вариантами засчитывается только полностью верный набор ответов.</p>
+          </div>
+        </div>
       `;
+      const percentEl = summaryBox.querySelector('[data-score-percent]');
+      if (window.LexPrepMotion) {
+        LexPrepMotion.countTo(percentEl, percent, 1100);
+        if (percent >= 90) setTimeout(() => LexPrepMotion.confetti(summaryBox.querySelector('.score-ring')), 500);
+      } else {
+        percentEl.textContent = percent;
+      }
 
       summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -999,7 +1106,15 @@ function initApp() {
     const state = LexPrepProgress.getCardState(activeTopic.id, cardIndex);
 
     area.innerHTML = `
-      <div class="flashcard" id="flashcard">
+      <div class="card-session">
+        <span class="card-session__count">${cardPos + 1} / ${cardQueue.length}</span>
+        <span class="card-session__track"><span class="card-session__fill" style="width: ${Math.round((cardPos / cardQueue.length) * 100)}%"></span></span>
+      </div>
+      <div class="flashcard ${cardFlipped ? 'is-flipped' : ''} ${skipCardEnter ? 'no-enter' : ''}" id="flashcard">
+        ${cardFlipped ? `
+          <span class="flashcard__stamp flashcard__stamp--yes" aria-hidden="true">Знаю</span>
+          <span class="flashcard__stamp flashcard__stamp--no" aria-hidden="true">Не знаю</span>
+        ` : ''}
         <div class="flashcard__inner ${cardFlipped ? 'is-flipped' : ''}" id="flashcardInner">
           <div class="flashcard__face flashcard__face--front">
             <span class="flashcard__label">Вопрос</span>
@@ -1037,9 +1152,9 @@ function initApp() {
         </div>
       ` : ''}
       ${!cardFlipped ? `
-        <p class="flashcard-hint">Нажми на карточку, чтобы перевернуть · ${cardPos + 1} из ${cardQueue.length}</p>
+        <p class="flashcard-hint">Нажми на карточку, чтобы перевернуть</p>
       ` : `
-        <p class="flashcard-hint">Оцени, знал(а) ли ты ответ</p>
+        <p class="flashcard-hint">Оцени, знал(а) ли ты ответ<span class="flashcard-hint__swipe"> · или смахни карточку: вправо — знаю, влево — нет</span></p>
         <div class="flashcard-grade">
           <button class="btn btn--outline" type="button" id="gradeWrongBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
@@ -1053,11 +1168,32 @@ function initApp() {
       `}
     `;
 
+    skipCardEnter = false;
     const flashcard = document.getElementById('flashcard');
+    let suppressClick = false;
     flashcard.addEventListener('click', () => {
+      if (suppressClick) {
+        suppressClick = false;
+        return;
+      }
+      if (cardFlipping) return;
       cardFlipped = !cardFlipped;
       voiceAnswerResult = null;
-      renderCardSession();
+      // Сначала честно переворачиваем текущую карточку (CSS-переход), и
+      // только потом перерисовываем сессию — уже без анимации появления.
+      const inner = document.getElementById('flashcardInner');
+      const reduced = window.LexPrepMotion && LexPrepMotion.reduced();
+      if (inner && !reduced) {
+        cardFlipping = true;
+        inner.classList.toggle('is-flipped', cardFlipped);
+        setTimeout(() => {
+          cardFlipping = false;
+          skipCardEnter = true;
+          renderCardSession();
+        }, 480);
+      } else {
+        renderCardSession();
+      }
     });
 
     const voiceMicBtn = document.getElementById('voiceMicBtn');
@@ -1109,10 +1245,15 @@ function initApp() {
     const gradeWrongBtn = document.getElementById('gradeWrongBtn');
     const gradeRightBtn = document.getElementById('gradeRightBtn');
 
+    let graded = false;
     function grade(correct) {
+      if (graded) return;
+      graded = true;
       LexPrepProgress.reviewCard(activeTopic.id, cardIndex, correct);
       renderGamifyBar();
+      flashcard.style.transform = '';
       flashcard.classList.add(correct ? 'flashcard--correct' : 'flashcard--wrong');
+      flashcard.classList.add(correct ? 'is-flying-right' : 'is-flying-left');
       if (gradeWrongBtn) gradeWrongBtn.disabled = true;
       if (gradeRightBtn) gradeRightBtn.disabled = true;
       setTimeout(() => {
@@ -1123,7 +1264,50 @@ function initApp() {
         voiceError = '';
         renderCardSession();
         renderSelectors();
-      }, 260);
+        if (cardPos >= cardQueue.length && window.LexPrepMotion) {
+          LexPrepMotion.confetti(document.getElementById('cardSessionArea'));
+        }
+      }, 300);
+    }
+
+    // Свайп перевёрнутой карточки: вправо — «знал(а)», влево — «не знал(а)».
+    // Короткое движение считается обычным кликом (переворот обратно).
+    if (cardFlipped) {
+      let startX = 0;
+      let startY = 0;
+      let dx = 0;
+      let dragging = false;
+      flashcard.addEventListener('pointerdown', (e) => {
+        if (graded || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        dx = 0;
+        flashcard.classList.add('is-dragging');
+      });
+      flashcard.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        if (!flashcard.hasPointerCapture(e.pointerId)) flashcard.setPointerCapture(e.pointerId);
+        flashcard.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+        flashcard.style.setProperty('--swipe', Math.max(-1, Math.min(1, dx / 110)).toFixed(3));
+      });
+      const endDrag = () => {
+        if (!dragging) return;
+        dragging = false;
+        flashcard.classList.remove('is-dragging');
+        if (Math.abs(dx) > 6) suppressClick = true;
+        if (Math.abs(dx) > 100) {
+          grade(dx > 0);
+        } else {
+          flashcard.style.transform = '';
+          flashcard.style.setProperty('--swipe', 0);
+        }
+      };
+      flashcard.addEventListener('pointerup', endDrag);
+      flashcard.addEventListener('pointercancel', endDrag);
     }
 
     if (gradeWrongBtn) {
@@ -1144,7 +1328,7 @@ function initApp() {
     e.stopPropagation();
     const willOpen = disciplineSelectMenu.hidden;
     closeSelectMenus();
-    disciplineSelectMenu.hidden = !willOpen;
+    if (willOpen) openSelectMenu(disciplineSelectMenu);
   });
   disciplineSelectMenu.addEventListener('click', (e) => e.stopPropagation());
 
@@ -1152,7 +1336,7 @@ function initApp() {
     e.stopPropagation();
     const willOpen = topicSelectMenu.hidden;
     closeSelectMenus();
-    topicSelectMenu.hidden = !willOpen;
+    if (willOpen) openSelectMenu(topicSelectMenu);
   });
   topicSelectMenu.addEventListener('click', (e) => e.stopPropagation());
 
@@ -1169,15 +1353,73 @@ function initApp() {
     searchInput.addEventListener('click', (e) => e.stopPropagation());
   }
 
+  let lastGamifyXp = null;
+  let lastGamifyLevel = null;
+
+  function restartAnim(el, className) {
+    if (!el) return;
+    el.classList.remove(className);
+    void el.offsetWidth;
+    el.classList.add(className);
+  }
+
+  // Высота липкой шапки — к ней «прилипают» вкладки темы.
+  function stickyTopOffset() {
+    const header = document.getElementById('header');
+    return header ? header.getBoundingClientRect().height : 0;
+  }
+
+  // Тонкая полоса под шапкой: сколько конспекта уже прочитано.
+  const readingProgress = document.getElementById('readingProgress');
+  const readingProgressBar = document.getElementById('readingProgressBar');
+  let readingFrame = 0;
+  function updateReadingProgress() {
+    if (!readingProgress || !readingProgressBar) return;
+    const panel = contentView.querySelector('[data-view-panel="notes"]');
+    const visible = activeView === 'notes' && panel && !panel.hidden;
+    readingProgress.classList.toggle('is-visible', !!visible);
+    if (!visible) return;
+    const rect = panel.getBoundingClientRect();
+    const total = rect.height - window.innerHeight * 0.6;
+    const passed = stickyTopOffset() + 60 - rect.top;
+    const ratio = total > 0 ? Math.min(1, Math.max(0, passed / total)) : 0;
+    readingProgressBar.style.transform = `scaleX(${ratio.toFixed(4)})`;
+  }
+  window.addEventListener('scroll', () => {
+    cancelAnimationFrame(readingFrame);
+    readingFrame = requestAnimationFrame(updateReadingProgress);
+  }, { passive: true });
+  window.addEventListener('resize', updateReadingProgress);
+
+  const sheetBackdrop = document.getElementById('sheetBackdrop');
+  if (sheetBackdrop) sheetBackdrop.addEventListener('click', closeSelectMenus);
+
   function renderGamifyBar() {
     const bar = document.getElementById('gamifyBar');
     if (!bar || typeof LexPrepProgress.getGamification !== 'function') return;
 
     const g = LexPrepProgress.getGamification();
-    document.getElementById('gamifyLevel').querySelector('.gamify-bar__level-num').textContent = g.level;
+    const levelNumEl = document.getElementById('gamifyLevel').querySelector('.gamify-bar__level-num');
+    if (lastGamifyLevel !== null && g.level > lastGamifyLevel) restartAnim(levelNumEl, 'is-bump');
+    levelNumEl.textContent = g.level;
     document.getElementById('gamifyTitle').textContent = g.rankName;
+    const levelTextEl = document.getElementById('gamifyLevelText');
+    if (levelTextEl) levelTextEl.textContent = `Уровень ${g.level}`;
     document.getElementById('gamifyXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP`;
-    document.getElementById('gamifyFill').style.width = `${g.progressPercent}%`;
+    const fillEl = document.getElementById('gamifyFill');
+    if (lastGamifyXp === null) {
+      // Первый рендер: полоса «набегает» от нуля.
+      fillEl.style.width = '0%';
+      requestAnimationFrame(() => requestAnimationFrame(() => { fillEl.style.width = `${g.progressPercent}%`; }));
+    } else {
+      fillEl.style.width = `${g.progressPercent}%`;
+      if (g.xp > lastGamifyXp && window.LexPrepMotion) {
+        LexPrepMotion.xpFloat(fillEl.parentElement, g.xp - lastGamifyXp);
+        restartAnim(bar, 'is-gain');
+      }
+    }
+    lastGamifyXp = g.xp;
+    lastGamifyLevel = g.level;
     const rankIconEl = document.getElementById('gamifyRankIcon');
     if (rankIconEl) rankIconEl.src = `assets/badges/${g.rankIcon}`;
 
@@ -1198,6 +1440,7 @@ function initApp() {
     gamifyBadgesToggle.addEventListener('click', (e) => {
       e.stopPropagation();
       gamifyBadges.hidden = !gamifyBadges.hidden;
+      if (!gamifyBadges.hidden && window.LexPrepMotion) LexPrepMotion.stagger(gamifyBadges, '.gamify-badge');
     });
     document.addEventListener('click', (e) => {
       if (!gamifyBadges.hidden && !gamifyBadges.contains(e.target) && e.target !== gamifyBadgesToggle) {

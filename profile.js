@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // до подгрузки реального контента из Supabase это demo-заглушка
   // (без неё "Последние тесты" не находили тему и показывали id/заглушку).
   await (window.LexPrepContentReady || Promise.resolve());
+  initHeroSummary();
   initStats();
   initGamification();
   initBasicDisciplineSetting();
@@ -61,17 +62,64 @@ function initSections() {
   const navItems = document.querySelectorAll('.profile-nav__item');
   const panels = document.querySelectorAll('[data-section-panel]');
 
-  function activate(section) {
+  const nav = document.querySelector('.profile-nav');
+  const indicator = document.createElement('span');
+  indicator.className = 'profile-nav__indicator';
+  indicator.setAttribute('aria-hidden', 'true');
+  if (nav) nav.prepend(indicator);
+
+  // Подсветка активного раздела — одна «плашка», которая переезжает к
+  // выбранному пункту (в сайдбаре — по вертикали, в ленте на телефоне — по
+  // горизонтали).
+  function moveIndicator(animate) {
+    const active = nav && nav.querySelector('.profile-nav__item.is-active');
+    if (!active) return;
+    if (!animate) indicator.style.transition = 'none';
+    indicator.style.width = `${active.offsetWidth}px`;
+    indicator.style.height = `${active.offsetHeight}px`;
+    indicator.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+    indicator.classList.add('is-ready');
+    if (!animate) {
+      void indicator.offsetWidth;
+      indicator.style.transition = '';
+    }
+    // В горизонтальной ленте держим активный пункт в поле зрения.
+    if (nav.scrollWidth > nav.clientWidth) {
+      const left = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+      nav.scrollTo({ left, behavior: animate ? 'smooth' : 'auto' });
+    }
+  }
+
+  let current = null;
+  function activate(section, animate) {
     navItems.forEach(item => item.classList.toggle('is-active', item.dataset.section === section));
     panels.forEach(panel => panel.classList.toggle('is-active', panel.dataset.sectionPanel === section));
+    moveIndicator(animate);
+    const panel = document.querySelector(`[data-section-panel="${section}"]`);
+    if (panel && section !== current && window.LexPrepMotion) {
+      LexPrepMotion.stagger(panel, '.profile-card');
+      if (section === 'stats') {
+        LexPrepMotion.stagger(panel.querySelector('.stats-grid'), '.stat-tile', 120);
+      }
+    }
+    current = section;
   }
+  window.addEventListener('resize', () => moveIndicator(false));
 
   const validSections = Array.from(navItems).map(i => i.dataset.section);
 
   navItems.forEach(item => {
     item.addEventListener('click', () => {
-      activate(item.dataset.section);
+      activate(item.dataset.section, true);
       history.replaceState(null, '', `#${item.dataset.section}`);
+      // Если человек успел прокрутить вниз, возвращаем к началу раздела,
+      // а не оставляем посередине нового, более короткого раздела.
+      const content = document.querySelector('.profile-content');
+      const headerHeight = (document.getElementById('header') || { offsetHeight: 0 }).offsetHeight;
+      const navHeight = window.matchMedia('(max-width: 900px)').matches && nav ? nav.offsetHeight : 0;
+      if (content && content.getBoundingClientRect().top < headerHeight + navHeight) {
+        window.scrollTo({ top: window.scrollY + content.getBoundingClientRect().top - headerHeight - navHeight - 12, behavior: 'smooth' });
+      }
     });
   });
 
@@ -82,11 +130,11 @@ function initSections() {
   // hashchange, иначе такие ссылки выглядят нерабочими.
   window.addEventListener('hashchange', () => {
     const section = window.location.hash.replace('#', '');
-    if (validSections.includes(section)) activate(section);
+    if (validSections.includes(section)) activate(section, true);
   });
 
   const initial = window.location.hash.replace('#', '');
-  activate(validSections.includes(initial) ? initial : 'info');
+  activate(validSections.includes(initial) ? initial : 'info', false);
 }
 
 /* ---------------- Hero + avatar helpers ---------------- */
@@ -222,6 +270,8 @@ function initSubscription() {
   const title = LexPrepPlan.TIER_TITLES[tier];
 
   badge.textContent = `Тариф «${title}»`;
+  const planBox = document.getElementById('planBox');
+  if (planBox) planBox.classList.add(`plan-box--${tier}`);
   priceEl.textContent = PLAN_PRICES[tier];
   const features = tier === 'basic' ? PLAN_FEATURES.basic : PLAN_FEATURES[tier][LexPrepPlan.hasAnnualPlan() ? 'annual' : 'monthly'];
   listEl.innerHTML = features.map(f => `<li>${f}</li>`).join('');
@@ -333,29 +383,99 @@ async function handlePaymentReturn() {
   alert('Оплата обрабатывается — если тариф не обновился в течение минуты, обнови страницу.');
 }
 
+/* ---------------- Сводка в обложке профиля ---------------- */
+function initHeroSummary() {
+  if (typeof LexPrepProgress === 'undefined' || typeof LEXPREP_DATA === 'undefined') return;
+
+  const planChip = document.getElementById('heroPlanChip');
+  if (planChip && typeof LexPrepPlan !== 'undefined') {
+    const { tier } = LexPrepPlan.getEffectivePlan();
+    planChip.textContent = `Тариф «${LexPrepPlan.TIER_TITLES[tier]}»`;
+    planChip.classList.add(`profile-chip--${tier}`);
+    planChip.hidden = false;
+  }
+
+  const stats = LexPrepProgress.getStats(LEXPREP_DATA);
+  animateNumber(document.getElementById('heroStreak'), stats.streakDays);
+  animateNumber(document.getElementById('heroTests'), stats.testsCount);
+
+  if (typeof LexPrepProgress.getGamification !== 'function') return;
+  const g = LexPrepProgress.getGamification();
+  animateNumber(document.getElementById('heroXp'), g.xp);
+  const levelChip = document.getElementById('heroLevelChip');
+  if (levelChip) {
+    levelChip.textContent = `Уровень ${g.level} · ${g.rankName}`;
+    levelChip.hidden = false;
+  }
+  const rankIcon = document.getElementById('heroRankIcon');
+  if (rankIcon) {
+    rankIcon.src = `assets/badges/${g.rankIcon}`;
+    rankIcon.alt = g.rankName;
+  }
+  const levelText = document.getElementById('heroLevelText');
+  if (levelText) levelText.textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP до уровня ${g.level + 1}`;
+  fillBar(document.getElementById('heroLevelFill'), g.progressPercent);
+}
+
+// Число «набегает» от нуля (суффикс вроде «%» дописывается после).
+function animateNumber(el, value, suffix) {
+  if (!el) return;
+  if (value === null || value === undefined) {
+    el.textContent = '—';
+    return;
+  }
+  suffix = suffix || '';
+  const reduced = !window.LexPrepMotion || LexPrepMotion.reduced();
+  if (reduced) {
+    el.textContent = `${value}${suffix}`;
+    return;
+  }
+  const start = performance.now();
+  const duration = 1100;
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = `${Math.round(value * eased)}${suffix}`;
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// Полоса прогресса заполняется от нуля до нужного значения.
+function fillBar(el, percent) {
+  if (!el) return;
+  el.style.width = '0%';
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.width = `${percent}%`; }));
+}
+
 /* ---------------- Stats (real data from LexPrepProgress) ---------------- */
 function initStats() {
   if (typeof LexPrepProgress === 'undefined' || typeof LEXPREP_DATA === 'undefined') return;
 
   const stats = LexPrepProgress.getStats(LEXPREP_DATA);
-  document.getElementById('statTopics').textContent = stats.topicsTouched;
-  document.getElementById('statTests').textContent = stats.testsCount;
-  document.getElementById('statAvg').textContent = stats.avgScorePercent === null ? '—' : `${stats.avgScorePercent}%`;
-  document.getElementById('statStreak').textContent = stats.streakDays;
-  document.getElementById('statCards').textContent = stats.cardsReviewed;
+  animateNumber(document.getElementById('statTopics'), stats.topicsTouched);
+  animateNumber(document.getElementById('statTests'), stats.testsCount);
+  animateNumber(document.getElementById('statAvg'), stats.avgScorePercent, '%');
+  animateNumber(document.getElementById('statStreak'), stats.streakDays);
+  animateNumber(document.getElementById('statCards'), stats.cardsReviewed);
 
   const recentList = document.getElementById('recentResultsList');
   if (stats.recent.length) {
     recentList.innerHTML = stats.recent.map(r => {
       const percent = Math.round((r.score / r.total) * 100);
       const scoreClass = percent >= 80 ? 'results-row__score--good' : percent >= 50 ? 'results-row__score--mid' : 'results-row__score--bad';
+      const barClass = percent >= 80 ? 'good' : percent >= 50 ? 'mid' : 'bad';
       return `
         <div class="results-row">
-          <span class="results-row__topic">${escapeAttr(r.title)}</span>
+          <div class="results-row__main">
+            <span class="results-row__topic">${escapeAttr(r.title)}</span>
+            <span class="results-row__bar results-row__bar--${barClass}"><span style="--w: ${percent}%"></span></span>
+          </div>
           <span class="results-row__score ${scoreClass}">${r.score} / ${r.total}</span>
         </div>
       `;
     }).join('');
+    if (window.LexPrepMotion) LexPrepMotion.stagger(recentList, '.results-row', 200);
   }
 
   const weak = LexPrepProgress.getWeakQuestions(LEXPREP_DATA, 5);
@@ -363,9 +483,12 @@ function initStats() {
   const reviewLink = document.getElementById('reviewWeakLink');
   if (weak.length) {
     weakList.innerHTML = weak.map(w => `
-      <div class="results-row">
-        <span class="results-row__topic">${escapeAttr(w.topicTitle)}</span>
-        <span class="results-row__score results-row__score--bad">${escapeAttr(w.question.question)}</span>
+      <div class="results-row results-row--weak">
+        <span class="results-row__weak-icon" aria-hidden="true">!</span>
+        <div class="results-row__main">
+          <span class="results-row__label">${escapeAttr(w.topicTitle)}</span>
+          <span class="results-row__question">${escapeAttr(w.question.question)}</span>
+        </div>
       </div>
     `).join('');
     reviewLink.hidden = false;
@@ -381,7 +504,7 @@ async function initGamification() {
   document.getElementById('rankIcon').src = `assets/badges/${g.rankIcon}`;
   document.getElementById('rankLevelNum').textContent = g.level;
   document.getElementById('rankName').textContent = g.rankName;
-  document.getElementById('rankFill').style.width = `${g.progressPercent}%`;
+  fillBar(document.getElementById('rankFill'), g.progressPercent);
   document.getElementById('rankXp').textContent = `${g.xpIntoLevel} / ${g.xpForNextLevel} XP до следующего уровня`;
 
   const grid = document.getElementById('achvGrid');
@@ -403,6 +526,7 @@ async function initGamification() {
           <div class="achv-category__desc">${escapeAttr(cat.desc)}</div>
         </div>
         <span class="achv-category__count">${cat.earnedCount}/${cat.total}</span>
+        <span class="achv-category__bar" aria-hidden="true"><span style="--w: ${Math.round((cat.earnedCount / cat.total) * 100)}%"></span></span>
       </button>
       <div class="achv-category__list" id="achvList-${cat.id}">
         ${cat.items.map(item => `
@@ -421,6 +545,8 @@ async function initGamification() {
       </div>
     </div>
   `).join('');
+
+  if (window.LexPrepMotion) LexPrepMotion.stagger(grid, '.achv-category', 150);
 
   grid.querySelectorAll('[data-category-toggle]').forEach(btn => {
     const list = document.getElementById(`achvList-${btn.dataset.categoryToggle}`);

@@ -3007,3 +3007,199 @@ body.lexprep-dialog-open {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   APP SHELL — общее для внутренних страниц приложения (тренажёр, профиль,
+   рейтинг, экзамен, дуэли, турниры, магазин): нижняя навигация на
+   телефоне, мягкий фон и анимации появления. Нижнюю панель вставляет
+   initTabbar() в script.js на страницах с <body data-tabbar>.
+   ========================================================================== */
+
+/* Мягкое свечение фона, медленно «дышит». */
+body.app-surface::before {
+  content: "";
+  position: fixed;
+  inset: -20vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38vmax 38vmax at 12% 8%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 70%),
+    radial-gradient(30vmax 30vmax at 92% 30%, color-mix(in srgb, #8c54ff 12%, transparent), transparent 70%),
+    radial-gradient(34vmax 34vmax at 70% 100%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%);
+  animation: appGlowDrift 26s ease-in-out infinite alternate;
+}
+@keyframes appGlowDrift {
+  to {
+    transform: translate3d(-3vmax, 2vmax, 0) scale(1.06);
+  }
+}
+
+/* Появление элементов по очереди (--stagger ставит LexPrepMotion.stagger).
+   fill-mode только backwards — после анимации элемент снова может
+   двигаться сам (hover-эффекты с transform продолжают работать). */
+.stagger-in {
+  animation: staggerIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--stagger, 0) * 45ms + var(--stagger-base, 0ms));
+}
+@keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.page-enter {
+  animation: staggerIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Блик, пробегающий по полосам опыта/прогресса. */
+@keyframes fillShine {
+  0%,
+  62% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Всплывающая плашка «+N XP» (LexPrepMotion.xpFloat). */
+.xp-float {
+  position: fixed;
+  z-index: 3500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--color-success);
+  box-shadow: 0 8px 20px rgba(31, 183, 116, 0.35);
+  pointer-events: none;
+  animation: xpFloat 1.4s ease forwards;
+}
+
+/* Конфетти для хороших результатов (LexPrepMotion.confetti). */
+.confetti-piece {
+  position: fixed;
+  z-index: 3600;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confettiFall var(--dur, 1.6s) cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+}
+@keyframes confettiFall {
+  from {
+    opacity: 1;
+    transform: translate(var(--x0), var(--y0)) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--x1), var(--y1)) rotate(var(--rot, 540deg));
+  }
+}
+
+/* ---- Нижняя навигация (только телефон, только для вошедших) ---- */
+.tabbar {
+  display: none;
+}
+@media (max-width: 760px) {
+  body.is-authed.has-tabbar {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  body.is-authed .tabbar {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 950;
+    display: flex;
+    gap: 2px;
+    height: 64px;
+    padding: 6px;
+    border-radius: 22px;
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 14px 34px rgba(12, 14, 24, 0.22);
+    animation: tabbarIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s backwards;
+  }
+  [data-theme="dark"] body.is-authed .tabbar {
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  }
+  body.is-authed.has-tabbar #cookieConsentBanner {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+}
+@keyframes tabbarIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+.tabbar__item {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 16px;
+  color: var(--color-text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease;
+}
+.tabbar__item svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.tabbar__item:active svg {
+  transform: scale(0.86);
+}
+.tabbar__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tabbar__item.is-active {
+  color: var(--color-primary);
+}
+.tabbar__item.is-active::before {
+  content: "";
+  position: absolute;
+  inset: 2px 4px;
+  z-index: -1;
+  border-radius: 14px;
+  background: var(--color-primary-light);
+  animation: tabPillIn 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.tabbar__item.is-active svg {
+  transform: translateY(-1px);
+}
+@keyframes tabPillIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.app-surface::before,
+  .stagger-in,
+  .page-enter,
+  .tabbar,
+  .tabbar__item.is-active::before,
+  .confetti-piece,
+  .xp-float {
+    animation: none !important;
+  }
+}

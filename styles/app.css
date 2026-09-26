@@ -246,7 +246,11 @@ body {
   background: linear-gradient(180deg, rgba(10, 19, 42, 0.95), rgba(7, 14, 32, 0.92));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 30px;
+  /* clip, а не hidden: hidden делает панель скролл-контейнером, и
+     position: sticky внутри (вкладки темы, карточка paywall) перестаёт
+     прилипать к шапке страницы. */
   overflow: hidden;
+  overflow: clip;
   box-shadow: 0 24px 60px rgba(2, 8, 24, 0.52);
   min-height: 480px;
 }
@@ -1036,7 +1040,7 @@ body {
   cursor: pointer;
   user-select: none;
   border-radius: 20px;
-  animation: cardFadeIn 0.35s ease both;
+  animation: cardFadeIn 0.35s ease backwards;
 }
 
 @keyframes cardFadeIn {
@@ -2133,5 +2137,953 @@ body {
     order: 1;
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   РЕДИЗАЙН ТРЕНАЖЁРА: стекло, анимации и удобство на телефоне.
+   Правила ниже намеренно идут после базовых и переопределяют их.
+   ========================================================================== */
+
+/* ---------------- Поиск и кнопки ---------------- */
+.app-search {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.app-search:focus-within,
+[data-theme="light"] .app-search:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.app-toolbar__label--short {
+  display: none;
+}
+.app-search__results,
+.app-select__menu,
+.gamify-badges {
+  transform-origin: top center;
+  animation: menuIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+/* ---------------- Уровень и опыт ---------------- */
+.gamify-bar {
+  background: color-mix(in srgb, var(--color-white) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+  animation: staggerIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
+}
+[data-theme="dark"] .gamify-bar {
+  background: rgba(20, 27, 54, 0.62);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.gamify-bar__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.gamify-bar__sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.gamify-bar__rank-icon {
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--color-primary) 35%, transparent));
+}
+.gamify-bar__level-num.is-bump {
+  animation: levelIconBump 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.gamify-bar__track {
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+.gamify-bar__fill {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--color-primary), #8c54ff, var(--color-accent));
+  transition: width 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gamify-bar__fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.5) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: fillShine 3.4s ease-in-out 1.4s infinite;
+}
+.gamify-bar.is-gain .gamify-bar__track {
+  animation: trackGlow 1s ease;
+}
+@keyframes trackGlow {
+  30% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 32%, transparent);
+  }
+}
+.gamify-bar__badges-toggle {
+  transition: border-color var(--transition), color var(--transition), transform 0.2s ease;
+}
+.gamify-bar__badges-toggle:active {
+  transform: scale(0.96);
+}
+.gamify-bar__badges-toggle svg {
+  width: 16px;
+  height: 16px;
+  color: #e0a316;
+}
+
+/* ---------------- Дисциплина и тема: подпись внутри поля ---------------- */
+.app-select {
+  display: grid;
+  gap: 0;
+}
+.app-select__label {
+  grid-area: 1 / 1;
+  z-index: 1;
+  align-self: start;
+  padding: 10px 17px 0;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+.app-select__btn {
+  grid-area: 1 / 1;
+  padding: 27px 16px 11px;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.app-select__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+.app-select__sheet-head {
+  display: none;
+}
+
+/* ---------------- Панель контента ---------------- */
+.panel {
+  animation: staggerIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s backwards;
+}
+[data-theme="dark"] .panel {
+  background: linear-gradient(180deg, rgba(14, 22, 48, 0.88), rgba(9, 15, 34, 0.93));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.topic-title {
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.02em;
+}
+.topic-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 20px;
+}
+.topic-meta__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.topic-meta__chip svg {
+  width: 14px;
+  height: 14px;
+  color: var(--color-primary);
+}
+
+/* Вкладки темы: липкая лента под шапкой, на телефоне листается вбок. */
+.topic-tabs {
+  position: sticky;
+  top: 76px;
+  z-index: 6;
+  flex-wrap: nowrap;
+  margin: 0 -26px 22px;
+  padding: 12px 26px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: rgba(12, 19, 42, 0.96);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.topic-tabs::-webkit-scrollbar {
+  display: none;
+}
+[data-theme="light"] .topic-tabs {
+  background: rgba(255, 255, 255, 0.96);
+}
+.topic-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 9px 16px;
+  font-size: 13.5px;
+}
+.topic-tab.is-active,
+[data-theme="light"] .topic-tab.is-active {
+  background: linear-gradient(135deg, #5f7bff, #7e95ff);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(95, 123, 255, 0.3);
+  animation: tabPop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes tabPop {
+  from {
+    transform: scale(0.92);
+  }
+}
+.view-panel-in {
+  animation: staggerIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Конспект: крупнее и спокойнее для чтения. */
+.theory h2,
+.theory h3 {
+  position: relative;
+  padding-left: 14px;
+}
+.theory h2::before,
+.theory h3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.18em;
+  bottom: 0.18em;
+  width: 4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+}
+.theory p,
+.theory li {
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+.theory strong {
+  color: var(--color-text);
+}
+.theory li::marker {
+  color: var(--color-primary);
+}
+.theory table {
+  border-radius: 12px;
+}
+.note-box,
+[data-theme="light"] .note-box {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 13%, transparent),
+    color-mix(in srgb, var(--color-accent) 7%, transparent)
+  );
+}
+.note-box h3::before {
+  content: "💡";
+  margin-right: 8px;
+}
+
+/* Полоса прогресса чтения под шапкой. */
+.reading-progress {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 76px;
+  z-index: 99;
+  height: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.reading-progress.is-visible {
+  opacity: 1;
+}
+.reading-progress__bar {
+  display: block;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--color-primary), #8c54ff, var(--color-accent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+/* ---------------- Карточки ---------------- */
+.card-session {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 auto 14px;
+}
+.card-session__count {
+  min-width: 44px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.card-session__track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+[data-theme="light"] .card-session__track {
+  background: #eef0f6;
+}
+.card-session__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 0.5s ease;
+}
+.flashcard {
+  --swipe: 0;
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  touch-action: pan-y;
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.32s ease;
+}
+.flashcard.no-enter {
+  animation: none;
+}
+.flashcard.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+.flashcard.is-flying-right {
+  opacity: 0;
+  transform: translateX(130%) rotate(16deg) !important;
+}
+.flashcard.is-flying-left {
+  opacity: 0;
+  transform: translateX(-130%) rotate(-16deg) !important;
+}
+.flashcard__inner {
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+.flashcard__face {
+  border-radius: 24px;
+}
+[data-theme="dark"] .flashcard__face--front {
+  background: linear-gradient(160deg, rgba(24, 34, 70, 0.92), rgba(10, 16, 36, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+/* Штампы «Знаю / Не знаю» проявляются по мере свайпа (--swipe от -1 до 1). */
+.flashcard__stamp {
+  position: absolute;
+  top: 18px;
+  z-index: 3;
+  padding: 5px 12px;
+  border: 2.5px solid currentColor;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+.flashcard__stamp--yes {
+  left: 18px;
+  color: var(--color-success);
+  transform: rotate(-10deg);
+  opacity: clamp(0, calc(var(--swipe) * 1.5), 1);
+}
+.flashcard__stamp--no {
+  right: 18px;
+  color: #ff5a52;
+  transform: rotate(10deg);
+  opacity: clamp(0, calc(var(--swipe) * -1.5), 1);
+}
+.flashcard.is-flying-right .flashcard__stamp--yes,
+.flashcard.is-flying-left .flashcard__stamp--no {
+  opacity: 1;
+}
+.flashcard-hint__swipe {
+  display: none;
+}
+@media (hover: none) {
+  .flashcard-hint__swipe {
+    display: inline;
+  }
+}
+.flashcard-grade .btn {
+  flex: 1;
+  max-width: 220px;
+  padding: 14px 18px;
+}
+.flashcard-box__dot.is-filled {
+  animation: dotIn 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+.flashcard-box__dot:nth-child(2) { animation-delay: 0.05s; }
+.flashcard-box__dot:nth-child(3) { animation-delay: 0.1s; }
+.flashcard-box__dot:nth-child(4) { animation-delay: 0.15s; }
+.flashcard-box__dot:nth-child(5) { animation-delay: 0.2s; }
+@keyframes dotIn {
+  from {
+    transform: scale(0);
+  }
+}
+.cards-empty {
+  animation: staggerIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* ---------------- Тесты ---------------- */
+.test-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.test-card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+.test-card__body:not([hidden]) {
+  animation: staggerIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.answer {
+  position: relative;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease, color 0.2s ease;
+}
+.answer:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+.answer:active {
+  transform: scale(0.99);
+}
+/* Свои радиокнопки и чекбоксы вместо системных. */
+.answer input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+[data-theme="light"] .answer input {
+  border-color: #c3c9da;
+}
+.answer input[type="checkbox"] {
+  border-radius: 6px;
+}
+.answer input::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  transform: scale(0);
+  transition: transform 0.22s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.answer input[type="checkbox"]::after {
+  width: 10px;
+  height: 5px;
+  margin-top: -3px;
+  border-radius: 0;
+  background: none;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+}
+.answer input:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.answer input:checked::after {
+  transform: scale(1);
+}
+.answer input[type="checkbox"]:checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+.answer input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.answer:has(input:checked) {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-text);
+}
+/* После проверки: верные варианты зелёные, ошибочный выбор красный. */
+.answers .answer.is-correct-option {
+  border-color: #2fd98a;
+  background: rgba(47, 217, 138, 0.12);
+  color: var(--color-text);
+}
+.answers .answer.is-wrong-option {
+  border-color: #ff5a52;
+  background: rgba(255, 90, 82, 0.1);
+}
+.answers .answer.is-correct-option::after,
+.answers .answer.is-wrong-option::after {
+  margin-left: auto;
+  padding-left: 8px;
+  font-weight: 800;
+  animation: dotIn 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.answers .answer.is-correct-option::after {
+  content: "✓";
+  color: #2fd98a;
+}
+.answers .answer.is-wrong-option::after {
+  content: "✕";
+  color: #ff5a52;
+}
+[data-theme="light"] .answers .answer.is-correct-option {
+  border-color: #1fb774;
+  background: rgba(31, 183, 116, 0.1);
+}
+.question-result.is-correct,
+.question-result.is-wrong {
+  animation: staggerIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Панель «Отвечено N из M + Проверить» прилипает к низу экрана. */
+.test-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  padding: 10px 10px 10px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(16, 24, 52, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+[data-theme="light"] .test-actions {
+  border-color: var(--color-border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 30px rgba(20, 22, 31, 0.12);
+}
+.test-actions__progress {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.test-actions__progress strong {
+  color: var(--color-text);
+}
+.test-actions.is-complete .btn {
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-primary) 26%, transparent);
+  }
+}
+
+/* Итог теста: кольцо с процентом. */
+.summary.is-visible {
+  animation: staggerIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.summary__layout {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.score-ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+}
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.score-ring circle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+.score-ring__track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+[data-theme="light"] .score-ring__track {
+  stroke: #e8ebf3;
+}
+.score-ring__fill {
+  stroke: var(--ring-color, var(--color-primary));
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: ringFill 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s forwards;
+}
+@keyframes ringFill {
+  to {
+    stroke-dashoffset: calc(100 - var(--p));
+  }
+}
+.score-ring--good {
+  --ring-color: #2fd98a;
+}
+.score-ring--mid {
+  --ring-color: #ffb020;
+}
+.score-ring--bad {
+  --ring-color: #ff5a52;
+}
+.score-ring__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+.score-ring__value strong {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- ИИ-консультант ---------------- */
+.ai-chat__toggle {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  animation: fabIn 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) 0.7s backwards;
+}
+.ai-chat__toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 40px rgba(111, 135, 255, 0.42);
+}
+.ai-chat__toggle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: fabPulse 3s ease-out 2s infinite;
+  pointer-events: none;
+}
+@keyframes fabIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(20px);
+  }
+}
+@keyframes fabPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(111, 135, 255, 0.5);
+  }
+  60%,
+  100% {
+    box-shadow: 0 0 0 16px rgba(111, 135, 255, 0);
+  }
+}
+.ai-chat__panel:not([hidden]) {
+  transform-origin: bottom right;
+  animation: chatIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes chatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}
+.ai-chat__msg {
+  animation: msgIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.ai-chat__msg.is-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+}
+.ai-chat__msg.is-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: typingDot 1.2s ease-in-out infinite;
+}
+.ai-chat__msg.is-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.ai-chat__msg.is-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typingDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---------------- Телефон ---------------- */
+.sheet-backdrop {
+  display: none;
+}
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 16px 0 28px;
+  }
+  .app-toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .app-search {
+    grid-column: 1 / -1;
+    height: 46px;
+  }
+  .app-toolbar__exam {
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .app-toolbar__exam svg {
+    width: 16px;
+    height: 16px;
+  }
+  .app-toolbar__label--long {
+    display: none;
+  }
+  .app-toolbar__label--short {
+    display: inline;
+  }
+
+  .gamify-bar {
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 11px 12px;
+    margin-bottom: 12px;
+  }
+  .gamify-bar__level,
+  .gamify-bar__rank-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .gamify-bar__sub,
+  .gamify-bar__badges-label {
+    display: none;
+  }
+  .gamify-bar__badges-toggle {
+    order: 0;
+    width: auto;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .app-selectors {
+    gap: 8px;
+  }
+
+  /* Списки дисциплин и тем — шторкой снизу. */
+  .sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1190;
+    background: rgba(8, 10, 20, 0.5);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  body.sheet-open {
+    overflow: hidden;
+  }
+  body.sheet-open .sheet-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  body.sheet-open .ai-chat,
+  body.sheet-open .tabbar {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .app-select__menu {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    gap: 6px;
+    max-height: 74vh;
+    padding: 0 12px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+    animation: sheetUp 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .app-select__sheet-head {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0 -12px 2px;
+    padding: 24px 20px 12px;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--color-text);
+    background: inherit;
+  }
+  .app-select__sheet-head::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-text-muted) 45%, transparent);
+  }
+  .app-select__menu .item-btn {
+    padding: 14px 16px;
+  }
+
+  .panel {
+    border-radius: 20px;
+  }
+  .content__scroll {
+    padding: 18px 14px 22px;
+  }
+  .topic-tabs {
+    margin: 0 -14px 18px;
+    padding: 10px 14px;
+  }
+  .theory p,
+  .theory li {
+    font-size: 15px;
+  }
+
+  .flashcard-grade {
+    gap: 10px;
+  }
+  .flashcard-grade .btn {
+    max-width: none;
+  }
+
+  .summary__layout {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .test-actions {
+    padding: 8px 8px 8px 14px;
+  }
+  .test-actions .btn {
+    padding: 11px 16px;
+    font-size: 14px;
+  }
+  body.is-authed.has-tabbar .test-actions {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  body.is-authed.has-tabbar .ai-chat {
+    right: 14px;
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  /* Чат на телефоне — шторка почти на весь экран. */
+  .ai-chat:has(.ai-chat__panel:not([hidden])) {
+    z-index: 1300;
+  }
+  .ai-chat:has(.ai-chat__panel:not([hidden])) .ai-chat__toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ai-chat__panel,
+  .ai-chat__panel--expanded {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 82vh;
+    max-height: 82vh;
+    border-radius: 22px 22px 0 0;
+  }
+  .ai-chat__panel:not([hidden]) {
+    animation: sheetUp 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .ai-chat__panel--expanded {
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  .ai-chat__body {
+    max-height: none;
+  }
+  .ai-chat__form {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gamify-bar,
+  .gamify-bar__fill::after,
+  .panel,
+  .topic-tab.is-active,
+  .view-panel-in,
+  .flashcard-box__dot.is-filled,
+  .cards-empty,
+  .test-card__body:not([hidden]),
+  .question-result.is-correct,
+  .question-result.is-wrong,
+  .test-actions.is-complete .btn,
+  .summary.is-visible,
+  .ai-chat__toggle,
+  .ai-chat__toggle::before,
+  .ai-chat__panel:not([hidden]),
+  .ai-chat__msg,
+  .app-search__results,
+  .app-select__menu,
+  .gamify-badges,
+  .answers .answer.is-correct-option::after,
+  .answers .answer.is-wrong-option::after {
+    animation: none !important;
+  }
+  .score-ring__fill {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+  .flashcard,
+  .flashcard__inner,
+  .gamify-bar__fill {
+    transition: none;
   }
 }
