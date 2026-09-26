@@ -1096,6 +1096,48 @@ const LexPrepApi = (function () {
     if (error) throw friendlyError(error);
   }
 
+  // Участники турнира (для лобби и сетки). Таблица открыта на чтение
+  // всем вошедшим (см. supabase/tournaments.sql), имена — через
+  // getPublicProfiles.
+  async function listTournamentParticipants(tournamentId) {
+    await requireSession();
+    const { data, error } = await client
+      .from('tournament_participants')
+      .select('user_id, eliminated_round, joined_at')
+      .eq('tournament_id', tournamentId)
+      .order('joined_at', { ascending: true });
+    if (error) throw friendlyError(error);
+    return data.map(p => ({ userId: p.user_id, eliminatedRound: p.eliminated_round, joinedAt: p.joined_at }));
+  }
+
+  // Все матчи турнира — для отрисовки сетки.
+  async function listTournamentMatches(tournamentId) {
+    await requireSession();
+    const { data, error } = await client
+      .from('tournament_matches')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .order('round', { ascending: true })
+      .order('slot', { ascending: true });
+    if (error) throw friendlyError(error);
+    return data.map(toFrontendTournamentMatch);
+  }
+
+  /* ---------------- Публичные карточки игроков ----------------
+     Имя, аватар и опыт других игроков для экранов дуэлей и турниров —
+     из того же публичного leaderboard_view, что и рейтинг (только
+     безопасные поля, см. supabase/leaderboard.sql). */
+  async function getPublicProfiles(ids) {
+    const unique = Array.from(new Set((ids || []).filter(Boolean)));
+    if (!unique.length) return [];
+    const { data, error } = await client
+      .from('leaderboard_view')
+      .select('id, name, avatar_url, xp')
+      .in('id', unique);
+    if (error) throw friendlyError(error);
+    return data.map(row => ({ id: row.id, name: row.name, avatar: row.avatar_url, xp: row.xp }));
+  }
+
   /* ---------------- Уведомления ---------------- */
 
   function toFrontendNotification(n) {
@@ -1391,6 +1433,7 @@ const LexPrepApi = (function () {
     createDuelChallenge, listOpenDuels, listMyDuels, acceptDuelChallenge, submitDuelScore, forfeitDuel, cancelDuelChallenge,
     getDuel, markDuelReady, advanceDuelProgress,
     joinTournament, getMyTournamentState, getTournamentMatch, markTournamentMatchReady, submitTournamentScore, advanceTournamentMatchProgress,
+    listTournamentParticipants, listTournamentMatches, getPublicProfiles,
     forfeitTournamentMatch, leaveTournamentLobby,
     askAiConsultant, askAiConsultantPro,
     initSubscriptionPayment, setSubscriptionAutoRenew, scheduleDowngrade,

@@ -21,16 +21,16 @@
       content="Личный профиль LexPrep: данные аккаунта, подписка, статистика и настройки."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/profile.css?v=20260923180000" />
+    <link rel="stylesheet" href="./styles/profile.css?v=20260926220000" />
   </head>
-  <body>
+  <body class="app-surface" data-tabbar>
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
         <a href="index.html" class="logo">
@@ -87,14 +87,38 @@
     <main class="profile-page">
       <section class="profile-shell">
         <div class="container">
+          <!-- Обложка профиля: аватар со значком ранга, тариф, уровень и
+               короткая сводка. Числа и полоса опыта заполняются в
+               initHeroSummary (profile.js). -->
           <div class="profile-hero">
-            <div class="profile-hero__avatar-wrap">
-              <span class="profile-hero__avatar" id="heroAvatar">U</span>
+            <div class="profile-hero__cover" aria-hidden="true">
+              <span class="profile-hero__blob profile-hero__blob--1"></span>
+              <span class="profile-hero__blob profile-hero__blob--2"></span>
+              <span class="profile-hero__blob profile-hero__blob--3"></span>
             </div>
-            <div>
-              <div class="eyebrow">LexPrep / Личный кабинет</div>
-              <h1 class="profile-hero__name" id="heroName">Профиль</h1>
-              <p class="profile-hero__email" id="heroEmail">you@example.com</p>
+            <div class="profile-hero__main">
+              <div class="profile-hero__avatar-wrap">
+                <span class="profile-hero__avatar" id="heroAvatar">U</span>
+                <img class="profile-hero__rank" id="heroRankIcon" src="assets/badges/themis-standard.svg" alt="" />
+              </div>
+              <div class="profile-hero__info">
+                <div class="eyebrow">Личный кабинет</div>
+                <h1 class="profile-hero__name" id="heroName">Профиль</h1>
+                <p class="profile-hero__email" id="heroEmail">you@example.com</p>
+                <div class="profile-hero__chips">
+                  <span class="profile-chip profile-chip--plan" id="heroPlanChip" hidden></span>
+                  <span class="profile-chip" id="heroLevelChip" hidden></span>
+                </div>
+              </div>
+              <div class="profile-hero__stats">
+                <div class="profile-hero__stat"><strong id="heroXp">0</strong><span>опыта</span></div>
+                <div class="profile-hero__stat"><strong id="heroStreak">0</strong><span>дней подряд</span></div>
+                <div class="profile-hero__stat"><strong id="heroTests">0</strong><span>тестов</span></div>
+              </div>
+            </div>
+            <div class="profile-hero__level">
+              <span class="profile-hero__level-track"><span class="profile-hero__level-fill" id="heroLevelFill"></span></span>
+              <span class="profile-hero__level-text" id="heroLevelText"></span>
             </div>
           </div>
 
@@ -104,43 +128,43 @@
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
                 </span>
-                Личная информация
+                <span class="profile-nav__label">Личная информация</span><span class="profile-nav__label profile-nav__label--short">Данные</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="subscription">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
                 </span>
-                Подписка
+                <span class="profile-nav__label">Подписка</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="stats">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
                 </span>
-                Статистика
+                <span class="profile-nav__label">Статистика</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="articles">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h9M8 13h9M8 17h5"/></svg>
                 </span>
-                Мои статьи
+                <span class="profile-nav__label">Мои статьи</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="tests">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10l2 2 4-4"/><path d="M8 16h8"/></svg>
                 </span>
-                Мои тесты
+                <span class="profile-nav__label">Мои тесты</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="referral">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 11l2 2 4-4"/></svg>
                 </span>
-                Реферальная программа
+                <span class="profile-nav__label">Реферальная программа</span><span class="profile-nav__label profile-nav__label--short">Рефералы</span>
               </button>
               <button class="profile-nav__item" type="button" data-section="settings">
                 <span class="profile-nav__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg>
                 </span>
-                Настройки
+                <span class="profile-nav__label">Настройки</span>
               </button>
             </aside>
 
@@ -234,22 +258,27 @@
 
                   <div class="stats-grid" id="statsGrid">
                     <div class="stat-tile">
+                      <span class="stat-tile__icon" aria-hidden="true">📚</span>
                       <span class="stat-tile__num" id="statTopics">0</span>
                       <span class="stat-tile__label">тем затронуто</span>
                     </div>
                     <div class="stat-tile">
+                      <span class="stat-tile__icon" aria-hidden="true">✅</span>
                       <span class="stat-tile__num" id="statTests">0</span>
                       <span class="stat-tile__label">тестов решено</span>
                     </div>
                     <div class="stat-tile">
+                      <span class="stat-tile__icon" aria-hidden="true">🎯</span>
                       <span class="stat-tile__num" id="statAvg">—</span>
                       <span class="stat-tile__label">средний результат</span>
                     </div>
                     <div class="stat-tile">
+                      <span class="stat-tile__icon" aria-hidden="true">🔥</span>
                       <span class="stat-tile__num" id="statStreak">0</span>
                       <span class="stat-tile__label">дней подряд</span>
                     </div>
                     <div class="stat-tile">
+                      <span class="stat-tile__icon" aria-hidden="true">🧠</span>
                       <span class="stat-tile__num" id="statCards">0</span>
                       <span class="stat-tile__label">карточек повторено</span>
                     </div>
@@ -522,17 +551,17 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="data.js?v=20260831160000"></script>
-    <script src="progress.js?v=20260916020000"></script>
+    <script src="progress.js?v=20260926190000"></script>
     <script src="plan.js?v=20260923180000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923180000"></script>
+    <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260924150000"></script>
+    <script src="script.js?v=20260926220000"></script>
     <script src="legal-docs.js?v=20260923150000"></script>
-    <script src="profile.js?v=20260924150000"></script>
+    <script src="profile.js?v=20260926190000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>

@@ -239,3 +239,17 @@ EXAM.CSS — страница пробного экзамена: карточк�
 [data-theme="light"] .exam-setup__error {
   color: #c0262a;
 }
+
+/* На узком экране три кнопки в ряд не помещались — «Далее» уезжала за
+   край. «Назад» и «Далее» остаются рядом, «Завершить» — строкой ниже. */
+@media (max-width: 520px) {
+  .exam-running__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #examFinishBtn {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

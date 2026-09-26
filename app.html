@@ -17,16 +17,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LexPrep — Учебная программа</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/app.css?v=20260924130000" />
+    <link rel="stylesheet" href="./styles/app.css?v=20260927010000" />
   </head>
-  <body>
+  <body class="app-surface" data-tabbar>
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
         <a href="index.html" class="logo">
@@ -77,6 +77,8 @@
       </div>
     </header>
 
+    <div class="reading-progress" id="readingProgress" aria-hidden="true"><span class="reading-progress__bar" id="readingProgressBar"></span></div>
+
     <main class="app-page">
       <section class="app-shell">
         <div class="container">
@@ -90,15 +92,15 @@
             </div>
             <a href="exam.html" class="btn btn--primary app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
-              Пробный экзамен
+              <span class="app-toolbar__label app-toolbar__label--long">Пробный экзамен</span><span class="app-toolbar__label app-toolbar__label--short">Экзамен</span>
             </a>
             <a href="duel.html" class="btn btn--outline app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/></svg>
-              Дуэли
+              <span class="app-toolbar__label">Дуэли</span>
             </a>
             <a href="tournaments.html" class="btn btn--outline app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>
-              Турниры
+              <span class="app-toolbar__label">Турниры</span>
             </a>
           </div>
 
@@ -109,15 +111,19 @@
             </div>
             <div class="gamify-bar__main">
               <div class="gamify-bar__top">
-                <span class="gamify-bar__title" id="gamifyTitle">Новичок</span>
+                <span class="gamify-bar__heading">
+                  <span class="gamify-bar__title" id="gamifyTitle">Новичок</span>
+                  <span class="gamify-bar__sub" id="gamifyLevelText">Уровень 1</span>
+                </span>
                 <span class="gamify-bar__xp" id="gamifyXp">0 XP</span>
               </div>
               <div class="gamify-bar__track">
                 <div class="gamify-bar__fill" id="gamifyFill" style="width: 0%"></div>
               </div>
             </div>
-            <button class="gamify-bar__badges-toggle" type="button" id="gamifyBadgesToggle">
-              Достижения
+            <button class="gamify-bar__badges-toggle" type="button" id="gamifyBadgesToggle" aria-label="Достижения">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>
+              <span class="gamify-bar__badges-label">Достижения</span>
               <span class="gamify-bar__badges-count" id="gamifyBadgesCount">0/40</span>
             </button>
             <div class="gamify-badges" id="gamifyBadges" hidden></div>
@@ -143,6 +149,8 @@
                 <div class="app-select__menu" id="topicSelectMenu" hidden></div>
               </div>
             </div>
+
+            <div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true"></div>
 
             <section class="panel content" id="contentPanel">
               <div class="content__scroll" id="contentView"></div>
@@ -192,18 +200,18 @@
     </div>
 
     <script src="data.js?v=20260831160000"></script>
-    <script src="progress.js?v=20260916020000"></script>
+    <script src="progress.js?v=20260926190000"></script>
     <script src="plan.js?v=20260923180000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923180000"></script>
+    <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="vendor/jspdf.umd.min.js"></script>
     <script src="vendor/roboto-fonts.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260924150000"></script>
-    <script src="app.js?v=20260924130000"></script>
+    <script src="script.js?v=20260926220000"></script>
+    <script src="app.js?v=20260926190000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>

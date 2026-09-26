@@ -45,12 +45,12 @@
     />
     <meta name="twitter:image" content="https://lexprep.ru/assets/favicon/android-chrome-512x512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
   </head>
   <body>
@@ -139,9 +139,16 @@
 
     <main>
       <!-- HERO -->
-      <section class="hero">
+      <section class="hero" id="hero">
+        <div class="hero__bg" aria-hidden="true">
+          <span class="hero__orb hero__orb--1"></span>
+          <span class="hero__orb hero__orb--2"></span>
+          <span class="hero__orb hero__orb--3"></span>
+          <span class="hero__grid"></span>
+          <span class="hero__spotlight"></span>
+        </div>
         <div class="container hero__inner">
-          <div class="hero__content reveal">
+          <div class="hero__content">
             <span class="badge">Приложение, которое готовит к экзамену по-настоящему</span>
             <h1 class="hero__title">
               Готовься к экзаменам так,<br />как удобно
@@ -153,13 +160,13 @@
               права → предмет → тему.
             </p>
             <div class="hero__actions">
-              <a href="auth.html#register" class="btn btn--primary btn--lg" data-auth="guest"
+              <a href="auth.html#register" class="btn btn--primary btn--lg btn--shine" data-auth="guest"
                 >Создать аккаунт</a
               >
               <a href="auth.html#login" class="btn btn--outline btn--lg" data-auth="guest"
                 >Посмотреть демо</a
               >
-              <a href="app.html" class="btn btn--primary btn--lg" data-auth="user">Перейти к программе</a>
+              <a href="app.html" class="btn btn--primary btn--lg btn--shine" data-auth="user">Перейти к программе</a>
             </div>
             <div class="hero__stats">
               <div class="stat">
@@ -176,51 +183,122 @@
               </div>
             </div>
           </div>
-          <div class="hero__visual reveal">
-            <div class="mock-card">
-              <div class="mock-card__row--head">
-                <span class="dot dot--red"></span
-                ><span class="dot dot--yellow"></span
-                ><span class="dot dot--green"></span>
+          <!-- Живое демо одной темы: карточка сама проходит шаги
+               Конспект → Практика → Карточки → Тест (см. initHeroStudy в
+               script.js), а плашка уровня и всплывающие уведомления
+               показывают, за что в приложении начисляется опыт. -->
+          <div class="hero__visual" id="heroStudy">
+            <div class="hero__float">
+              <div class="study-card">
+                <span class="study-card__beam" aria-hidden="true"></span>
+                <div class="study-card__head">
+                  <span class="study-card__subject-icon" aria-hidden="true">⚖️</span>
+                  <span class="study-card__subject">
+                    <small>Гражданское право</small>
+                    <strong>Договор купли-продажи</strong>
+                  </span>
+                  <span class="study-card__demo">Пример темы</span>
+                </div>
+
+                <div class="study-tabs" role="tablist" aria-label="Режимы изучения темы">
+                  <button class="study-tab is-active" type="button" role="tab" aria-selected="true" data-study-tab="notes" data-progress="25">
+                    Конспект<span class="study-tab__timer" aria-hidden="true"></span>
+                  </button>
+                  <button class="study-tab" type="button" role="tab" aria-selected="false" data-study-tab="practice" data-progress="50">
+                    Практика<span class="study-tab__timer" aria-hidden="true"></span>
+                  </button>
+                  <button class="study-tab" type="button" role="tab" aria-selected="false" data-study-tab="cards" data-progress="75">
+                    Карточки<span class="study-tab__timer" aria-hidden="true"></span>
+                  </button>
+                  <button class="study-tab" type="button" role="tab" aria-selected="false" data-study-tab="test" data-progress="100">
+                    Тест<span class="study-tab__timer" aria-hidden="true"></span>
+                  </button>
+                </div>
+
+                <div class="study-stage">
+                  <div class="study-scene study-scene--notes is-active" data-study-scene="notes" data-xp="8" data-toast-icon="📖" data-toast-title="+8 опыта" data-toast-text="за прочитанный конспект">
+                    <p class="scene-notes__text">
+                      По договору купли-продажи продавец обязуется
+                      <mark class="scene-notes__mark">передать вещь в собственность</mark>
+                      покупателю, а покупатель — принять товар и уплатить за него цену.
+                    </p>
+                    <div class="scene-notes__meta">
+                      <span class="scene-pill">ст. 454 ГК РФ</span>
+                      <span class="scene-pill scene-pill--muted">≈ 5 мин чтения</span>
+                    </div>
+                  </div>
+
+                  <div class="study-scene study-scene--practice" data-study-scene="practice" data-xp="0" data-toast-icon="⚖️" data-toast-title="Практика по теме" data-toast-text="кейсы уже привязаны к конспекту">
+                    <div class="scene-case">
+                      <span class="scene-case__label">Судебный кейс</span>
+                      <p class="scene-case__text">
+                        Покупатель требует передать товар, но в договоре не указано
+                        его количество.
+                      </p>
+                      <div class="scene-case__verdict">
+                        <span class="scene-case__stamp">Решение</span>
+                        Договор не заключён — п.&nbsp;2 ст.&nbsp;465 ГК РФ
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="study-scene study-scene--cards" data-study-scene="cards" data-xp="4" data-toast-icon="🧠" data-toast-title="+4 опыта" data-toast-text="повторим эти карточки через 3 дня">
+                    <div class="scene-flip">
+                      <div class="scene-flip__inner">
+                        <div class="scene-flip__face scene-flip__face--front">
+                          <small>Вопрос</small>
+                          Какое условие договора купли-продажи существенное?
+                        </div>
+                        <div class="scene-flip__face scene-flip__face--back">
+                          <small>Ответ</small>
+                          Предмет: наименование и количество товара (п.&nbsp;3 ст.&nbsp;455 ГК РФ)
+                        </div>
+                      </div>
+                    </div>
+                    <div class="scene-rate" aria-hidden="true">
+                      <span>Не помню</span>
+                      <span>Сложно</span>
+                      <span class="scene-rate__pick">Знаю</span>
+                    </div>
+                  </div>
+
+                  <div class="study-scene study-scene--test" data-study-scene="test" data-xp="18" data-toast-icon="✅" data-toast-title="9 из 10 верно" data-toast-text="+18 опыта · тема закрыта">
+                    <p class="scene-test__q">Если в договоре не указано количество товара, договор…</p>
+                    <ul class="scene-test__options">
+                      <li>заключён, количество определит суд</li>
+                      <li class="scene-test__correct">не считается заключённым</li>
+                      <li>ничтожен</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="study-progress">
+                  <div class="study-progress__label">
+                    <span>Тема пройдена</span>
+                    <strong><span id="studyProgressValue">25</span>%</strong>
+                  </div>
+                  <div class="study-progress__track">
+                    <div class="study-progress__bar" id="studyProgressBar"></div>
+                  </div>
+                </div>
               </div>
-              <div class="mock-card__body">
-                <div class="mock-info mock-info--enter" id="mockInfo">
-                  <div class="mock-info__title">Конспект</div>
-                  <p class="mock-info__desc">
-                    Разбор темы простым языком с примерами и судебной практикой —
-                    быстро войти в тему перед семинаром.
-                  </p>
-                </div>
-                <div class="mock-chip-row">
-                  <span
-                    class="mock-chip mock-chip--active"
-                    data-progress="62"
-                    data-desc="Разбор темы простым языком с примерами и судебной практикой — быстро войти в тему перед семинаром."
-                    >Конспект</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="35"
-                    data-desc="ИИ подбирает карточки под твой уровень и повторяет их по интервалам — сложное не забывается, а простое не отнимает время."
-                    >Карточки</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="90"
-                    data-desc="Проверка знаний с разбором каждого ответа — сразу видно, что подтянуть перед семинаром или экзаменом."
-                    >Тест</span
-                  >
-                  <span
-                    class="mock-chip"
-                    data-progress="48"
-                    data-desc="Судебные кейсы и практические задачи по теме — учишься применять норму, а не только запоминать её."
-                    >Практика</span
-                  >
-                </div>
-                <div class="mock-progress">
-                  <div class="mock-progress__bar"></div>
-                </div>
-              </div>
+            </div>
+
+            <div class="hero-level" aria-hidden="true">
+              <img class="hero-level__icon" src="assets/badges/themis-bronze.svg" alt="" />
+              <span class="hero-level__body">
+                <span class="hero-level__title">Уровень <span id="heroLevelValue">5</span> · Студент</span>
+                <span class="hero-level__track"><span class="hero-level__bar" id="heroLevelBar"></span></span>
+              </span>
+              <span class="hero-level__plus" id="heroLevelPlus"></span>
+            </div>
+
+            <div class="hero-toast" id="heroToast" aria-hidden="true">
+              <span class="hero-toast__icon" id="heroToastIcon">📖</span>
+              <span class="hero-toast__body">
+                <strong id="heroToastTitle">+8 опыта</strong>
+                <small id="heroToastText">за прочитанный конспект</small>
+              </span>
             </div>
           </div>
         </div>
@@ -238,66 +316,125 @@
               От адаптивных карточек до готовых билетов на экзамен.
             </p>
           </div>
-          <div class="grid grid--3">
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--blue">
-                <img src="./images/images icon-tree.svg" alt="" />
-              </div>
-              <h3>Дерево категорий</h3>
-              <p>
-                Категория → предмет → тема. Всплывающие окна ведут по дереву без
-                потери контекста.
-              </p>
+          <div class="feature-tabs reveal" id="featureTabs">
+            <div class="feature-tabs__list" role="tablist">
+              <button class="feature-tabs__item is-active" type="button" data-feature-tab="tree" style="--tab-accent: var(--color-primary)">
+                <span class="feature-card__icon feature-card__icon--blue"><img src="./images/images icon-tree.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Дерево категорий</strong>
+                  <small>Категория → предмет → тема</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="cards" style="--tab-accent: #ff7a45">
+                <span class="feature-card__icon feature-card__icon--orange"><img src="./images/images icon-ai-cards.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>ИИ-карточки под уровень</strong>
+                  <small>Сложность подбирается автоматически</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="tests" style="--tab-accent: #1fb774">
+                <span class="feature-card__icon feature-card__icon--green"><img src="./images/images icon-tests.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Тесты трёх видов</strong>
+                  <small>Редакция, ИИ и сообщество</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="practice" style="--tab-accent: #8c54ff">
+                <span class="feature-card__icon feature-card__icon--purple"><img src="./images/images icon-court.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Судебная практика</strong>
+                  <small>Пленумы и решения судов</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="tickets" style="--tab-accent: #5865f2">
+                <span class="feature-card__icon feature-card__icon--indigo"><img src="./images/images icon-tickets.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Готовые билеты к экзамену</strong>
+                  <small>Собраны заранее</small>
+                </span>
+              </button>
+              <button class="feature-tabs__item" type="button" data-feature-tab="rewards" style="--tab-accent: #e0a316">
+                <span class="feature-card__icon feature-card__icon--yellow"><img src="./images/images icon-rewards.svg" alt="" /></span>
+                <span class="feature-tabs__item-text">
+                  <strong>Награды за вклад</strong>
+                  <small>Бонусы к подписке</small>
+                </span>
+              </button>
             </div>
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--orange">
-                <img src="./images/images icon-ai-cards.svg" alt="" />
+
+            <div class="feature-tabs__preview">
+              <div class="feature-tabs__panel is-active" data-feature-panel="tree" style="--tab-accent: var(--color-primary)">
+                <h3>Дерево категорий</h3>
+                <p>
+                  Категория → предмет → тема. Всплывающие окна ведут по дереву без
+                  потери контекста — как в привычном маркетплейсе, только вместо
+                  товаров учебный материал.
+                </p>
+                <div class="feature-visual feature-visual--crumbs">
+                  <span class="bento__crumb">Гражданское право</span>
+                  <span class="bento__crumb-arrow">→</span>
+                  <span class="bento__crumb">Обязательства</span>
+                  <span class="bento__crumb-arrow">→</span>
+                  <span class="bento__crumb bento__crumb--active">Договор купли-продажи</span>
+                </div>
               </div>
-              <h3>ИИ-карточки под уровень</h3>
-              <p>
-                Нейросеть подбирает сложность карточек индивидуально — от
-                новичка до продвинутого.
-              </p>
-            </div>
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--green">
-                <img src="./images/images icon-tests.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="cards" style="--tab-accent: #ff7a45">
+                <h3>ИИ-карточки под уровень</h3>
+                <p>
+                  Нейросеть подбирает сложность карточек индивидуально — от
+                  новичка до продвинутого.
+                </p>
+                <div class="feature-visual feature-visual--levels">
+                  <span class="feature-visual__level">Новичок</span>
+                  <span class="feature-visual__level is-active">Средний</span>
+                  <span class="feature-visual__level">Продвинутый</span>
+                </div>
               </div>
-              <h3>Тесты трёх видов</h3>
-              <p>
-                От редакции, от нейросети или созданные другими студентами — с
-                проверкой модераторами.
-              </p>
-            </div>
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--purple">
-                <img src="./images/images icon-court.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="tests" style="--tab-accent: #1fb774">
+                <h3>Тесты трёх видов</h3>
+                <p>
+                  От редакции, от нейросети или созданные другими студентами — с
+                  проверкой модераторами.
+                </p>
+                <div class="feature-visual feature-visual--sources">
+                  <span class="feature-visual__source">📘 От редакции</span>
+                  <span class="feature-visual__source">🤖 От ИИ</span>
+                  <span class="feature-visual__source">👥 От студентов</span>
+                </div>
               </div>
-              <h3>Судебная практика</h3>
-              <p>
-                Актуальные пленумы и решения судов, привязанные к каждой теме и
-                билету.
-              </p>
-            </div>
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--indigo">
-                <img src="./images/images icon-tickets.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="practice" style="--tab-accent: #8c54ff">
+                <h3>Судебная практика</h3>
+                <p>
+                  Актуальные пленумы и решения судов, привязанные к каждой теме и
+                  билету.
+                </p>
+                <blockquote class="feature-visual feature-visual--quote">
+                  «Постановление Пленума ВС РФ № 25: сделка, совершённая под влиянием
+                  существенного заблуждения относительно её природы...»
+                </blockquote>
               </div>
-              <h3>Готовые билеты к экзамену</h3>
-              <p>
-                Конспекты и билеты собраны заранее — не нужно искать по десяткам
-                источников.
-              </p>
-            </div>
-            <div class="feature-card reveal">
-              <div class="feature-card__icon feature-card__icon--yellow">
-                <img src="./images/images icon-rewards.svg" alt="" />
+              <div class="feature-tabs__panel" data-feature-panel="tickets" style="--tab-accent: #5865f2">
+                <h3>Готовые билеты к экзамену</h3>
+                <p>
+                  Конспекты и билеты собраны заранее — не нужно искать по десяткам
+                  источников.
+                </p>
+                <div class="feature-visual feature-visual--ticket">
+                  <span>Билет</span>
+                  <strong>№ 14</strong>
+                </div>
               </div>
-              <h3>Награды за вклад</h3>
-              <p>
-                Предлагай правки и идеи карточек — после проверки редакцией
-                получай бонусы к подписке.
-              </p>
+              <div class="feature-tabs__panel" data-feature-panel="rewards" style="--tab-accent: #e0a316">
+                <h3>Награды за вклад</h3>
+                <p>
+                  Предлагай правки и идеи карточек — после проверки редакцией
+                  получай бонусы к подписке.
+                </p>
+                <div class="feature-visual feature-visual--reward">
+                  <span>🪙</span>
+                  <strong>+250 монет</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,32 +447,33 @@
             <span class="eyebrow">Процесс</span>
             <h2 class="section__title">Как проходит подготовка</h2>
           </div>
-          <div class="steps">
-            <div class="step reveal">
-              <div class="step__num">01</div>
+          <div class="roadmap reveal">
+            <div class="roadmap__line" aria-hidden="true"></div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">1</div>
               <h3>Выбираешь тему</h3>
               <p>
                 Находишь нужную тему через навигацию по отраслям и предметам.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">02</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">2</div>
               <h3>Изучаешь материал</h3>
               <p>
                 Конспект, судебная практика и карточки, подобранные под твой
                 уровень.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">03</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">3</div>
               <h3>Проверяешь себя</h3>
               <p>
                 Проходишь тест — от редакции, ИИ или сообщества — и видишь
                 пробелы.
               </p>
             </div>
-            <div class="step reveal">
-              <div class="step__num">04</div>
+            <div class="roadmap__step">
+              <div class="roadmap__node">4</div>
               <h3>Идёшь на экзамен</h3>
               <p>
                 Повторяешь готовые билеты и конспекты прямо перед экзаменом.
@@ -722,10 +860,10 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923180000"></script>
+    <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260924150000"></script>
+    <script src="script.js?v=20260926220000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');

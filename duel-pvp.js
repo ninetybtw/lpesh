@@ -2,8 +2,8 @@
 DUEL-PVP.JS — дуэль 1 на 1 против реального игрока. Открытое лобби:
 вызов создаётся без конкретного соперника, любой другой пользователь
 принимает его из списка. Дальше оба играют один и тот же набор вопросов
-независимо (как в тренажёре) и отправляют счёт — сервер сам считает
-победителя и дуэльный рейтинг (см. supabase/duels.sql).
+с общим таймером и отправляют счёт — сервер сам считает победителя и
+дуэльный рейтинг (см. supabase/duels.sql). Отображение — arena.js.
 ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,8 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   modeTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const mode = tab.dataset.duelModeTab;
-      modeTabs.forEach(t => t.classList.toggle('is-active', t === tab));
+      modeTabs.forEach(t => {
+        t.classList.toggle('is-active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
       modePanels.forEach(p => { p.hidden = p.dataset.duelModePanel !== mode; });
+      const panel = document.querySelector(`[data-duel-mode-panel="${mode}"]`);
+      Arena.animateIn(panel, 'arena-enter');
       if (mode === 'pvp' && !pvpInited) {
         pvpInited = true;
         initPvp();
@@ -30,9 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  function escapeHtml(str) {
-    return DuelEngine.escapeHtml(str);
-  }
+  const escapeHtml = Arena.esc;
 
   function disciplineLabel(id) {
     if (!id || id === 'all') return 'Все дисциплины';
@@ -80,39 +83,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     discSelect.addEventListener('change', renderTopicOptions);
     renderTopicOptions();
 
+    function ratingChip(value) {
+      return `<span aria-hidden="true">⚔️</span><b>${value}</b><span>рейтинг PvP</span>`;
+    }
+
     function renderStats() {
-      statsEl.innerHTML = `
-        <div class="duel-stats__item duel-stats__item--rating"><span class="duel-stats__num">${user.duelRating || 1000}</span><span class="duel-stats__label">рейтинг PvP</span></div>
-      `;
+      statsEl.innerHTML = ratingChip(user.duelRating || 1000);
       LexPrepApi.me().then(fresh => {
         user.duelRating = fresh.duelRating;
-        statsEl.innerHTML = `
-          <div class="duel-stats__item duel-stats__item--rating"><span class="duel-stats__num">${fresh.duelRating}</span><span class="duel-stats__label">рейтинг PvP</span></div>
-        `;
+        statsEl.innerHTML = ratingChip(fresh.duelRating);
       }).catch(() => {});
     }
     renderStats();
 
-    const STATUS_LABEL = { open: 'Открыт', accepted: 'Идёт', completed: 'Завершена', cancelled: 'Отменена' };
+    const STATUS_LABEL = { open: 'Ищем соперника', accepted: 'Идёт', completed: 'Завершена', cancelled: 'Отменена' };
+
+    // Аватары соперников подгружаются по мере появления новых id.
+    const profileCache = new Map();
+    async function ensureProfiles(ids) {
+      const missing = ids.filter(id => id && !profileCache.has(id));
+      if (!missing.length) return false;
+      const loaded = await Arena.loadProfiles(missing);
+      missing.forEach(id => profileCache.set(id, loaded.get(id) || null));
+      return loaded.size > 0;
+    }
+
+    function playerFor(id, fallbackName, meta) {
+      const p = Arena.fromProfile(profileCache.get(id), fallbackName, meta);
+      return p;
+    }
+
+    let lastOpenList = [];
 
     function renderOpenList(list) {
+      lastOpenList = list;
       const others = list.filter(d => d.challengerId !== user.id);
       if (!others.length) {
-        openListEl.innerHTML = '<p class="community-empty">Пока никто не создал открытый вызов — стань первым.</p>';
+        openListEl.innerHTML = `
+          <div class="arena-empty">
+            <span class="arena-empty__icon" aria-hidden="true">🏟️</span>
+            <p>Пока никто не бросил вызов — создай свой, и соперник найдётся.</p>
+          </div>`;
         return;
       }
-      openListEl.innerHTML = others.map(d => `
-        <div class="community-item">
-          <div class="community-item__head">
-            <h3>${escapeHtml(disciplineLabel(d.discipline))} · ${d.questionCount} вопросов</h3>
-            <span class="community-badge community-badge--open">${STATUS_LABEL[d.status]}</span>
+      openListEl.innerHTML = others.map(d => {
+        const meta = [
+          d.challengerLevel ? `Ур. ${d.challengerLevel}` : '',
+          d.challengerRating ? `⚔️ ${d.challengerRating}` : ''
+        ].filter(Boolean).join(' · ');
+        const player = playerFor(d.challengerId, d.challengerName || 'Игрок', meta);
+        return `
+          <div class="challenge-card">
+            ${Arena.avatarHtml(player, 'arena-avatar--md')}
+            <div class="challenge-card__info">
+              <div class="challenge-card__name">${escapeHtml(player.name)}</div>
+              <div class="challenge-card__meta">${escapeHtml(meta || player.meta || '')}</div>
+              <div class="challenge-card__tags">
+                <span class="arena-tag">📚 ${escapeHtml(disciplineLabel(d.discipline))}</span>
+                <span class="arena-tag">🎯 ${d.questionCount} раундов</span>
+                <span class="arena-tag arena-tag--muted">${formatDateTime(d.createdAt)}</span>
+              </div>
+            </div>
+            <button type="button" class="arena-accept" data-accept="${d.id}">⚔️ Принять</button>
           </div>
-          <div class="community-item__meta">
-            <span>Создал: ${escapeHtml(d.challengerName || 'Игрок')}${d.challengerLevel ? ` · ур. ${d.challengerLevel}` : ''}${d.challengerRating ? ` · рейтинг ${d.challengerRating}` : ''} · ${formatDateTime(d.createdAt)}</span>
-            <button type="button" class="admin-action-btn" data-accept="${d.id}">Принять</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       openListEl.querySelectorAll('[data-accept]').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -132,7 +167,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderMyList(fullList) {
       if (!fullList.length) {
-        myListEl.innerHTML = '<p class="community-empty">Ты ещё не создавал и не принимал дуэли.</p>';
+        myListEl.innerHTML = `
+          <div class="arena-empty">
+            <span class="arena-empty__icon" aria-hidden="true">⚔️</span>
+            <p>Ты ещё не создавал и не принимал дуэли.</p>
+          </div>`;
         return;
       }
       // Активные (открытые/идущие) — нужны все, они требуют действия.
@@ -148,32 +187,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         const oppScore = isChallenger ? d.opponentScore : d.challengerScore;
         const myDelta = isChallenger ? d.challengerRatingDelta : d.opponentRatingDelta;
         const myPlayed = isChallenger ? d.challengerPlayedAt : d.opponentPlayedAt;
+        const oppId = isChallenger ? d.opponentId : d.challengerId;
+        const oppName = (isChallenger ? d.opponentName : d.challengerName) || 'Соперник';
+
+        // Свой открытый вызов — «радар»: ищем соперника.
+        if (d.status === 'open' && isChallenger) {
+          return `
+            <div class="search-card">
+              <div class="search-card__radar" aria-hidden="true">
+                <span class="search-card__ring"></span><span class="search-card__ring"></span><span class="search-card__ring"></span>
+                ${Arena.avatarHtml(Arena.me(user), 'arena-avatar--md')}
+              </div>
+              <div class="search-card__info">
+                <div class="search-card__title">Ищем соперника…</div>
+                <div class="challenge-card__tags">
+                  <span class="arena-tag">📚 ${escapeHtml(disciplineLabel(d.discipline))}</span>
+                  <span class="arena-tag">🎯 ${d.questionCount} раундов</span>
+                </div>
+              </div>
+              <button type="button" class="arena-link-btn" data-cancel="${d.id}">Отменить</button>
+            </div>`;
+        }
 
         let action = '';
-        if (d.status === 'open' && isChallenger) {
-          action = `<button type="button" class="admin-action-btn admin-action-btn--warn" data-cancel="${d.id}">Отменить</button>`;
-        } else if (d.status === 'accepted' && !myPlayed) {
-          action = `<button type="button" class="admin-action-btn" data-play="${d.id}">Играть</button>`;
+        let state = '';
+        if (d.status === 'accepted' && !myPlayed) {
+          action = `<button type="button" class="arena-accept" data-play="${d.id}">▶ Играть</button>`;
+          state = 'is-live';
         } else if (d.status === 'accepted' && myPlayed) {
-          action = `<span class="community-badge community-badge--reviewing">Ждём соперника</span>`;
+          action = `<span class="arena-tag arena-tag--wait">⏳ ждём соперника</span>`;
         }
 
         let resultLine = '';
         if (d.status === 'completed') {
-          const outcome = myScore > oppScore ? 'Победа' : myScore < oppScore ? 'Поражение' : 'Ничья';
-          resultLine = `<span>${myScore} : ${oppScore} — ${outcome} (${myDelta >= 0 ? '+' : ''}${myDelta} рейтинга)</span>`;
+          const outcome = myScore > oppScore ? 'win' : myScore < oppScore ? 'loss' : 'draw';
+          const label = { win: 'Победа', loss: 'Поражение', draw: 'Ничья' }[outcome];
+          state = `is-${outcome}`;
+          resultLine = `
+            <span class="history-card__score">${myScore} : ${oppScore}</span>
+            <span class="history-card__outcome">${label}</span>
+            <span class="history-card__delta ${myDelta >= 0 ? 'is-up' : 'is-down'}">${myDelta >= 0 ? '+' : ''}${myDelta}</span>`;
+        } else if (d.status === 'cancelled') {
+          state = 'is-cancelled';
+          resultLine = '<span class="history-card__outcome">Отменена</span>';
         }
 
+        const opponent = playerFor(oppId, oppId ? oppName : '?', '');
         return `
-          <div class="community-item">
-            <div class="community-item__head">
-              <h3>${escapeHtml(disciplineLabel(d.discipline))} · ${d.questionCount} вопросов</h3>
-              <span class="community-badge community-badge--${d.status === 'accepted' ? 'reviewing' : d.status === 'completed' ? 'accepted' : d.status === 'cancelled' ? 'rejected' : 'open'}">${STATUS_LABEL[d.status]}</span>
+          <div class="history-card ${state}">
+            ${oppId ? Arena.avatarHtml(opponent, 'arena-avatar--sm') : '<span class="arena-avatar arena-avatar--sm arena-avatar--ghost">?</span>'}
+            <div class="history-card__info">
+              <div class="history-card__name">${oppId ? `vs ${escapeHtml(oppName)}` : 'Соперник ещё не найден'}</div>
+              <div class="history-card__meta">${escapeHtml(disciplineLabel(d.discipline))} · ${d.questionCount} раундов · ${formatDateTime(d.createdAt)}</div>
             </div>
-            <div class="community-item__meta">
-              ${resultLine || `<span>${formatDateTime(d.createdAt)}</span>`}
-              ${action}
-            </div>
+            <div class="history-card__right">${resultLine || `<span class="arena-tag">${STATUS_LABEL[d.status]}</span>`}${action}</div>
           </div>
         `;
       }).join('');
@@ -200,13 +267,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let myDuelsCache = [];
+    let listsRendered = false;
+    let listsSignature = '';
 
     async function refreshLists() {
       try {
         const [openList, myList] = await Promise.all([LexPrepApi.listOpenDuels(), LexPrepApi.listMyDuels()]);
         myDuelsCache = myList;
-        renderOpenList(openList);
-        renderMyList(myList);
+        // Перерисовываем только если что-то изменилось — иначе опрос раз в
+        // 5 секунд перезапускал бы анимации карточек («радар» поиска).
+        const signature = JSON.stringify([openList, myList]);
+        if (signature !== listsSignature) {
+          listsSignature = signature;
+          renderOpenList(openList);
+          renderMyList(myList);
+        }
+        if (!listsRendered && window.LexPrepMotion) {
+          listsRendered = true;
+          LexPrepMotion.stagger(openListEl, '.challenge-card');
+          LexPrepMotion.stagger(myListEl, '.history-card, .search-card');
+        }
+        // Аватары соперников — после первого рендера, чтобы не ждать сеть.
+        const ids = [
+          ...openList.map(d => d.challengerId),
+          ...myList.map(d => (d.challengerId === user.id ? d.opponentId : d.challengerId))
+        ];
+        if (await ensureProfiles(ids)) {
+          renderOpenList(lastOpenList);
+          renderMyList(myDuelsCache);
+        }
       } catch (err) {
         openListEl.innerHTML = `<p class="community-empty">Не удалось загрузить: ${escapeHtml(err.message)}</p>`;
         myListEl.innerHTML = '';
@@ -256,6 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           challengerRating: user.duelRating || 1000
         });
         await refreshLists();
+        myListEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.hidden = false;
@@ -276,6 +366,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pvpViews = document.querySelectorAll('[data-pvp-view]');
     function showPvpView(name) {
       pvpViews.forEach(v => { v.hidden = v.dataset.pvpView !== name; });
+      document.body.classList.toggle('arena-in-game', name !== 'lobby');
+      Arena.animateIn(document.querySelector(`[data-pvp-view="${name}"]`), 'arena-enter');
+      window.scrollTo({ top: 0, behavior: Arena.reduced() ? 'auto' : 'smooth' });
     }
 
     let battleDuel = null;
@@ -287,14 +380,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     let battleChosen = [];
     let readyPollTimer = null;
     let battleTickTimer = null;
+    let hud = null;
+    let mePlayer = null;
+    let oppPlayer = null;
+    let shownOppProgress = 0;
+    let myStreak = 0;
 
-    const progressEl = document.getElementById('pvpProgress');
-    const topicLabelEl = document.getElementById('pvpTopicLabel');
     const questionBox = document.getElementById('pvpQuestionBox');
     const roundResultEl = document.getElementById('pvpRoundResult');
     const answerBtn = document.getElementById('pvpAnswerBtn');
     const readyBtn = document.getElementById('pvpReadyBtn');
     const readyStatusEl = document.getElementById('pvpReadyStatus');
+    const readyStageEl = document.getElementById('pvpReadyStage');
 
     function stopTimers() {
       if (readyPollTimer) { clearInterval(readyPollTimer); readyPollTimer = null; }
@@ -324,6 +421,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pvpForfeitBtn').addEventListener('click', forfeitDuel);
     document.getElementById('pvpBattleForfeitBtn').addEventListener('click', forfeitDuel);
 
+    function opponentOf(duel) {
+      const isChallenger = duel.challengerId === user.id;
+      const oppId = isChallenger ? duel.opponentId : duel.challengerId;
+      const oppName = (isChallenger ? duel.opponentName : duel.challengerName) || 'Соперник';
+      const meta = !isChallenger && duel.challengerRating ? `⚔️ ${duel.challengerRating}` : '';
+      return { id: oppId, player: playerFor(oppId, oppName, meta) };
+    }
+
+    function renderReadyStage(duel) {
+      const iAmReady = amChallenger() ? duel.challengerReady : duel.opponentReady;
+      const oppReady = amChallenger() ? duel.opponentReady : duel.challengerReady;
+      readyStageEl.innerHTML = `
+        <div class="arena-ready__side">
+          ${Arena.fighterHtml(mePlayer)}
+          <span class="arena-ready__flag ${iAmReady ? 'is-ready' : ''}">${iAmReady ? '✓ Готов' : 'Не готов'}</span>
+        </div>
+        <div class="arena-ready__vs"><span>VS</span></div>
+        <div class="arena-ready__side">
+          ${Arena.fighterHtml(oppPlayer)}
+          <span class="arena-ready__flag ${oppReady ? 'is-ready' : ''}">${oppReady ? '✓ Готов' : 'ждём…'}</span>
+        </div>
+      `;
+    }
+
     function playDuel(duel) {
       battleDuel = duel;
       battleQuestions = resolveQuestions(duel.questionIds);
@@ -331,10 +452,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       battleFinished = false;
       renderedIndex = -1;
       lockedIndex = -1;
+      mePlayer = Arena.me(user, user.duelRating ? `⚔️ ${user.duelRating}` : undefined);
+      const opp = opponentOf(duel);
+      oppPlayer = opp.player;
       showPvpView('ready');
       readyBtn.disabled = false;
-      readyBtn.textContent = 'Готов';
+      readyBtn.textContent = 'Готов!';
+      renderReadyStage(duel);
       updateReadyStatus(duel);
+      // Если карточки соперника ещё нет — подгружаем и перерисовываем VS.
+      ensureProfiles([opp.id]).then(changed => {
+        if (!changed || battleDuel !== duel) return;
+        oppPlayer = opponentOf(battleDuel).player;
+        renderReadyStage(battleDuel);
+      });
 
       readyBtn.onclick = async () => {
         readyBtn.disabled = true;
@@ -343,9 +474,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           battleDuel = updated;
           if (updated.startedAt) {
             LexPrepProgress.incrementDailyUsage('duelsPlayed');
-            showPvpView('battle');
-            startBattleClock();
+            beginBattle();
           } else {
+            renderReadyStage(updated);
             updateReadyStatus(updated);
             waitForStart();
           }
@@ -390,18 +521,47 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (duel.startedAt) {
             stopTimers();
             LexPrepProgress.incrementDailyUsage('duelsPlayed');
-            showPvpView('battle');
-            startBattleClock();
+            beginBattle();
           } else {
+            renderReadyStage(duel);
             updateReadyStatus(duel);
           }
         } catch (e) { /* временная сетевая ошибка — просто попробуем ещё раз */ }
       }, 1500);
     }
 
+    // Часы боя уже идут с момента started_at, поэтому вместо долгой
+    // заставки — короткая вспышка «В бой!» поверх уже открытого вопроса.
+    function beginBattle() {
+      hud = Arena.buildHud(document.getElementById('pvpHud'), {
+        left: mePlayer,
+        right: { ...oppPlayer, hiddenScore: true },
+        total: battleQuestions.length,
+        timer: true
+      });
+      shownOppProgress = 0;
+      myStreak = 0;
+      showPvpView('battle');
+      Arena.flash('В бой!');
+      Arena.vibrate(40);
+      startBattleClock();
+    }
+
     let myProgress = 0;
     let oppProgress = 0;
     let progressPollTimer = null;
+
+    function syncOpponentProgress() {
+      if (!hud) return;
+      while (shownOppProgress < Math.min(oppProgress, battleQuestions.length)) {
+        hud.pip('right', shownOppProgress, 'done');
+        shownOppProgress++;
+      }
+      if (renderedIndex >= 0) {
+        const oppDone = oppProgress > renderedIndex;
+        hud.status('right', oppDone ? 'ответил ✓' : 'думает…', oppDone ? 'ok' : 'think');
+      }
+    }
 
     function startBattleClock() {
       const startedAtMs = new Date(battleDuel.startedAt).getTime();
@@ -424,6 +584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
           }
           oppProgress = amChallenger() ? fresh.opponentProgress : fresh.challengerProgress;
+          syncOpponentProgress();
         } catch (e) { /* пропустим один опрос — не критично */ }
       }, 800);
 
@@ -436,20 +597,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         const index = Math.max(timeIndex, bothAnsweredIndex);
 
         if (index >= battleQuestions.length) {
+          markMissedUpTo(battleQuestions.length);
           finishBattleClock();
           return;
         }
 
         if (index !== renderedIndex) {
+          markMissedUpTo(index);
           renderBattleQuestion(index);
         }
 
-        const remainingSec = Math.max(0, Math.ceil((durationMs - (elapsed % durationMs)) / 1000));
-        progressEl.textContent = `Вопрос ${index + 1} из ${battleQuestions.length} · осталось ${remainingSec}с`;
+        const remainingMs = durationMs - (elapsed % durationMs);
+        hud.setTimer(Math.max(0, remainingMs / 1000), battleDuel.secondsPerQuestion);
       }
 
       tick();
       battleTickTimer = setInterval(tick, 250);
+    }
+
+    // Вопрос, на который игрок не успел ответить до смены, — «мимо».
+    function markMissedUpTo(index) {
+      if (renderedIndex >= 0 && renderedIndex < index && lockedIndex !== renderedIndex) {
+        hud.pip('left', renderedIndex, 'miss');
+        myStreak = 0;
+      }
     }
 
     function lockCurrentAnswer(index) {
@@ -458,18 +629,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       const item = battleQuestions[index];
       const correct = DuelEngine.sameAnswerSet(battleChosen, item.question.correct);
       if (correct) battleScore++;
+      myStreak = correct ? myStreak + 1 : 0;
 
       myProgress = index + 1;
       LexPrepApi.advanceDuelProgress(battleDuel.id, myProgress).catch(() => {});
 
-      questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => { input.disabled = true; });
+      Arena.revealAnswers(questionBox, item.question.correct, battleChosen);
       answerBtn.disabled = true;
+      Arena.vibrate(correct ? 25 : [20, 40, 20]);
+
+      hud.pip('left', index, correct ? 'ok' : 'bad');
+      hud.setScore('left', battleScore);
+      hud.status('left', correct ? 'верно!' : 'мимо', correct ? 'ok' : 'bad');
+      if (correct) {
+        hud.hit('left');
+        hud.pop('left', myStreak >= 2 ? `🔥 ×${myStreak}` : '+1', 'ok');
+      } else {
+        hud.miss('left');
+      }
 
       roundResultEl.hidden = false;
       roundResultEl.innerHTML = `
-        <span class="${correct ? 'duel-round-result__ok' : 'duel-round-result__bad'}">${battleChosen.length ? (correct ? 'Верно' : 'Неверно') : 'Время вышло'}</span>
+        <div class="arena-feedback__verdicts">
+          <span class="arena-verdict ${correct ? 'is-ok' : 'is-bad'}">${battleChosen.length ? (correct ? 'Верно' : 'Неверно') : 'Время вышло'}</span>
+          <span class="arena-verdict is-wait">Следующий вопрос — когда ответит соперник или кончится время</span>
+        </div>
         <p class="duel-round-result__explain">${escapeHtml(item.question.explanation)}</p>
       `;
+      Arena.animateIn(roundResultEl);
     }
 
     function renderBattleQuestion(index) {
@@ -480,25 +667,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       answerBtn.disabled = true;
 
       const item = battleQuestions[index];
-      const isMulti = item.question.correct.length > 1;
-      topicLabelEl.textContent = `${item.disciplineTitle} → ${item.topicTitle}`;
-
-      questionBox.innerHTML = `
-        <h4>${escapeHtml(item.question.question)}</h4>
-        ${isMulti ? '<p class="question--multi__hint">Выбери все подходящие варианты</p>' : ''}
-        <div class="answers">
-          ${item.question.options.map((option, i) => `
-            <label class="answer">
-              <input type="${isMulti ? 'checkbox' : 'radio'}" name="pvp-answer" value="${i}">
-              <span>${escapeHtml(option)}</span>
-            </label>
-          `).join('')}
-        </div>
-      `;
-
-      questionBox.classList.remove('is-animating');
-      void questionBox.offsetWidth;
-      questionBox.classList.add('is-animating');
+      hud.setRound(index);
+      hud.status('left', 'твой ход', 'turn');
+      syncOpponentProgress();
+      questionBox.innerHTML = Arena.questionHtml(item, index, 'pvp-answer');
+      Arena.animateIn(questionBox);
 
       questionBox.querySelectorAll('input[name="pvp-answer"]').forEach(input => {
         input.addEventListener('change', () => {
@@ -533,44 +706,43 @@ document.addEventListener('DOMContentLoaded', async () => {
       const titleEl = document.getElementById('pvpResultTitle');
       const msgEl = document.getElementById('pvpResultMsg');
       const detailsEl = document.getElementById('pvpResultDetails');
+      const me = mePlayer || Arena.me(user);
 
       if (result.status === 'completed') {
         const isChallenger = result.challengerId === user.id;
         const myScore = isChallenger ? result.challengerScore : result.opponentScore;
         const oppScore = isChallenger ? result.opponentScore : result.challengerScore;
         const myDelta = isChallenger ? result.challengerRatingDelta : result.opponentRatingDelta;
-        const oppDelta = isChallenger ? result.opponentRatingDelta : result.challengerRatingDelta;
-        const myName = (user.name || 'Ты').trim();
         const oppName = (isChallenger ? result.opponentName : result.challengerName) || 'Соперник';
-        const outcome = myScore > oppScore ? 'Победа!' : myScore < oppScore ? 'Поражение' : 'Ничья';
-        const outcomeClass = myScore > oppScore ? 'is-win' : myScore < oppScore ? 'is-loss' : 'is-draw';
+        const opponent = oppPlayer || playerFor(isChallenger ? result.opponentId : result.challengerId, oppName, '');
+        const outcome = myScore > oppScore ? 'win' : myScore < oppScore ? 'loss' : 'draw';
 
-        titleEl.textContent = outcome;
+        titleEl.textContent = { win: 'Победа!', loss: 'Поражение', draw: 'Ничья' }[outcome];
         msgEl.textContent = '';
-
-        detailsEl.innerHTML = `
-          <div class="duel-vs duel-result-vs ${outcomeClass}">
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar">${escapeHtml(myName.charAt(0).toUpperCase())}</span>
-              <span class="duel-vs__name">${escapeHtml(myName)} (ты)</span>
-              <span class="duel-vs__score">${myScore}</span>
-              <span class="duel-result-vs__delta ${myDelta >= 0 ? 'is-up' : 'is-down'}">${myDelta >= 0 ? '+' : ''}${myDelta} рейтинга</span>
-            </div>
-            <div class="duel-vs__mid">
-              <span class="duel-vs__vs">VS</span>
-            </div>
-            <div class="duel-vs__side">
-              <span class="duel-vs__avatar">${escapeHtml(oppName.charAt(0).toUpperCase())}</span>
-              <span class="duel-vs__name">${escapeHtml(oppName)}</span>
-              <span class="duel-vs__score">${oppScore}</span>
-              <span class="duel-result-vs__delta ${oppDelta >= 0 ? 'is-up' : 'is-down'}">${oppDelta >= 0 ? '+' : ''}${oppDelta} рейтинга</span>
-            </div>
-          </div>
-        `;
+        detailsEl.innerHTML = Arena.resultHtml({
+          outcome,
+          subtitle: outcome === 'win' ? `${oppName} повержен(а) в честной дуэли!` : outcome === 'loss' ? 'Соперник оказался сильнее — возьми реванш.' : 'Равный бой — рейтинг почти не изменился.',
+          left: me,
+          right: opponent,
+          leftScore: myScore,
+          rightScore: oppScore,
+          rewards: [
+            { icon: '⚔️', label: 'рейтинг PvP', value: myDelta || 0, tone: (myDelta || 0) >= 0 ? 'up' : 'down' }
+          ]
+        });
+        Arena.playResult(detailsEl, outcome);
       } else {
         titleEl.textContent = `Ты ответил на ${battleScore} из ${battleQuestions.length}`;
-        msgEl.textContent = 'Соперник ещё не доиграл — результат и изменение рейтинга появятся здесь, как только он закончит (проверь во вкладке «Мои дуэли»).';
-        detailsEl.innerHTML = '';
+        msgEl.textContent = 'Соперник ещё не доиграл — результат и изменение рейтинга появятся в «Моих дуэлях», как только он закончит.';
+        detailsEl.innerHTML = Arena.resultHtml({
+          outcome: 'wait',
+          title: `${battleScore} из ${battleQuestions.length}`,
+          subtitle: 'Твой результат отправлен',
+          left: me,
+          right: oppPlayer || { name: 'Соперник', tone: 'red' },
+          leftScore: battleScore,
+          rightScore: null
+        });
       }
 
       showPvpView('results');

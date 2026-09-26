@@ -21,17 +21,17 @@
       content="Рейтинг студентов LexPrep по лигам: уровень и опыт участников."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles/global.css?v=20260917200000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260924150000" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260926220000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260917010000" />
-    <link rel="stylesheet" href="./styles/profile.css?v=20260923180000" />
-    <link rel="stylesheet" href="./styles/rating.css?v=20260923180000" />
+    <link rel="stylesheet" href="./styles/profile.css?v=20260926220000" />
+    <link rel="stylesheet" href="./styles/rating.css?v=20260926190000" />
   </head>
-  <body>
+  <body class="app-surface" data-tabbar>
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
         <a href="index.html" class="logo">
@@ -87,13 +87,19 @@
     <main class="rating-page">
       <section class="rating-shell">
         <div class="container container--narrow">
-          <div class="eyebrow">LexPrep / Рейтинг</div>
-          <h1 class="page-title">Рейтинг по лигам</h1>
-          <p class="topic-desc">
-            Место в рейтинге считается по опыту (XP), заработанному в тренажёре — тесты, карточки, экзамены и пользовательские тесты.
-            Лига — это твой текущий ранг Фемиды: от обычной до сапфировой.
-          </p>
-          <div class="rating-legend" id="ratingLegend"></div>
+          <div class="rating-head">
+            <div class="eyebrow">Рейтинг</div>
+            <h1 class="page-title">Рейтинг по лигам</h1>
+            <p class="topic-desc">
+              Место считается по опыту (XP) из тренажёра — тесты, карточки, экзамены и пользовательские тесты.
+              Лига — это твой текущий ранг Фемиды: от обычной до сапфировой.
+            </p>
+          </div>
+
+          <!-- Моё место, пьедестал топ-3 и фильтр по лигам заполняет rating.js. -->
+          <div class="rating-me" id="ratingMe" hidden></div>
+          <div class="rating-podium" id="ratingPodium" hidden></div>
+          <div class="rating-legend" id="ratingLegend" role="group" aria-label="Фильтр по лигам"></div>
 
           <div class="rating-list" id="ratingList"></div>
         </div>
@@ -101,14 +107,14 @@
     </main>
 
     <script src="data.js?v=20260831160000"></script>
-    <script src="progress.js?v=20260916020000"></script>
+    <script src="progress.js?v=20260926190000"></script>
     <script src="leaderboard.js?v=20260913000000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260923180000"></script>
+    <script src="api.js?v=20260927010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260916040000"></script>
-    <script src="script.js?v=20260924150000"></script>
-    <script src="rating.js?v=20260913000000"></script>
+    <script src="script.js?v=20260926220000"></script>
+    <script src="rating.js?v=20260926190000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>
