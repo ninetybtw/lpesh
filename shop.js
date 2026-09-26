@@ -52,6 +52,7 @@ const CONSUMABLE_ITEMS = [
     amount: 2,
     unit: 'попыт.',
     inventoryKey: 'testAttempts',
+    iconName: 'check',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
   },
   {
@@ -67,6 +68,7 @@ const CONSUMABLE_ITEMS = [
     // исчерпан) — остальные расходники (тесты, билеты турнира) тратятся
     // из localStorage-инвентаря, см. LexPrepProgress.spendInventory.
     serverBacked: true,
+    iconName: 'bot-medium',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
   },
   {
@@ -77,9 +79,48 @@ const CONSUMABLE_ITEMS = [
     amount: 1,
     unit: 'билет',
     inventoryKey: 'tourneyTickets',
+    iconName: 'ticket',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>'
   }
 ];
+
+// Что даёт тариф — берём из настоящих лимитов (plan.js), чтобы витрина не
+// расходилась с тем, что реально проверяется в тренажёре.
+function planFeatures(tier) {
+  const limits = typeof LexPrepPlan !== 'undefined' && LexPrepPlan.LIMITS[tier] ? LexPrepPlan.LIMITS[tier].monthly : null;
+  if (!limits) return [];
+  const per = (n, one, few, many, tail) => {
+    if (n === Infinity) return null;
+    const abs = n % 100;
+    const last = n % 10;
+    const word = abs > 10 && abs < 20 ? many : last === 1 ? one : last >= 2 && last <= 4 ? few : many;
+    return `${n} ${word} ${tail}`;
+  };
+  return [
+    limits.cardsPerDay === Infinity ? 'Карточки без лимита' : per(limits.cardsPerDay, 'карточка', 'карточки', 'карточек', 'в день'),
+    limits.testsPerDay === Infinity ? 'Тесты без лимита' : per(limits.testsPerDay, 'тест', 'теста', 'тестов', 'в день'),
+    limits.testExplanations ? 'Разбор ошибок в тестах' : null,
+    limits.duelsPerDay === Infinity ? 'Дуэли без лимита' : per(limits.duelsPerDay, 'дуэль', 'дуэли', 'дуэлей', 'в день'),
+    per(limits.tourneysPerMonth, 'турнир', 'турнира', 'турниров', 'в месяц'),
+    limits.examAttemptsPerMonth === Infinity ? 'Пробные экзамены без лимита' : per(limits.examAttemptsPerMonth, 'пробный экзамен', 'пробных экзамена', 'пробных экзаменов', 'в месяц'),
+    limits.pdfExport ? 'Скачивание конспектов в PDF' : null
+  ].filter(Boolean);
+}
+
+function shopIcon(name, cls) {
+  return typeof LexPrepIcon === 'function'
+    ? LexPrepIcon(name, cls)
+    : `<img class="lp-icon ${cls || ''}" src="assets/icons/${name}.svg" alt="" aria-hidden="true" />`;
+}
+
+function coinsWord(n) {
+  const abs = Math.abs(n) % 100;
+  const last = abs % 10;
+  if (abs > 10 && abs < 20) return 'монет';
+  if (last === 1) return 'монета';
+  if (last >= 2 && last <= 4) return 'монеты';
+  return 'монет';
+}
 
 // Разрешение тарифа теперь общее для всего сайта — см. plan.js.
 function getEffectivePlan() {
@@ -151,53 +192,99 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  const planBar = document.getElementById('shopPlanBar');
+  const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setBalance(balance) {
+    const prev = Number(balanceEl.textContent);
+    if (window.LexPrepMotion && !reduced() && balanceEl.dataset.ready && prev !== balance) {
+      LexPrepMotion.countTo(balanceEl, balance, 900);
+    } else {
+      balanceEl.textContent = balance;
+    }
+    balanceEl.dataset.ready = '1';
+  }
+
+  // Сколько накоплено до цены товара — полоска на карточке, если не хватает.
+  function progressHtml(balance, price) {
+    const pct = Math.min(100, Math.round((balance / price) * 100));
+    return `
+      <div class="shop-progress" aria-label="Накоплено ${balance} из ${price}">
+        <span class="shop-progress__bar"><span style="--w: ${pct}%"></span></span>
+        <span class="shop-progress__text">Ещё ${price - balance} ${coinsWord(price - balance)} · ${pct}%</span>
+      </div>`;
+  }
+
   function renderGrid() {
     const balance = LexPrepProgress.getCoins();
-    balanceEl.textContent = balance;
+    setBalance(balance);
 
     const activeTier = getActivePlanTier();
     const daysLeft = getPlanDaysLeft();
-    planEl.textContent = activeTier === 'basic'
-      ? 'Текущий тариф: Базовая'
-      : `Текущий тариф: ${PLAN_TITLES[activeTier]} (осталось ${daysLeft} дн.)`;
+    planEl.innerHTML = activeTier === 'basic'
+      ? 'Тариф <b>«Базовая»</b>'
+      : `Тариф <b>«${escapeHtml(PLAN_TITLES[activeTier])}»</b> · осталось ${daysLeft} дн.`;
+    if (planBar) {
+      planBar.hidden = activeTier === 'basic';
+      planBar.firstElementChild.style.setProperty('--w', `${Math.min(100, Math.round((daysLeft / 30) * 100))}%`);
+    }
 
     grid.innerHTML = SHOP_ITEMS.map(item => {
       const canAfford = balance >= item.price;
       const meetsRequirement = activeTier === item.requiresTier;
       const alreadyActive = activeTier === item.grantsTier;
+      const rank = LexPrepPlan.TIER_RANK || { basic: 0, pro: 1, max: 2 };
+      const alreadyHigher = rank[activeTier] > rank[item.grantsTier];
 
       let actionHtml;
-      if (alreadyActive) {
-        actionHtml = `<button class="btn btn--outline shop-item__btn" type="button" disabled>Активен ещё ${daysLeft} дн.</button>`;
+      let state = '';
+      if (alreadyHigher) {
+        state = 'is-covered';
+        actionHtml = `<button class="shop-buy shop-buy--ghost" type="button" disabled>Уже входит в «${escapeHtml(PLAN_TITLES[activeTier])}»</button>`;
+      } else if (alreadyActive) {
+        state = 'is-active';
+        actionHtml = `<button class="shop-buy shop-buy--ghost" type="button" disabled>Активен ещё ${daysLeft} дн.</button>`;
       } else if (!meetsRequirement) {
-        actionHtml = `<button class="btn btn--outline shop-item__btn" type="button" disabled>Нужен тариф «${PLAN_TITLES[item.requiresTier]}»</button>`;
+        state = 'is-locked';
+        actionHtml = `<button class="shop-buy shop-buy--ghost" type="button" disabled>Нужен тариф «${escapeHtml(PLAN_TITLES[item.requiresTier])}»</button>`;
       } else if (canAfford) {
-        actionHtml = `<button class="btn btn--primary shop-item__btn" type="button" data-buy="${item.id}">Купить за ${item.price}</button>`;
+        actionHtml = `<button class="shop-buy" type="button" data-buy="${item.id}">Купить за ${shopIcon('coin')}<b>${item.price}</b></button>`;
       } else {
-        actionHtml = `<button class="btn btn--outline shop-item__btn" type="button" disabled>Не хватает монет</button>`;
+        state = 'is-short';
+        actionHtml = `${progressHtml(balance, item.price)}<button class="shop-buy shop-buy--ghost" type="button" disabled>Не хватает монет</button>`;
       }
 
       return `
-        <div class="shop-item">
-          <div class="shop-item__preview shop-item__preview--plan">
-            <span class="shop-item__plan-badge">${escapeHtml(PLAN_TITLES[item.grantsTier])}</span>
+        <article class="shop-plan shop-plan--${item.grantsTier} ${state}" data-item="${item.id}">
+          ${alreadyActive ? '<span class="shop-plan__ribbon">Активен</span>' : ''}
+          ${!alreadyActive && !alreadyHigher && !meetsRequirement ? `<span class="shop-plan__lock" title="Нужен тариф «${escapeHtml(PLAN_TITLES[item.requiresTier])}»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>` : ''}
+          <div class="shop-plan__top">
+            <span class="shop-plan__icon">${shopIcon(item.grantsTier === 'max' ? 'crown' : 'star')}</span>
+            <div>
+              <span class="shop-plan__tier">${escapeHtml(PLAN_TITLES[item.grantsTier])}</span>
+              <h3 class="shop-plan__title">${escapeHtml(item.title)}</h3>
+            </div>
           </div>
-          <div class="shop-item__title">${escapeHtml(item.title)}</div>
-          <div class="shop-item__desc">${escapeHtml(item.desc)}</div>
-          <div class="shop-item__price">${item.price} монет</div>
+          <p class="shop-plan__desc">${escapeHtml(item.desc)}</p>
+          <ul class="shop-plan__features">
+            ${planFeatures(item.grantsTier).map(f => `<li>${escapeHtml(f)}</li>`).join('')}
+          </ul>
+          <div class="shop-plan__price">${shopIcon('coin')}<b>${item.price}</b><span>монет · 30 дней</span></div>
           ${actionHtml}
-        </div>
+        </article>
       `;
     }).join('');
 
     grid.querySelectorAll('[data-buy]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.buy;
         const item = SHOP_ITEMS.find(i => i.id === id);
         if (!item) return;
+        if (!(await confirmPurchase(item))) return;
         if (getActivePlanTier() !== item.requiresTier) return;
         if (!LexPrepProgress.spendCoins(item.price)) return;
         activatePlan(item.grantsTier);
+        celebrate(btn, `Тариф «${PLAN_TITLES[item.grantsTier]}» активирован на 30 дней`, true);
         renderGrid();
         renderConsumables();
         if (typeof initCoinBadge === 'function') initCoinBadge();
@@ -222,20 +309,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       const canAfford = balance >= item.price;
       const owned = item.serverBacked ? (user.aiExtraRequests || 0) : (inventory[item.inventoryKey] || 0);
       const actionHtml = canAfford
-        ? `<button class="btn btn--primary shop-item__btn" type="button" data-buy-consumable="${item.id}">Купить за ${item.price}</button>`
-        : `<button class="btn btn--outline shop-item__btn" type="button" disabled>Не хватает монет</button>`;
+        ? `<button class="shop-buy" type="button" data-buy-consumable="${item.id}">${shopIcon('coin')}<b>${item.price}</b></button>`
+        : `<button class="shop-buy shop-buy--ghost" type="button" disabled>${shopIcon('coin')}<b>${item.price}</b></button>`;
 
       return `
-        <div class="shop-item">
-          <div class="shop-item__preview shop-item__preview--icon">
-            <span class="shop-item__icon-badge">${item.icon}</span>
+        <article class="shop-boost shop-boost--${item.iconName} ${canAfford ? '' : 'is-short'}" data-item="${item.id}">
+          <span class="shop-boost__icon">${shopIcon(item.iconName)}</span>
+          <div class="shop-boost__body">
+            <h3 class="shop-boost__title">${escapeHtml(item.title)}</h3>
+            <p class="shop-boost__desc">${escapeHtml(item.desc)}</p>
+            <span class="shop-boost__owned ${owned ? 'has-items' : ''}">У тебя: <b>${owned}</b> ${escapeHtml(item.unit)}</span>
+            ${canAfford ? '' : progressHtml(balance, item.price)}
           </div>
-          <div class="shop-item__title">${escapeHtml(item.title)}</div>
-          <div class="shop-item__desc">${escapeHtml(item.desc)}</div>
-          <div class="shop-item__owned">У тебя: ${owned} ${escapeHtml(item.unit)}</div>
-          <div class="shop-item__price">${item.price} монет</div>
-          ${actionHtml}
-        </div>
+          <div class="shop-boost__action">${actionHtml}</div>
+        </article>
       `;
     }).join('');
 
@@ -244,6 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const id = btn.dataset.buyConsumable;
         const item = CONSUMABLE_ITEMS.find(i => i.id === id);
         if (!item) return;
+        if (!(await confirmPurchase(item))) return;
 
         if (item.serverBacked) {
           if (LexPrepProgress.getCoins() < item.price) return;
@@ -266,6 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           LexPrepProgress.addInventory(item.inventoryKey, item.amount);
         }
 
+        celebrate(btn, `Куплено: ${item.title}`, false);
         renderGrid();
         renderConsumables();
         if (typeof initCoinBadge === 'function') initCoinBadge();
@@ -278,6 +367,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     div.textContent = str;
     return div.innerHTML;
   }
+
+  // Монеты — не мелочь (апгрейд копится месяцами), поэтому перед списанием
+  // спрашиваем подтверждение.
+  function confirmPurchase(item) {
+    const text = `Купить «${item.title}» за ${item.price} ${coinsWord(item.price)}? После покупки останется ${LexPrepProgress.getCoins() - item.price}.`;
+    if (typeof LexPrepDialog !== 'undefined' && LexPrepDialog.confirm) return LexPrepDialog.confirm(text);
+    return Promise.resolve(window.confirm(text));
+  }
+
+  const walletEl = document.getElementById('shopWallet');
+  const walletCoin = document.getElementById('shopWalletCoin');
+
+  // После покупки: монеты улетают из кнопки в кошелёк, кошелёк «ёкает»,
+  // внизу — короткое уведомление. За тариф — ещё и конфетти.
+  function celebrate(fromEl, message, big) {
+    showToast(message);
+    if (reduced() || !walletCoin) return;
+    const from = fromEl.getBoundingClientRect();
+    const to = walletCoin.getBoundingClientRect();
+    const count = big ? 9 : 5;
+    for (let i = 0; i < count; i++) {
+      const coin = document.createElement('img');
+      coin.src = 'assets/icons/coin.svg';
+      coin.alt = '';
+      coin.className = 'shop-fly-coin';
+      coin.style.left = `${from.left + from.width / 2 - 14 + (Math.random() - 0.5) * 40}px`;
+      coin.style.top = `${from.top + from.height / 2 - 14}px`;
+      coin.style.setProperty('--dx', `${to.left + to.width / 2 - (from.left + from.width / 2)}px`);
+      coin.style.setProperty('--dy', `${to.top + to.height / 2 - (from.top + from.height / 2)}px`);
+      coin.style.animationDelay = `${i * 60}ms`;
+      coin.addEventListener('animationend', () => coin.remove());
+      document.body.appendChild(coin);
+    }
+    setTimeout(() => {
+      if (!walletEl) return;
+      walletEl.classList.remove('is-bump');
+      void walletEl.offsetWidth;
+      walletEl.classList.add('is-bump');
+    }, 650);
+    // Кнопка к этому моменту уже перерисована — конфетти пускаем из кошелька.
+    if (big && window.LexPrepMotion) setTimeout(() => LexPrepMotion.confetti(walletCoin), 650);
+  }
+
+  let toastTimer = null;
+  function showToast(message) {
+    let toast = document.getElementById('shopToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'shopToast';
+      toast.className = 'shop-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = `${shopIcon('check')}<span>${escapeHtml(message)}</span>`;
+    toast.classList.remove('is-visible');
+    void toast.offsetWidth;
+    toast.classList.add('is-visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 3200);
+  }
+
+  // Разделы: всё / подписка / бустеры.
+  document.querySelectorAll('[data-shop-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.shopFilter;
+      document.querySelectorAll('[data-shop-filter]').forEach(b => {
+        b.classList.toggle('is-active', b === btn);
+        b.setAttribute('aria-selected', String(b === btn));
+      });
+      document.querySelectorAll('[data-shop-section]').forEach(section => {
+        const show = filter === 'all' || section.dataset.shopSection === filter;
+        section.hidden = !show;
+        if (show && !reduced()) {
+          section.classList.remove('is-entering');
+          void section.offsetWidth;
+          section.classList.add('is-entering');
+        }
+      });
+    });
+  });
 
   /* ---------------- Промокод ---------------- */
   const promoInput = document.getElementById('shopPromoInput');
@@ -324,4 +493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderAvatar();
   renderGrid();
   renderConsumables();
+  if (window.LexPrepMotion) {
+    LexPrepMotion.stagger(grid, '.shop-plan', 150);
+    LexPrepMotion.stagger(consumableGrid, '.shop-boost', 300);
+  }
 });

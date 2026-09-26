@@ -25,11 +25,11 @@
     <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
-    <link rel="stylesheet" href="./styles/global.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
     <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
     <link rel="stylesheet" href="./styles/profile.css?v=20260927030000" />
-    <link rel="stylesheet" href="./styles/shop.css?v=20260923180000" />
+    <link rel="stylesheet" href="./styles/shop.css?v=20260927050000" />
   </head>
   <body data-tabbar>
     <header class="header" id="header">
@@ -83,38 +83,78 @@
 
     <main class="shop-page">
       <section class="shop-shell">
-        <div class="container container--narrow">
-          <div class="eyebrow">LexPrep / Магазин</div>
-          <h1 class="page-title">Магазин</h1>
-          <p class="topic-desc">
-            Монеты начисляются за прогресс в тренажёре: тесты, повторение карточек и пробные экзамены. Обменивай их на временный
-            апгрейд тарифа или на разовые покупки сверх дневных лимитов.
-          </p>
-          <div class="shop-balance">
-            <div class="shop-balance__preview">
-              <span class="profile-avatar-editor__preview shop-balance__avatar" id="shopAvatarPreview">U</span>
-            </div>
-            <div class="shop-balance__info">
-              <div class="shop-balance__label">Твой баланс</div>
-              <div class="shop-balance__amount">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.5-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2"/></svg>
-                <span id="shopBalance">0</span> монет
+        <div class="container shop-container">
+          <!-- Витрина: заголовок и кошелёк -->
+          <div class="shop-hero">
+            <div class="shop-hero__main">
+              <span class="shop-eyebrow">Магазин LexPrep</span>
+              <h1 class="shop-title">Трать монеты <span>с пользой</span></h1>
+              <p class="shop-lead">
+                Монеты начисляются за прогресс в тренажёре. Обменивай их на апгрейд тарифа
+                или на разовые покупки сверх дневных лимитов.
+              </p>
+              <div class="shop-earn">
+                <span class="shop-earn__title">Как заработать</span>
+                <span class="shop-earn__chip"><img class="lp-icon" src="assets/icons/check.svg" alt="" />Тесты</span>
+                <span class="shop-earn__chip"><img class="lp-icon" src="assets/icons/brain.svg" alt="" />Карточки</span>
+                <span class="shop-earn__chip"><img class="lp-icon" src="assets/icons/book-open.svg" alt="" />Конспекты</span>
+                <span class="shop-earn__chip"><img class="lp-icon" src="assets/icons/target.svg" alt="" />Экзамены</span>
+                <small class="shop-earn__rate">1 монета за каждые 4 XP опыта</small>
               </div>
-              <div class="shop-balance__plan" id="shopCurrentPlan">Текущий тариф: Базовая</div>
+            </div>
+
+            <div class="shop-wallet" id="shopWallet">
+              <div class="shop-wallet__glow" aria-hidden="true"></div>
+              <div class="shop-wallet__coin" id="shopWalletCoin" aria-hidden="true"><img class="lp-icon" src="assets/icons/coin.svg" alt="" /></div>
+              <div class="shop-wallet__label">Твой баланс</div>
+              <div class="shop-wallet__amount"><span id="shopBalance">0</span><small>монет</small></div>
+              <div class="shop-wallet__plan">
+                <span class="profile-avatar-editor__preview shop-balance__avatar" id="shopAvatarPreview">U</span>
+                <div class="shop-wallet__plan-info">
+                  <span id="shopCurrentPlan">Текущий тариф: Базовая</span>
+                  <span class="shop-wallet__bar" id="shopPlanBar" hidden><span></span></span>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Промокод -->
           <div class="shop-promo">
-            <input class="form-input" type="text" id="shopPromoInput" placeholder="Есть промокод? Введи здесь">
-            <button class="btn btn--outline" type="button" id="shopPromoBtn">Активировать</button>
+            <span class="shop-promo__icon" aria-hidden="true"><img class="lp-icon" src="assets/icons/gift.svg" alt="" /></span>
+            <div class="shop-promo__text">
+              <b>Есть промокод?</b>
+              <small>Подписка, скидка или монеты — активируй здесь</small>
+            </div>
+            <div class="shop-promo__form">
+              <label for="shopPromoInput" class="visually-hidden">Промокод</label>
+              <input class="form-input" type="text" id="shopPromoInput" placeholder="Например, WELCOME2026" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
+              <button class="btn btn--primary" type="button" id="shopPromoBtn">Активировать</button>
+            </div>
           </div>
-          <p class="shop-promo__status" id="shopPromoStatus" hidden></p>
+          <p class="shop-promo__status" id="shopPromoStatus" role="status" hidden></p>
 
-          <h2 class="shop-section-title">Подписка</h2>
-          <div class="shop-grid" id="shopGrid"></div>
+          <!-- Разделы -->
+          <div class="shop-filter" role="tablist" aria-label="Разделы магазина">
+            <button type="button" class="shop-filter__btn is-active" data-shop-filter="all">Всё</button>
+            <button type="button" class="shop-filter__btn" data-shop-filter="plans"><img class="lp-icon" src="assets/icons/crown.svg" alt="" />Подписка</button>
+            <button type="button" class="shop-filter__btn" data-shop-filter="boosts"><img class="lp-icon" src="assets/icons/lightning.svg" alt="" />Бустеры</button>
+          </div>
 
-          <h2 class="shop-section-title">Разовые покупки</h2>
-          <div class="shop-grid" id="shopConsumableGrid"></div>
+          <section class="shop-section" data-shop-section="plans">
+            <div class="shop-section__head">
+              <h2 class="shop-section-title">Подписка</h2>
+              <p>Апгрейд тарифа на 30 дней — все возможности открываются сразу</p>
+            </div>
+            <div class="shop-plans" id="shopGrid"></div>
+          </section>
+
+          <section class="shop-section" data-shop-section="boosts">
+            <div class="shop-section__head">
+              <h2 class="shop-section-title">Бустеры</h2>
+              <p>Разовые покупки сверх дневных и месячных лимитов тарифа</p>
+            </div>
+            <div class="shop-boosts" id="shopConsumableGrid"></div>
+          </section>
         </div>
       </section>
     </main>
@@ -127,7 +167,7 @@
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260927030000"></script>
     <script src="script.js?v=20260927040000"></script>
-    <script src="shop.js?v=20260917020000"></script>
+    <script src="shop.js?v=20260927050000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>
