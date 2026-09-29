@@ -803,22 +803,26 @@ body.vs-intro-open {
   }
 }
 
+/* Полосы наклонены (skew), и на высоком узком экране телефона их внешние
+   края уезжали внутрь у верхнего/нижнего угла — там был виден чёрный фон.
+   Поэтому каждая полоса продлена наружу на запас, зависящий от высоты
+   экрана; стык полос по центру остаётся на месте. */
 .vs-intro__bg {
   position: absolute;
   top: -10%;
   bottom: -10%;
-  width: 62%;
+  width: calc(62% + 30vh);
 }
 
 .vs-intro__bg--left {
-  left: -10%;
+  left: calc(-10% - 30vh);
   background: linear-gradient(135deg, #2a3ecf, #6a3fd0);
   transform: skewX(-12deg);
   animation: vsSlideLeft 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
 .vs-intro__bg--right {
-  right: -10%;
+  right: calc(-10% - 30vh);
   background: linear-gradient(135deg, #d9364a, #ff8a3d);
   transform: skewX(-12deg);
   animation: vsSlideRight 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;

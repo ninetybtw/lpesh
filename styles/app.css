@@ -204,6 +204,8 @@ body {
 }
 
 .app-select__value {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2245,7 +2247,11 @@ body {
 /* ---------------- Дисциплина и тема: подпись внутри поля ---------------- */
 .app-select {
   display: grid;
+  /* Колонка не шире контейнера: иначе длинное название темы (оно в одну
+     строку) растягивало поле за край экрана на телефоне. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
+  min-width: 0;
 }
 .app-select__label {
   grid-area: 1 / 1;
@@ -2258,6 +2264,7 @@ body {
 }
 .app-select__btn {
   grid-area: 1 / 1;
+  min-width: 0;
   padding: 27px 16px 11px;
   transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
 }

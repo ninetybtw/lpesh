@@ -448,6 +448,18 @@ RATING.CSS — страница рейтинга: моё место, пьеде�
   display: none;
 }
 
+/* С мышью горизонтальную ленту не пролистать (колесо крутит страницу, а
+   полосы прокрутки нет) — до «Мастера LexPrep» было не добраться.
+   На компьютере и широких экранах все лиги переносятся на новую строку и
+   видны сразу; на телефоне остаётся лента со свайпом. */
+@media (min-width: 721px), (hover: hover) and (pointer: fine) {
+  .rating-legend {
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+}
+
 .rating-legend__item {
   display: inline-flex;
   flex-shrink: 0;
