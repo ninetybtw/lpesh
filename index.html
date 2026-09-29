@@ -3,11 +3,11 @@
   <head>
     <meta name="yandex-verification" content="4cb36b801092fa7e" />
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
-    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (function () {
@@ -49,16 +49,16 @@
     <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
-    <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
-    <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="/styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/notifications.css?v=20260927030000" />
   </head>
   <body>
     <!-- HEADER -->
     <header class="header" id="header">
       <div class="container header__inner header__inner--centered">
         <a href="#" class="logo">
-          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <img class="logo__icon" src="/assets/favicon/apple-touch-icon.png" alt="LexPrep" />
           <span class="logo__text">LexPrep</span>
         </a>
 
@@ -77,11 +77,11 @@
             <span class="online-badge__dot"></span>
             <span id="onlineCount">–</span> онлайн
           </div>
-          <a href="auth.html#login" class="btn btn--outline" data-auth="guest"
+          <a href="/auth#login" class="btn btn--outline" data-auth="guest"
             >Войти</a
           >
           <a
-            href="auth.html#register"
+            href="/auth#register"
             class="btn btn--primary"
             data-auth="guest"
             >Начать бесплатно</a
@@ -98,17 +98,17 @@
             </button>
 
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
-              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
-              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
-              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
-              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
-              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
-              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
-              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
-              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
-              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
-              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <a href="/admin" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="/moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="/profile#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="/profile#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="/profile#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="/profile#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="/profile#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="/profile#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="/support" class="profile-dropdown__item">Поддержка</a>
+              <a href="/suggestions" class="profile-dropdown__item">Предложения</a>
+              <a href="/profile#settings" class="profile-dropdown__item">Настройки</a>
               <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
           </div>
@@ -133,11 +133,11 @@
         <!--  -->
       </ul>
       <div class="mobile-nav__actions">
-        <a href="auth.html#login" class="btn btn--outline btn--block" data-auth="guest">Войти</a>
-        <a href="auth.html#register" class="btn btn--primary btn--block" data-auth="guest"
+        <a href="/auth#login" class="btn btn--outline btn--block" data-auth="guest">Войти</a>
+        <a href="/auth#register" class="btn btn--primary btn--block" data-auth="guest"
           >Начать бесплатно</a
         >
-        <a href="profile.html" class="btn btn--outline btn--block" data-auth="user">Мой профиль</a>
+        <a href="/profile" class="btn btn--outline btn--block" data-auth="user">Мой профиль</a>
       </div>
     </div>
 
@@ -164,13 +164,13 @@
               права → предмет → тему.
             </p>
             <div class="hero__actions">
-              <a href="auth.html#register" class="btn btn--primary btn--lg btn--shine" data-auth="guest"
+              <a href="/auth#register" class="btn btn--primary btn--lg btn--shine" data-auth="guest"
                 >Создать аккаунт</a
               >
-              <a href="auth.html#login" class="btn btn--outline btn--lg" data-auth="guest"
+              <a href="/auth#login" class="btn btn--outline btn--lg" data-auth="guest"
                 >Посмотреть демо</a
               >
-              <a href="app.html" class="btn btn--primary btn--lg btn--shine" data-auth="user">Перейти к программе</a>
+              <a href="/app" class="btn btn--primary btn--lg btn--shine" data-auth="user">Перейти к программе</a>
             </div>
             <div class="hero__stats">
               <div class="stat">
@@ -196,7 +196,7 @@
               <div class="study-card">
                 <span class="study-card__beam" aria-hidden="true"></span>
                 <div class="study-card__head">
-                  <span class="study-card__subject-icon" aria-hidden="true"><img class="lp-icon" src="assets/icons/scales.svg" alt="" /></span>
+                  <span class="study-card__subject-icon" aria-hidden="true"><img class="lp-icon" src="/assets/icons/scales.svg" alt="" /></span>
                   <span class="study-card__subject">
                     <small>Гражданское право</small>
                     <strong>Договор купли-продажи</strong>
@@ -289,7 +289,7 @@
             </div>
 
             <div class="hero-level" aria-hidden="true">
-              <img class="hero-level__icon" src="assets/badges/themis-bronze.svg?v=2" alt="" />
+              <img class="hero-level__icon" src="/assets/badges/themis-bronze.svg?v=2" alt="" />
               <span class="hero-level__body">
                 <span class="hero-level__title">Уровень <span id="heroLevelValue">5</span> · Студент</span>
                 <span class="hero-level__track"><span class="hero-level__bar" id="heroLevelBar"></span></span>
@@ -298,7 +298,7 @@
             </div>
 
             <div class="hero-toast" id="heroToast" aria-hidden="true">
-              <span class="hero-toast__icon" id="heroToastIcon"><img class="lp-icon" src="assets/icons/book-open.svg" alt="" /></span>
+              <span class="hero-toast__icon" id="heroToastIcon"><img class="lp-icon" src="/assets/icons/book-open.svg" alt="" /></span>
               <span class="hero-toast__body">
                 <strong id="heroToastTitle">+8 опыта</strong>
                 <small id="heroToastText">за прочитанный конспект</small>
@@ -323,42 +323,42 @@
           <div class="feature-tabs reveal" id="featureTabs">
             <div class="feature-tabs__list" role="tablist">
               <button class="feature-tabs__item is-active" type="button" data-feature-tab="tree" style="--tab-accent: var(--color-primary)">
-                <span class="feature-card__icon feature-card__icon--blue"><img src="./images/images icon-tree.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--blue"><img src="/images/images icon-tree.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Дерево категорий</strong>
                   <small>Категория → предмет → тема</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="cards" style="--tab-accent: #ff7a45">
-                <span class="feature-card__icon feature-card__icon--orange"><img src="./images/images icon-ai-cards.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--orange"><img src="/images/images icon-ai-cards.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>ИИ-карточки под уровень</strong>
                   <small>Сложность подбирается автоматически</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="tests" style="--tab-accent: #1fb774">
-                <span class="feature-card__icon feature-card__icon--green"><img src="./images/images icon-tests.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--green"><img src="/images/images icon-tests.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Тесты трёх видов</strong>
                   <small>Редакция, ИИ и сообщество</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="practice" style="--tab-accent: #8c54ff">
-                <span class="feature-card__icon feature-card__icon--purple"><img src="./images/images icon-court.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--purple"><img src="/images/images icon-court.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Судебная практика</strong>
                   <small>Пленумы и решения судов</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="tickets" style="--tab-accent: #5865f2">
-                <span class="feature-card__icon feature-card__icon--indigo"><img src="./images/images icon-tickets.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--indigo"><img src="/images/images icon-tickets.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Готовые билеты к экзамену</strong>
                   <small>Собраны заранее</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="rewards" style="--tab-accent: #e0a316">
-                <span class="feature-card__icon feature-card__icon--yellow"><img src="./images/images icon-rewards.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--yellow"><img src="/images/images icon-rewards.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Награды за вклад</strong>
                   <small>Бонусы к подписке</small>
@@ -401,9 +401,9 @@
                   проверкой модераторами.
                 </p>
                 <div class="feature-visual feature-visual--sources">
-                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/book-open.svg" alt="" /> От редакции</span>
-                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/bot-medium.svg" alt="" /> От ИИ</span>
-                  <span class="feature-visual__source"><img class="lp-icon" src="assets/icons/users.svg" alt="" /> От студентов</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="/assets/icons/book-open.svg" alt="" /> От редакции</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="/assets/icons/bot-medium.svg" alt="" /> От ИИ</span>
+                  <span class="feature-visual__source"><img class="lp-icon" src="/assets/icons/users.svg" alt="" /> От студентов</span>
                 </div>
               </div>
               <div class="feature-tabs__panel" data-feature-panel="practice" style="--tab-accent: #8c54ff">
@@ -435,7 +435,7 @@
                   получай бонусы к подписке.
                 </p>
                 <div class="feature-visual feature-visual--reward">
-                  <span><img class="lp-icon" src="assets/icons/coin.svg" alt="" /></span>
+                  <span><img class="lp-icon" src="/assets/icons/coin.svg" alt="" /></span>
                   <strong>+250 монет</strong>
                 </div>
               </div>
@@ -502,8 +502,8 @@
               </p>
             </div>
             <div class="articles__head-actions">
-              <a href="article.html" class="btn btn--outline">Все статьи</a>
-              <a href="write-article.html" class="btn btn--primary">Написать статью</a>
+              <a href="/article" class="btn btn--outline">Все статьи</a>
+              <a href="/write-article" class="btn btn--primary">Написать статью</a>
             </div>
           </div>
           <div class="grid grid--3" id="homeArticlesGrid">
@@ -511,7 +511,7 @@
           </div>
           <div class="articles__cta reveal">
             <p>Есть чем поделиться с другими студентами?</p>
-            <a href="write-article.html" class="btn btn--primary">Опубликовать свою статью</a>
+            <a href="/write-article" class="btn btn--primary">Опубликовать свою статью</a>
           </div>
         </div>
       </section>
@@ -600,7 +600,7 @@
 
           <div class="pricing__payment-note">
             <a href="https://www.tbank.ru" target="_blank" rel="noopener noreferrer" class="pricing__payment-badge">
-              <img src="assets/payment/tbank-logo.svg" alt="Т-Банк" width="72" height="28" />
+              <img src="/assets/payment/tbank-logo.svg" alt="Т-Банк" width="72" height="28" />
             </a>
             <p>
               Оплата подписки — через <a href="https://www.tbank.ru" target="_blank" rel="noopener noreferrer">Т-Банк</a>
@@ -744,10 +744,10 @@
           <h2>Начни готовиться уже сегодня</h2>
           <p>Первые 7 дней в тарифе Про — бесплатно.</p>
           <div class="cta-section__actions">
-            <a href="auth.html#register" class="btn btn--primary btn--lg"
+            <a href="/auth#register" class="btn btn--primary btn--lg"
               >Создать аккаунт</a
             >
-            <a href="auth.html#login" class="cta-section__login"
+            <a href="/auth#login" class="cta-section__login"
               >Уже есть аккаунт? <span>Войти</span></a
             >
           </div>
@@ -818,7 +818,7 @@
       <div class="container footer__inner">
         <div class="footer__col">
           <a href="#" class="logo logo--footer"
-            ><img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep"
+            ><img class="logo__icon" src="/assets/favicon/apple-touch-icon.png" alt="LexPrep"
             /><span class="logo__text">LexPrep</span></a
           >
           <p class="footer__text">
@@ -851,10 +851,10 @@
         </div>
         <div class="footer__col">
           <h4>Документы</h4>
-          <a href="legal.html#terms">Пользовательское соглашение</a>
-          <a href="legal.html#privacy">Политика конфиденциальности</a>
-          <a href="legal.html#offer">Публичная оферта</a>
-          <a href="legal.html#rules">Правила дуэлей и турниров</a>
+          <a href="/legal#terms">Пользовательское соглашение</a>
+          <a href="/legal#privacy">Политика конфиденциальности</a>
+          <a href="/legal#offer">Публичная оферта</a>
+          <a href="/legal#rules">Правила дуэлей и турниров</a>
         </div>
       </div>
       <div class="container footer__bottom">
@@ -862,12 +862,12 @@
       </div>
     </footer>
 
-    <script src="validation.js?v=20260831160000"></script>
-    <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260927010000"></script>
-    <script src="dialog.js?v=20260924150000"></script>
-    <script src="notifications.js?v=20260927030000"></script>
-    <script src="script.js?v=20260927040000"></script>
+    <script src="/validation.js?v=20260831160000"></script>
+    <script src="/vendor/supabase-js.min.js"></script>
+    <script src="/api.js?v=20260927010000"></script>
+    <script src="/dialog.js?v=20260924150000"></script>
+    <script src="/notifications.js?v=20260927030000"></script>
+    <script src="/script.js?v=20260927040000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');
@@ -880,7 +880,7 @@
             return;
           }
           grid.innerHTML = latest.map(a => `
-            <a class="article-card reveal" href="article.html?open=${encodeURIComponent(a.id)}">
+            <a class="article-card reveal" href="/article?open=${encodeURIComponent(a.id)}">
               <div class="article-card__body">
                 <span class="article-card__tag">${escapeHtml(a.topic || 'Статья')}</span>
                 <h3>${escapeHtml(a.title)}</h3>
@@ -1038,6 +1038,6 @@
         });
       });
     </script>
-    <script src="cookie-consent.js?v=20260917220000"></script>
+    <script src="/cookie-consent.js?v=20260917220000"></script>
   </body>
 </html>

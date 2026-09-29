@@ -697,7 +697,7 @@ function initApp() {
     const createTestBtn = document.getElementById('createTestBtn');
     if (createTestBtn) {
       createTestBtn.addEventListener('click', () => {
-        window.location.href = `create-test.html?discipline=${encodeURIComponent(activeDiscipline.id)}&topic=${encodeURIComponent(activeTopic.id)}`;
+        window.location.href = `/create-test?discipline=${encodeURIComponent(activeDiscipline.id)}&topic=${encodeURIComponent(activeTopic.id)}`;
       });
     }
 
@@ -887,7 +887,7 @@ function initApp() {
         summaryBox.innerHTML = `
           <h3>Дневной лимит тестов исчерпан</h3>
           <p>На тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» доступно ${limits.testsPerDay} ${limits.testsPerDay === 1 ? 'попытка' : 'попытки'} в день.</p>
-          <p class="summary__note">Оформи более высокий тариф или докупи попытки в <a href="shop.html">магазине</a>.</p>
+          <p class="summary__note">Оформи более высокий тариф или докупи попытки в <a href="/shop">магазине</a>.</p>
         `;
         summaryBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return;
@@ -1441,7 +1441,7 @@ function initApp() {
         <span class="gamify-badge__title">${escapeHtml(cat.title)}</span>
         <span class="gamify-badge__desc">${cat.earnedCount} / ${cat.total}</span>
       </div>
-    `).join('') + '<a href="profile.html#stats" class="gamify-badges__link">Все достижения в профиле →</a>';
+    `).join('') + '<a href="/profile#stats" class="gamify-badges__link">Все достижения в профиле →</a>';
   }
 
   const gamifyBadgesToggle = document.getElementById('gamifyBadgesToggle');

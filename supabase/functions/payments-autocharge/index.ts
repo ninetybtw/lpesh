@@ -73,7 +73,7 @@ async function sendExpiryReminders(adminClient: ReturnType<typeof createClient>)
           type: 'plan_expiry_reminder',
           title: `Тариф «${tierLabel}» истекает через 3 дня`,
           body: `Действует до ${dateLabel}. ${renewNote}`,
-          link: 'profile.html#subscription'
+          link: '/profile#subscription'
         });
         await adminClient.from('profiles').update({ plan_expiry_notice_3d_sent: true }).eq('id', profile.id);
       } else if (daysLeft === 1 && !profile.plan_expiry_notice_1d_sent) {
@@ -82,7 +82,7 @@ async function sendExpiryReminders(adminClient: ReturnType<typeof createClient>)
           type: 'plan_expiry_reminder',
           title: `Тариф «${tierLabel}» истекает завтра`,
           body: `Действует до ${dateLabel}. ${renewNote}`,
-          link: 'profile.html#subscription'
+          link: '/profile#subscription'
         });
         await adminClient.from('profiles').update({ plan_expiry_notice_1d_sent: true }).eq('id', profile.id);
       }
@@ -180,8 +180,8 @@ serve(async (req) => {
           // Без Recurrent: это НЕ регистрация новой привязки карты, а
           // обычный платёж, который сразу же довзыскиваем по RebillId.
           notificationUrl: `${PUBLIC_API_BASE}/functions/v1/payments-notification?apikey=${Deno.env.get('SUPABASE_ANON_KEY')}`,
-          successUrl: `${PUBLIC_SITE_BASE}/profile.html?payment=success#subscription`,
-          failUrl: `${PUBLIC_SITE_BASE}/profile.html?payment=fail#subscription`,
+          successUrl: `${PUBLIC_SITE_BASE}/profile?payment=success#subscription`,
+          failUrl: `${PUBLIC_SITE_BASE}/profile?payment=fail#subscription`,
           receiptEmail: profile.email,
           receiptTaxation: taxation,
           receiptItem

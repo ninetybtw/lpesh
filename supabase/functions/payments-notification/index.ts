@@ -114,7 +114,7 @@ serve(async (req) => {
         type: 'plan_activated',
         title: `Поздравляем, вы оформили тариф «${TIER_TITLES[payment.plan_tier] || payment.plan_tier}»!`,
         body: `Оплата (${PERIOD_TITLES[payment.billing_period] || payment.billing_period}) прошла успешно. Подписка активна до ${expiresLabel}.`,
-        link: 'profile.html#subscription'
+        link: '/profile#subscription'
       });
       if (notifyErr) console.error('[payments-notification] не удалось создать уведомление:', notifyErr.message);
 

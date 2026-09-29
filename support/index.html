@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Поддержка</title>
+    <meta
+      name="description"
+      content="Поддержка LexPrep: напиши в свободной форме, если что-то не работает или остались вопросы."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="/styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="/styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/notifications.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/profile.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/help.css?v=20260927060000" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="/" class="logo">
+          <img class="logo__icon" src="/assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Разделы">
+          <ul class="nav__list">
+            <li><a href="/app" class="nav__link">Тренажёр</a></li>
+            <li><a href="/exam" class="nav__link">Экзамен</a></li>
+            <li><a href="/duel" class="nav__link">Дуэли</a></li>
+            <li><a href="/tournaments" class="nav__link">Турниры</a></li>
+            <li><a href="/rating" class="nav__link">Рейтинг</a></li>
+            <li><a href="/article" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="/shop" class="shop-btn" title="Магазин" aria-label="Магазин, монеты">
+            <img class="shop-btn__coin" src="/assets/icons/coin.svg" alt="" />
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="/app" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__text">
+                <span class="profile-btn__name" id="profileName">Профиль</span>
+                <span class="profile-btn__meta" id="profileMeta" hidden></span>
+              </span>
+              <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="/admin" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="/moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="/profile#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="/profile#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="/profile#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="/profile#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="/profile#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="/profile#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="/support" class="profile-dropdown__item">Поддержка</a>
+              <a href="/suggestions" class="profile-dropdown__item">Предложения</a>
+              <a href="/profile#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="help-page">
+      <section class="help-shell">
+        <div class="container help-container">
+          <div class="help-hero">
+            <div class="help-hero__text">
+              <span class="help-eyebrow">Поддержка</span>
+              <h1 class="help-title">Чем <span>помочь?</span></h1>
+              <p class="help-lead">
+                Напиши, если что-то не работает, не грузится или есть вопрос по аккаунту, подписке или монетам.
+                Ответ появится здесь же, рядом с обращением.
+              </p>
+            </div>
+            <span class="help-hero__art" aria-hidden="true"><img class="lp-icon" src="/assets/icons/envelope.svg" alt="" /></span>
+          </div>
+
+          <div class="help-guest" data-auth="guest">
+            <span class="help-guest__icon"><img class="lp-icon" src="/assets/icons/shield.svg" alt="" /></span>
+            <div>
+              <b>Войди, чтобы написать через сайт</b>
+              <p>Обращения и ответы на них сохраняются в аккаунте. Или напиши напрямую:
+                <a href="mailto:geolzzz@yandex.ru">geolzzz@yandex.ru</a> · <a href="tel:+79852059883">+7 985 205-98-83</a></p>
+            </div>
+            <a href="/auth#login" class="btn btn--primary">Войти</a>
+          </div>
+
+          <div class="help-layout" data-auth="user">
+            <div class="help-main">
+              <form class="help-card help-form" id="ticketForm">
+                <span class="help-card__title">Новое обращение</span>
+                <div class="help-topics" id="ticketTopics" aria-label="Быстрые темы">
+                  <button type="button" class="help-topic" data-topic="Ошибка на сайте"><img class="lp-icon" src="/assets/icons/burst.svg" alt="" />Ошибка на сайте</button>
+                  <button type="button" class="help-topic" data-topic="Аккаунт и вход"><img class="lp-icon" src="/assets/icons/shield.svg" alt="" />Аккаунт и вход</button>
+                  <button type="button" class="help-topic" data-topic="Подписка"><img class="lp-icon" src="/assets/icons/card.svg" alt="" />Подписка</button>
+                  <button type="button" class="help-topic" data-topic="Монеты и магазин"><img class="lp-icon" src="/assets/icons/coin.svg" alt="" />Монеты и магазин</button>
+                  <button type="button" class="help-topic" data-topic="Другой вопрос"><img class="lp-icon" src="/assets/icons/bell.svg" alt="" />Другое</button>
+                </div>
+                <label class="help-field">
+                  <span class="help-field__label">Тема <em><span id="ticketSubjectCount">0</span>/120</em></span>
+                  <input type="text" id="ticketSubject" maxlength="120" placeholder="Коротко, о чём вопрос" required />
+                </label>
+                <label class="help-field">
+                  <span class="help-field__label">Сообщение <em><span id="ticketMessageCount">0</span>/4000</em></span>
+                  <textarea id="ticketMessage" rows="6" maxlength="4000" placeholder="Опиши подробнее: что делал, что ожидал и что получилось. Если есть ошибка — перепиши её текст." required></textarea>
+                </label>
+                <div class="help-form__row">
+                  <button type="submit" class="help-submit" id="ticketSubmit"><span>Отправить</span></button>
+                  <span class="community-form__status help-status" id="ticketFormStatus" role="status"></span>
+                </div>
+              </form>
+
+              <div class="help-list-head">
+                <h2 class="help-subtitle">Мои обращения</h2>
+                <div class="help-filter" id="ticketFilter" role="tablist" aria-label="Фильтр обращений">
+                  <button type="button" class="is-active" data-filter="all">Все <b data-count="all"></b></button>
+                  <button type="button" data-filter="open">Открытые <b data-count="open"></b></button>
+                  <button type="button" data-filter="answered">С ответом <b data-count="answered"></b></button>
+                  <button type="button" data-filter="closed">Закрытые <b data-count="closed"></b></button>
+                </div>
+              </div>
+              <div class="help-list" id="ticketList">
+                <p class="help-empty">Загрузка…</p>
+              </div>
+            </div>
+
+            <aside class="help-side">
+              <div class="help-card help-steps">
+                <span class="help-card__title">Как это работает</span>
+                <ol>
+                  <li><b>Пишешь обращение</b><small>Чем подробнее, тем быстрее разберёмся</small></li>
+                  <li><b>Мы отвечаем здесь</b><small>Ответ появится под обращением, придёт уведомление</small></li>
+                  <li><b>Вопрос закрыт</b><small>Если что-то осталось — напиши новое</small></li>
+                </ol>
+              </div>
+              <div class="help-card help-contacts">
+                <span class="help-card__title">Связаться напрямую</span>
+                <a class="help-contact" href="mailto:geolzzz@yandex.ru">
+                  <span class="help-contact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                  <span><b>geolzzz@yandex.ru</b><small>почта</small></span>
+                </a>
+                <a class="help-contact" href="tel:+79852059883">
+                  <span class="help-contact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+                  <span><b>+7 985 205-98-83</b><small>телефон</small></span>
+                </a>
+              </div>
+              <a class="help-card help-crosslink" href="/suggestions">
+                <img class="lp-icon" src="/assets/icons/lightbulb.svg" alt="" />
+                <span><b>Есть идея, а не проблема?</b><small>Предложи улучшение — за идеи голосуют другие студенты</small></span>
+              </a>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/data.js?v=20260831160000"></script>
+    <script src="/progress.js?v=20260927030000"></script>
+    <script src="/vendor/supabase-js.min.js"></script>
+    <script src="/api.js?v=20260927010000"></script>
+    <script src="/dialog.js?v=20260924150000"></script>
+    <script src="/notifications.js?v=20260927030000"></script>
+    <script src="/script.js?v=20260927040000"></script>
+    <script src="/support.js?v=20260927060000"></script>
+    <script src="/cookie-consent.js?v=20260917220000"></script>
+  </body>
+</html>

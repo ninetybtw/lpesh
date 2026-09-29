@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Пробный экзамен</title>
+    <meta
+      name="description"
+      content="Пробный экзамен LexPrep: случайная подборка вопросов по всем дисциплинам с таймером, как на настоящем зачёте."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="/styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="/styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/notifications.css?v=20260927030000" />
+    <link rel="stylesheet" href="/styles/app.css?v=20260929010000" />
+    <link rel="stylesheet" href="/styles/exam.css?v=20260927040000" />
+  </head>
+  <body data-tabbar>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="/" class="logo">
+          <img class="logo__icon" src="/assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Разделы">
+          <ul class="nav__list">
+            <li><a href="/app" class="nav__link">Тренажёр</a></li>
+            <li><a href="/exam" class="nav__link">Экзамен</a></li>
+            <li><a href="/duel" class="nav__link">Дуэли</a></li>
+            <li><a href="/tournaments" class="nav__link">Турниры</a></li>
+            <li><a href="/rating" class="nav__link">Рейтинг</a></li>
+            <li><a href="/article" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="/shop" class="shop-btn" title="Магазин" aria-label="Магазин, монеты">
+            <img class="shop-btn__coin" src="/assets/icons/coin.svg" alt="" />
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="/app" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__text">
+                <span class="profile-btn__name" id="profileName">Профиль</span>
+                <span class="profile-btn__meta" id="profileMeta" hidden></span>
+              </span>
+              <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="/admin" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="/moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="/profile#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="/profile#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="/profile#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="/profile#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="/profile#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="/profile#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="/support" class="profile-dropdown__item">Поддержка</a>
+              <a href="/suggestions" class="profile-dropdown__item">Предложения</a>
+              <a href="/profile#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="exam-page">
+      <div class="container exam-container">
+        <!-- SETUP: настройка билета, справа — «живой» билет-превью -->
+        <section class="exam-setup" data-exam-view="setup">
+          <div class="exam-hero">
+            <div class="exam-hero__text">
+              <span class="exam-eyebrow">Пробный экзамен</span>
+              <h1 class="exam-hero__title">Собери свой <span class="exam-accent">билет</span></h1>
+              <p class="exam-hero__desc">
+                Случайные вопросы по выбранным дисциплинам и общий таймер — как на настоящем зачёте.
+                Слабые места из прошлых тестов попадут в начало билета.
+              </p>
+              <div class="exam-history" id="examHistory"></div>
+            </div>
+
+            <div class="exam-ticket" id="examTicket" aria-hidden="true">
+              <div class="exam-ticket__top">
+                <span class="exam-ticket__label">Экзаменационный билет</span>
+                <strong class="exam-ticket__num">№ <span id="ticketNumber">1</span></strong>
+              </div>
+              <div class="exam-ticket__perf"></div>
+              <ul class="exam-ticket__rows">
+                <li><img class="lp-icon" src="/assets/icons/books.svg" alt="" /><span id="ticketDiscipline">Все дисциплины</span></li>
+                <li><img class="lp-icon" src="/assets/icons/target.svg" alt="" /><span id="ticketCount">15 вопросов</span></li>
+                <li><img class="lp-icon" src="/assets/icons/hourglass.svg" alt="" /><span id="ticketTime">≈ 23 мин</span></li>
+                <li id="ticketWeakRow"><img class="lp-icon" src="/assets/icons/flame.svg" alt="" /><span id="ticketWeak"></span></li>
+              </ul>
+              <div class="exam-ticket__stamp"><img class="lp-icon" src="/assets/icons/scales.svg" alt="" /><span>LexPrep</span></div>
+            </div>
+          </div>
+
+          <div class="exam-panel">
+            <div class="exam-option exam-option--wide">
+              <label class="exam-option__label" for="examDiscipline">Дисциплина</label>
+              <select class="form-input" id="examDiscipline"></select>
+            </div>
+
+            <div class="exam-option">
+              <span class="exam-option__label">Количество вопросов</span>
+              <div class="exam-seg" data-seg-for="examCount" role="radiogroup" aria-label="Количество вопросов">
+                <button type="button" data-value="10">10</button>
+                <button type="button" data-value="15">15</button>
+                <button type="button" data-value="20">20</button>
+                <button type="button" data-value="30">30</button>
+              </div>
+              <select id="examCount" hidden>
+                <option value="10">10</option>
+                <option value="15" selected>15</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+
+            <div class="exam-option">
+              <span class="exam-option__label">Время на вопрос</span>
+              <div class="exam-seg" data-seg-for="examTime" role="radiogroup" aria-label="Время на вопрос">
+                <button type="button" data-value="60">1 мин</button>
+                <button type="button" data-value="90">1,5 мин</button>
+                <button type="button" data-value="0">Без лимита</button>
+              </div>
+              <select id="examTime" hidden>
+                <option value="60">1 минута</option>
+                <option value="90" selected>1,5 минуты</option>
+                <option value="0">Без ограничения</option>
+              </select>
+            </div>
+
+            <label class="exam-switch exam-option--wide">
+              <input type="checkbox" id="examWeakFirst" checked />
+              <span class="exam-switch__track" aria-hidden="true"><span class="exam-switch__thumb"></span></span>
+              <span class="exam-switch__text">
+                <b>Сначала слабые места</b>
+                <small id="weakHint"></small>
+              </span>
+            </label>
+
+            <p class="exam-setup__error exam-option--wide" id="examSetupError" hidden></p>
+            <button class="exam-cta exam-option--wide" id="startExamBtn" type="button">
+              <img class="lp-icon" src="/assets/icons/lightning.svg" alt="" /><span>Начать экзамен</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- RUNNING: табло с таймером, навигатор по вопросам, вопрос -->
+        <section class="exam-run" data-exam-view="running" hidden>
+          <div class="exam-run__bar">
+            <div class="exam-run__info">
+              <span class="exam-run__progress" id="examProgress"></span>
+              <span class="exam-run__topic" id="examTopicLabel"></span>
+            </div>
+            <div class="exam-timer" id="examTimerWrap">
+              <svg class="exam-timer__ring" viewBox="0 0 44 44" aria-hidden="true">
+                <circle class="exam-timer__track" cx="22" cy="22" r="19" />
+                <circle class="exam-timer__fill" id="examTimerRing" cx="22" cy="22" r="19" />
+              </svg>
+              <span class="exam-timer__value" id="examTimer"></span>
+            </div>
+          </div>
+          <div class="exam-run__track" aria-hidden="true"><span id="examProgressBar"></span></div>
+          <div class="exam-nav" id="examNav" role="group" aria-label="Вопросы билета"></div>
+
+          <div class="question exam-question" id="examQuestionBox"></div>
+
+          <div class="exam-running__actions">
+            <button class="btn btn--outline" type="button" id="examPrevBtn">← Назад</button>
+            <button class="btn btn--ghost profile-danger-text" type="button" id="examFinishBtn">Завершить досрочно</button>
+            <button class="btn btn--primary" type="button" id="examNextBtn">Далее →</button>
+          </div>
+        </section>
+
+        <!-- RESULTS: кольцо результата, сводка, темы, разбор ошибок -->
+        <section class="exam-results" data-exam-view="results" hidden>
+          <div class="exam-score" id="examScoreBox">
+            <div class="exam-score__ring">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <defs>
+                  <linearGradient id="examRingGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#4f6bff" />
+                    <stop offset="0.6" stop-color="#8c54ff" />
+                    <stop offset="1" stop-color="#ff7a45" />
+                  </linearGradient>
+                </defs>
+                <circle class="exam-score__track" cx="60" cy="60" r="52" />
+                <circle class="exam-score__fill" id="examScoreRing" cx="60" cy="60" r="52" />
+              </svg>
+              <div class="exam-score__center">
+                <span class="exam-score__icon" id="examScoreIcon"></span>
+                <strong><span id="examScorePercent">0</span>%</strong>
+              </div>
+            </div>
+            <div class="exam-score__text">
+              <span class="exam-eyebrow" id="examGrade">Результат экзамена</span>
+              <h1 class="exam-score__title" id="examScoreTitle"></h1>
+              <p class="exam-score__msg" id="examScoreMsg"></p>
+            </div>
+          </div>
+
+          <div class="exam-stats" id="examStats"></div>
+
+          <h2 class="exam-subheading">По темам</h2>
+          <div class="exam-breakdown" id="examBreakdown"></div>
+
+          <h2 class="exam-subheading">Разбор ошибок <span class="exam-subheading__count" id="examReviewCount"></span></h2>
+          <div class="exam-review" id="examReview"></div>
+
+          <div class="exam-results__actions">
+            <button class="btn btn--primary" type="button" id="retryWeakBtn" hidden>Пройти неверные ещё раз</button>
+            <button class="btn btn--outline" type="button" id="examNewBtn">Новый билет</button>
+            <a href="/app" class="btn btn--ghost">В тренажёр</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="/data.js?v=20260831160000"></script>
+    <script src="/progress.js?v=20260927030000"></script>
+    <script src="/plan.js?v=20260923180000"></script>
+    <script src="/vendor/supabase-js.min.js"></script>
+    <script src="/api.js?v=20260927010000"></script>
+    <script src="/dialog.js?v=20260924150000"></script>
+    <script src="/notifications.js?v=20260927030000"></script>
+    <script src="/vendor/marked.min.js"></script>
+    <script src="/content-loader.js?v=20260917080000"></script>
+    <script src="/script.js?v=20260927040000"></script>
+    <script src="/exam.js?v=20260927030000"></script>
+    <script src="/cookie-consent.js?v=20260917220000"></script>
+  </body>
+</html>

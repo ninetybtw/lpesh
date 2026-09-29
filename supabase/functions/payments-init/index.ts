@@ -104,8 +104,8 @@ serve(async (req) => {
       // он не умеет слать Supabase-специфичные заголовки. Kong у
       // self-hosted Supabase принимает apikey и так.
       notificationUrl: `${PUBLIC_API_BASE}/functions/v1/payments-notification?apikey=${anonKey}`,
-      successUrl: `${PUBLIC_SITE_BASE}/profile.html?payment=success#subscription`,
-      failUrl: `${PUBLIC_SITE_BASE}/profile.html?payment=fail#subscription`,
+      successUrl: `${PUBLIC_SITE_BASE}/profile?payment=success#subscription`,
+      failUrl: `${PUBLIC_SITE_BASE}/profile?payment=fail#subscription`,
       receiptEmail: profile.email,
       receiptTaxation: taxation,
       receiptItem

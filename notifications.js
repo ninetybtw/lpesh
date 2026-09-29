@@ -164,7 +164,7 @@ RLS разрешает только user_id = auth.uid()):
         type: 'levelup',
         title: detail.rankChanged ? `Новое звание: ${detail.rankName}!` : `Новый уровень: ${detail.level}!`,
         body: detail.rankChanged ? `Ты дорос до звания «${detail.rankName}».` : 'Продолжай в том же духе.',
-        link: 'profile.html#stats'
+        link: '/profile#stats'
       }).then(refresh).catch(() => {});
     });
 
@@ -187,7 +187,7 @@ RLS разрешает только user_id = auth.uid()):
       type: 'subscription_expiring',
       title: daysLeft === 0 ? 'Подписка истекает сегодня' : `Подписка истекает через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}`,
       body: 'Продли подписку, чтобы не потерять доступ к тарифу.',
-      link: 'profile.html#subscription'
+      link: '/profile#subscription'
     }).catch(() => {});
   }
 
@@ -203,7 +203,7 @@ RLS разрешает только user_id = auth.uid()):
       type: 'rating_top',
       title: `Ты в топ-3 рейтинга! (#${place})`,
       body: 'Так держать — другие уже наступают на пятки.',
-      link: 'rating.html'
+      link: '/rating'
     }).catch(() => {});
   };
 
