@@ -1,8 +1,178 @@
 <!doctype html>
-<html lang="ru"><head>
-<meta charset="UTF-8" />
-<meta http-equiv="refresh" content="0; url=/suggestions" />
-<link rel="canonical" href="https://lexprep.ru/suggestions" />
-<title>LexPrep</title>
-<script>location.replace('/suggestions' + location.search + location.hash);</script>
-</head><body></body></html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Предложения</title>
+    <meta
+      name="description"
+      content="Предложения по изменениям и поправкам от пользователей LexPrep — предлагай и голосуй."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/profile.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/help.css?v=20260927060000" />
+  </head>
+  <body>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="/" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Разделы">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="exam.html" class="nav__link">Экзамен</a></li>
+            <li><a href="duel.html" class="nav__link">Дуэли</a></li>
+            <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
+            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" title="Магазин" aria-label="Магазин, монеты">
+            <img class="shop-btn__coin" src="assets/icons/coin.svg" alt="" />
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__text">
+                <span class="profile-btn__name" id="profileName">Профиль</span>
+                <span class="profile-btn__meta" id="profileMeta" hidden></span>
+              </span>
+              <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="help-page help-page--ideas">
+      <section class="help-shell">
+        <div class="container help-container">
+          <div class="help-hero">
+            <div class="help-hero__text">
+              <span class="help-eyebrow">Предложения</span>
+              <h1 class="help-title">Сделаем LexPrep <span>лучше вместе</span></h1>
+              <p class="help-lead">
+                Что добавить, поправить или переделать — пиши сюда. Остальные студенты видят идеи и голосуют за них,
+                а мы отмечаем статус по каждой.
+              </p>
+              <div class="help-stats" id="ideaStats" hidden>
+                <span class="help-stat"><b data-stat="total">0</b> идей</span>
+                <span class="help-stat help-stat--reviewing"><b data-stat="reviewing">0</b> на рассмотрении</span>
+                <span class="help-stat help-stat--accepted"><b data-stat="accepted">0</b> принято</span>
+              </div>
+            </div>
+            <span class="help-hero__art" aria-hidden="true"><img class="lp-icon" src="assets/icons/lightbulb.svg" alt="" /></span>
+          </div>
+
+          <div class="help-guest" data-auth="guest">
+            <span class="help-guest__icon"><img class="lp-icon" src="assets/icons/lightbulb.svg" alt="" /></span>
+            <div>
+              <b>Войди, чтобы предлагать и голосовать</b>
+              <p>После входа увидишь идеи других студентов и сможешь поддержать понравившиеся.</p>
+            </div>
+            <a href="auth.html#login" class="btn btn--primary">Войти</a>
+          </div>
+
+          <div class="help-layout help-layout--ideas" data-auth="user">
+            <aside class="help-side help-side--first">
+              <form class="help-card help-form" id="suggestionForm">
+                <span class="help-card__title"><img class="lp-icon" src="assets/icons/sparkles.svg" alt="" />Новая идея</span>
+                <label class="help-field">
+                  <span class="help-field__label">Заголовок <em><span id="suggestionTitleCount">0</span>/120</em></span>
+                  <input type="text" id="suggestionTitle" maxlength="120" placeholder="Коротко, в чём суть" required />
+                </label>
+                <label class="help-field">
+                  <span class="help-field__label">Описание <em><span id="suggestionMessageCount">0</span>/4000</em></span>
+                  <textarea id="suggestionMessage" rows="5" maxlength="4000" placeholder="Что именно изменить и зачем — так идею быстрее поддержат" required></textarea>
+                </label>
+                <div class="help-form__row">
+                  <button type="submit" class="help-submit" id="suggestionSubmit"><span>Предложить</span></button>
+                  <span class="community-form__status help-status" id="suggestionFormStatus" role="status"></span>
+                </div>
+              </form>
+              <a class="help-card help-crosslink" href="support.html">
+                <img class="lp-icon" src="assets/icons/envelope.svg" alt="" />
+                <span><b>Что-то сломалось?</b><small>С ошибками и вопросами по аккаунту — в поддержку</small></span>
+              </a>
+            </aside>
+
+            <div class="help-main">
+              <div class="help-list-head">
+                <h2 class="help-subtitle">Все идеи</h2>
+                <div class="help-sort" role="group" aria-label="Сортировка">
+                  <button type="button" class="is-active" data-sort="top">Популярные</button>
+                  <button type="button" data-sort="new">Новые</button>
+                </div>
+              </div>
+              <div class="help-filter" id="suggestionFilter" role="tablist" aria-label="Фильтр по статусу">
+                <button type="button" class="is-active" data-filter="all">Все <b data-count="all"></b></button>
+                <button type="button" data-filter="new">Новые <b data-count="new"></b></button>
+                <button type="button" data-filter="reviewing">На рассмотрении <b data-count="reviewing"></b></button>
+                <button type="button" data-filter="accepted">Принятые <b data-count="accepted"></b></button>
+                <button type="button" data-filter="rejected">Отклонённые <b data-count="rejected"></b></button>
+              </div>
+              <div class="help-list" id="suggestionList">
+                <p class="help-empty">Загрузка…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data.js?v=20260831160000"></script>
+    <script src="progress.js?v=20260927030000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="api.js?v=20260927010000"></script>
+    <script src="dialog.js?v=20260924150000"></script>
+    <script src="notifications.js?v=20260927030000"></script>
+    <script src="script.js?v=20260927040000"></script>
+    <script src="suggestions.js?v=20260927060000"></script>
+    <script src="cookie-consent.js?v=20260917220000"></script>
+  </body>
+</html>

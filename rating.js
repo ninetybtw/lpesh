@@ -28,7 +28,7 @@ function ratingAvatar(entry, className, frameClass) {
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = '/auth';
+    window.location.href = 'auth.html';
     return;
   }
 

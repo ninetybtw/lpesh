@@ -144,7 +144,7 @@ function activatePlan(tier) {
 document.addEventListener('DOMContentLoaded', async () => {
   let user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = '/auth';
+    window.location.href = 'auth.html';
     return;
   }
 
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             type: 'subscription',
             title: `Подписка «${PLAN_TITLES[item.grantsTier]}» активирована`,
             body: 'Действует 30 дней — новые возможности уже доступны.',
-            link: '/profile#subscription'
+            link: 'profile.html#subscription'
           }).catch(() => {});
         }
       });
