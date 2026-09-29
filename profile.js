@@ -916,6 +916,6 @@ function initDangerZone() {
     Object.keys(localStorage)
       .filter(key => key.startsWith('lexprep_'))
       .forEach(key => localStorage.removeItem(key));
-    window.location.href = 'index.html';
+    window.location.href = '/';
   });
 }

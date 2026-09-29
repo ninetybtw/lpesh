@@ -657,7 +657,7 @@ function initApp() {
               На «Про» открываются все дисциплины и темы без ограничений, тесты — с разбором ответов, до 5 попыток в день и дуэли с турнирами.
               На «Максимум» — вообще без лимитов, плюс экспорт конспектов в PDF.
             </p>
-            <a class="btn btn--primary" href="index.html#pricing">Оформить подписку</a>
+            <a class="btn btn--primary" href="/#pricing">Оформить подписку</a>
           </div>
         </div>
       ` : ''}
@@ -1096,7 +1096,7 @@ function initApp() {
     if (LexPrepProgress.getDailyUsage().cardsReviewed >= cardsLimit) {
       area.innerHTML = `
         <div class="cards-empty">
-          <p class="topic-desc">Дневной лимит карточек (${cardsLimit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан. Оформи «Про» для безлимитного повторения — <a href="index.html#pricing">смотреть тарифы</a>.</p>
+          <p class="topic-desc">Дневной лимит карточек (${cardsLimit}) на тарифе «${LexPrepPlan.TIER_TITLES[LexPrepPlan.getTier()]}» исчерпан. Оформи «Про» для безлимитного повторения — <a href="/#pricing">смотреть тарифы</a>.</p>
         </div>
       `;
       return;

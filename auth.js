@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (successText) successText.textContent = 'Готово, входим…';
             if (success) success.classList.add('is-visible');
             await redeemPromoIfEntered();
-            setTimeout(() => { window.location.href = 'index.html'; }, 900);
+            setTimeout(() => { window.location.href = '/'; }, 900);
           }
         } catch (err) {
           showAuthError(err.message);
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('lexprep_user', JSON.stringify(user));
           if (successText) successText.textContent = 'Готово, входим…';
           if (success) success.classList.add('is-visible');
-          setTimeout(() => { window.location.href = 'index.html'; }, 900);
+          setTimeout(() => { window.location.href = '/'; }, 900);
         } catch (err) {
           showAuthError(err.message);
         } finally {
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successText) successText.textContent = 'Готово, входим…';
         if (success) success.classList.add('is-visible');
         await redeemPromoIfEntered();
-        setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        setTimeout(() => { window.location.href = '/'; }, 900);
       } catch (err) {
         otpSlots.forEach(s => s.classList.add('is-error'));
         showOtpError(err.message);
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeResetOverlay();
         if (successText) successText.textContent = 'Пароль обновлён, входим…';
         if (success) success.classList.add('is-visible');
-        setTimeout(() => { window.location.href = 'index.html'; }, 900);
+        setTimeout(() => { window.location.href = '/'; }, 900);
       } catch (err) {
         resetOtpSlots.forEach(s => s.classList.add('is-error'));
         showResetConfirmError(err.message);
