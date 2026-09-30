@@ -44,7 +44,14 @@
 --        которые встречаются в тексте (['assets/p128_0.png']).
 --   4. library_assets — сами схемы, base64 без префикса data:, по пути из
 --        images; сопоставление с <img src> в тексте — по имени файла.
--- item_count/word_count у сборника пересчитываются триггером сами.
+-- item_count/word_count у сборника заполнять не нужно: число билетов и
+-- время чтения страница считает сама по library_items.
+--
+-- В SQL Editor Supabase: вставить файл целиком в новую вкладку, ничего не
+-- выделять, Run. На предупреждение Studio о «destructive operations» и
+-- RLS выбрать запуск как есть: drop ... if exists удаляют только политики
+-- и триггеры с этими же именами перед пересозданием (данные не трогают),
+-- а RLS включается сразу после каждой таблицы.
 
 create table if not exists public.library_collections (
   id text primary key,
@@ -63,6 +70,8 @@ create table if not exists public.library_collections (
   updated_at timestamptz not null default now()
 );
 
+alter table public.library_collections enable row level security;
+
 create table if not exists public.library_items (
   id text primary key,
   collection_id text not null references public.library_collections(id) on delete cascade,
@@ -76,6 +85,8 @@ create table if not exists public.library_items (
   updated_at timestamptz not null default now()
 );
 
+alter table public.library_items enable row level security;
+
 create index if not exists library_items_collection_idx on public.library_items(collection_id, sort_order, number);
 
 create table if not exists public.library_item_content (
@@ -87,6 +98,8 @@ create table if not exists public.library_item_content (
   updated_at timestamptz not null default now()
 );
 
+alter table public.library_item_content enable row level security;
+
 create table if not exists public.library_assets (
   collection_id text not null references public.library_collections(id) on delete cascade,
   path text not null,
@@ -94,6 +107,8 @@ create table if not exists public.library_assets (
   data_base64 text not null,
   primary key (collection_id, path)
 );
+
+alter table public.library_assets enable row level security;
 
 -- Кто какие билеты открывал и когда — для суточного лимита.
 create table if not exists public.library_reads (
@@ -104,13 +119,9 @@ create table if not exists public.library_reads (
   primary key (user_id, item_id, day)
 );
 
-create index if not exists library_reads_user_day_idx on public.library_reads(user_id, day);
-
-alter table public.library_collections enable row level security;
-alter table public.library_items enable row level security;
-alter table public.library_item_content enable row level security;
-alter table public.library_assets enable row level security;
 alter table public.library_reads enable row level security;
+
+create index if not exists library_reads_user_day_idx on public.library_reads(user_id, day);
 
 -- Каталог и оглавление — витрина, видны всем.
 drop policy if exists "Anyone can view published library collections" on public.library_collections;
@@ -160,7 +171,7 @@ create policy "Users can view own library reads"
   on public.library_reads for select
   using (auth.uid() = user_id or public.is_admin());
 
--- updated_at и счётчики сборника обновляются сами.
+-- updated_at обновляется сам.
 create or replace function public.library_touch_updated_at()
 returns trigger
 language plpgsql
@@ -186,40 +197,10 @@ create trigger library_item_content_touch
   before update on public.library_item_content
   for each row execute procedure public.library_touch_updated_at();
 
-create or replace function public.library_recount_collection()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  v_ids text[];
-begin
-  if tg_op = 'DELETE' then
-    v_ids := array[old.collection_id];
-  elsif tg_op = 'UPDATE' then
-    v_ids := array[old.collection_id, new.collection_id];
-  else
-    v_ids := array[new.collection_id];
-  end if;
-
-  update public.library_collections c
-  set item_count = s.cnt,
-      word_count = s.words
-  from (
-    select ids.id,
-           (select count(*) from public.library_items i where i.collection_id = ids.id) as cnt,
-           (select coalesce(sum(i.word_count), 0) from public.library_items i where i.collection_id = ids.id) as words
-    from unnest(v_ids) as ids(id)
-  ) s
-  where c.id = s.id;
-  return null;
-end;
-$$;
-
+-- Раньше здесь был триггер пересчёта item_count/word_count — не нужен:
+-- страница считает билеты и время чтения сама по library_items.
 drop trigger if exists library_items_recount on public.library_items;
-create trigger library_items_recount
-  after insert or update or delete on public.library_items
-  for each row execute procedure public.library_recount_collection();
+drop function if exists public.library_recount_collection();
 
 -- Доступ к тексту: админ — всегда; остальные — действующий серверный
 -- тариф «Про»/«Максимум» и не заблокирован. Тариф, «купленный» в

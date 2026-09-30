@@ -41,4 +41,4 @@ node import-topics.js <путь-к-каталогу-с-topic-NN.md> <discipline-
   сноски `[^n]`.
 - `<img src>` в тексте сопоставляется со схемой из `library_assets` по имени
   файла, так что путь в `src` может быть любым.
-- `item_count`/`word_count` сборника пересчитываются триггером сами.
+- `item_count`/`word_count` сборника заполнять не нужно — страница считает сама по `library_items`.
