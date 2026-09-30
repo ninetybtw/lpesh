@@ -1666,6 +1666,31 @@ LIBRARY.CSS — «Библиотека»: полка сборников-книг
   border-top: 1px dashed var(--color-border);
 }
 
+.lib-content pre {
+  margin: 1.2em 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  overflow-x: auto;
+  text-indent: 0;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.lib-content pre code,
+.lib-content code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.88em;
+  color: var(--color-text);
+}
+
+.lib-content code:not(pre code) {
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
 /* Врезки: нормы и практика / лектор и доктрина / внимание. */
 .lib-content .callout,
 .lib-content blockquote {
