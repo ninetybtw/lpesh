@@ -59,16 +59,36 @@ function lexprepEscapeHtml(str) {
 // ответа везде решаются по q.correct.length, а не по отдельному полю
 // типа — так один и тот же вопрос одинаково понимают тренажёр, экзамен,
 // дуэли и турниры.
+function lexprepShuffledIndices(n) {
+  const order = Array.from({ length: n }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
 function lexprepConvertQuiz(rawQuestions) {
   const result = [];
   (rawQuestions || []).forEach(q => {
-    const optionTexts = (q.options || []).map(o => o.text);
-    const correct = (q.correct || [])
-      .map(id => (q.options || []).findIndex(o => o.id === id))
-      .filter(i => i >= 0);
-    if (correct.length) {
-      result.push({ question: q.question, options: optionTexts, correct, explanation: q.explanation });
-    }
+    const options = q.options || [];
+    const optionTexts = options.map(o => o.text);
+    const correctOrig = new Set(
+      (q.correct || [])
+        .map(id => options.findIndex(o => o.id === id))
+        .filter(i => i >= 0)
+    );
+    if (!correctOrig.size) return;
+    // Перемешиваем варианты при каждой загрузке — иначе правильный ответ
+    // может систематически оказываться на одной и той же позиции (в
+    // исходных JSON так и есть), и это позволяет угадывать не читая вопрос.
+    const order = lexprepShuffledIndices(optionTexts.length);
+    const shuffledOptions = order.map(i => optionTexts[i]);
+    const correct = [];
+    order.forEach((origIdx, newIdx) => {
+      if (correctOrig.has(origIdx)) correct.push(newIdx);
+    });
+    result.push({ question: q.question, options: shuffledOptions, correct, explanation: q.explanation });
   });
   return result;
 }
