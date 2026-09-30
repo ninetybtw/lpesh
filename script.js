@@ -690,6 +690,7 @@ function initTabbar() {
   if (!cachedUser) return;
   const TABBAR_ITEMS = [
     { href: 'app.html', label: 'Тренажёр', icon: '<path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>' },
+    { href: 'library.html', label: 'Библиотека', icon: '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>' },
     { href: 'exam.html', label: 'Экзамен', icon: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>' },
     { href: 'duel.html', label: 'Дуэли', match: ['duel.html', 'tournaments.html'], icon: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/>' },
     { href: 'rating.html', label: 'Рейтинг', icon: '<path d="M3 21h18"/><rect x="9" y="7" width="6" height="14" rx="1.5"/><rect x="3" y="12" width="6" height="9" rx="1.5"/><rect x="15" y="10" width="6" height="11" rx="1.5"/>' },

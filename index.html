@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260930010000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
   <body>
@@ -427,6 +427,7 @@
                   <span>Билет</span>
                   <strong>№ 14</strong>
                 </div>
+                <a href="library.html" class="feature-panel-link">Открыть библиотеку <span aria-hidden="true">→</span></a>
               </div>
               <div class="feature-tabs__panel" data-feature-panel="rewards" style="--tab-accent: #e0a316">
                 <h3>Награды за вклад</h3>
@@ -561,6 +562,7 @@
                 <li data-plan-monthly hidden>Тесты — 3 попытки в день с разбором ответов</li>
                 <li data-plan-annual>Тесты — 5 попыток в день с разбором ответов</li>
                 <li>Пробный экзамен — 3 попытки в месяц</li>
+                <li>Библиотека — сборники билетов по дисциплинам</li>
                 <li data-plan-monthly hidden>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
                 <li data-plan-annual>Продвинутый ИИ-консультант — 10 запросов в день</li>
                 <li data-plan-monthly hidden>Дуэли — 3 в день, турниры — 1 открытый в месяц, без взноса</li>
@@ -864,10 +866,10 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260927010000"></script>
+    <script src="api.js?v=20260930010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260927030000"></script>
-    <script src="script.js?v=20260927040000"></script>
+    <script src="script.js?v=20260930010000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('lexprep-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexPrep — Библиотека</title>
+    <meta
+      name="description"
+      content="Библиотека LexPrep: сборники экзаменационных билетов по юридическим дисциплинам — читай прямо на сайте с тарифом «Про» или «Максимум»."
+    />
+    <meta name="robots" content="noarchive" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260930010000" />
+    <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/profile.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/library.css?v=20260930010000" />
+  </head>
+  <body data-tabbar>
+    <header class="header" id="header">
+      <div class="container header__inner header__inner--centered">
+        <a href="index.html" class="logo">
+          <img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+          <span class="logo__text">LexPrep</span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Разделы">
+          <ul class="nav__list">
+            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="library.html" class="nav__link">Библиотека</a></li>
+            <li><a href="exam.html" class="nav__link">Экзамен</a></li>
+            <li><a href="duel.html" class="nav__link">Дуэли</a></li>
+            <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
+            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
+            <li><a href="article.html" class="nav__link">Статьи</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__actions">
+          <a href="shop.html" class="shop-btn" data-auth="user" title="Магазин" aria-label="Магазин, монеты">
+            <img class="shop-btn__coin" src="assets/icons/coin.svg" alt="" />
+            <span class="shop-btn__count" id="coinCount">0</span>
+          </a>
+          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+            <span class="online-badge__dot"></span>
+            <span id="onlineCount">–</span> онлайн
+          </div>
+          <a href="app.html" class="btn btn--ghost">← В тренажёр</a>
+          <a href="auth.html#login" class="btn btn--primary" data-auth="guest">Войти</a>
+
+          <div class="profile-menu" id="profileMenu">
+            <button class="profile-btn" id="profileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="profile-btn__avatar" id="profileAvatar">U</span>
+              <span class="profile-btn__text">
+                <span class="profile-btn__name" id="profileName">Профиль</span>
+                <span class="profile-btn__meta" id="profileMeta" hidden></span>
+              </span>
+              <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
+              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
+              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="lib-page" id="libPage">
+      <div class="container lib-container">
+        <!-- ================= Полка: все сборники ================= -->
+        <section class="lib-view lib-view--shelf" id="libShelfView" aria-labelledby="libTitle">
+          <header class="lib-hero">
+            <div class="lib-hero__text">
+              <span class="lib-eyebrow">Библиотека</span>
+              <h1 class="lib-title" id="libTitle">Сборники <span>билетов</span></h1>
+              <p class="lib-lead">
+                Готовые ответы на экзаменационные билеты по дисциплинам: оглавление, врезки с нормами и позициями судов,
+                схемы и сноски. Читай прямо на сайте — с телефона или компьютера.
+              </p>
+              <div class="lib-stats" id="libStats" hidden>
+                <span class="lib-stat"><b data-stat="collections">0</b> <i data-stat-word="collections">сборников</i></span>
+                <span class="lib-stat"><b data-stat="items">0</b> <i data-stat-word="items">билетов</i></span>
+                <span class="lib-stat"><b data-stat="disciplines">0</b> <i data-stat-word="disciplines">дисциплин</i></span>
+              </div>
+            </div>
+            <div class="lib-hero__art" aria-hidden="true">
+              <span class="lib-hero__book lib-hero__book--1"></span>
+              <span class="lib-hero__book lib-hero__book--2"></span>
+              <span class="lib-hero__book lib-hero__book--3"></span>
+              <span class="lib-hero__book lib-hero__book--4"></span>
+              <span class="lib-hero__shelf"></span>
+            </div>
+          </header>
+
+          <div class="lib-access" id="libAccess" hidden></div>
+
+          <div class="lib-toolbar" id="libToolbar" hidden>
+            <label class="lib-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.35-4.35"/></svg>
+              <span class="visually-hidden">Поиск по библиотеке</span>
+              <input type="search" id="libSearch" placeholder="Найти билет или сборник…" autocomplete="off" />
+            </label>
+            <div class="lib-chips" id="libFilter" role="tablist" aria-label="Дисциплины"></div>
+          </div>
+
+          <div class="lib-results" id="libResults" hidden></div>
+          <div class="lib-shelf" id="libShelf" aria-live="polite">
+            <div class="lib-skeleton"></div>
+            <div class="lib-skeleton"></div>
+            <div class="lib-skeleton"></div>
+          </div>
+        </section>
+
+        <!-- ================= Сборник: оглавление ================= -->
+        <section class="lib-view lib-view--collection" id="libCollectionView" hidden>
+          <a class="lib-back" href="#" data-go-shelf>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            Все сборники
+          </a>
+          <div id="libCollection"></div>
+        </section>
+
+        <!-- ================= Читалка ================= -->
+        <section class="lib-view lib-view--reader" id="libReaderView" hidden>
+          <div class="lib-reader-bar" id="libReaderBar">
+            <a class="lib-reader-bar__back" href="#" id="libReaderBack" aria-label="К оглавлению сборника">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </a>
+            <div class="lib-reader-bar__title">
+              <span id="libReaderCollection"></span>
+              <b id="libReaderHeading"></b>
+            </div>
+            <div class="lib-reader-bar__tools">
+              <button type="button" class="lib-tool lib-tool--toc" id="libTocToggle" aria-expanded="false" aria-controls="libToc">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                <span>Разделы</span>
+              </button>
+              <div class="lib-font" role="group" aria-label="Размер текста">
+                <button type="button" class="lib-tool" data-font="-1" aria-label="Уменьшить текст">A<small>−</small></button>
+                <button type="button" class="lib-tool" data-font="1" aria-label="Увеличить текст">A<small>+</small></button>
+              </div>
+            </div>
+            <span class="lib-reader-bar__progress" aria-hidden="true"><i id="libProgressBar"></i></span>
+          </div>
+
+          <div class="lib-reader">
+            <aside class="lib-toc" id="libToc" aria-label="Разделы билета">
+              <div class="lib-toc__head">
+                <b>Разделы</b>
+                <button type="button" class="lib-toc__close" id="libTocClose" aria-label="Закрыть">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+              </div>
+              <ol class="lib-toc__list" id="libTocList"></ol>
+            </aside>
+            <div class="lib-toc-backdrop" id="libTocBackdrop" hidden></div>
+
+            <article class="lib-paper" id="libPaper" aria-live="polite">
+              <div class="lib-paper__body" id="libPaperBody"></div>
+              <div class="lib-watermark" id="libWatermark" aria-hidden="true"></div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="lib-modal" id="libModal" hidden>
+      <div class="lib-modal__backdrop" data-close-modal></div>
+      <div class="lib-modal__card" role="dialog" aria-modal="true" aria-labelledby="libModalTitle">
+        <button type="button" class="lib-modal__close" data-close-modal aria-label="Закрыть">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+        <div id="libModalBody"></div>
+      </div>
+    </div>
+
+    <div class="lib-lightbox" id="libLightbox" hidden>
+      <button type="button" class="lib-lightbox__close" data-close-lightbox aria-label="Закрыть схему">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="lib-lightbox__stage" data-close-lightbox>
+        <div class="lib-lightbox__img" id="libLightboxImg" role="img" aria-label="Схема"></div>
+      </div>
+    </div>
+
+    <div class="lib-toast" id="libToast" role="status" aria-live="polite" hidden></div>
+
+    <script src="progress.js?v=20260927030000"></script>
+    <script src="plan.js?v=20260930010000"></script>
+    <script src="vendor/supabase-js.min.js"></script>
+    <script src="vendor/marked.min.js"></script>
+    <script src="api.js?v=20260930010000"></script>
+    <script src="dialog.js?v=20260924150000"></script>
+    <script src="notifications.js?v=20260927030000"></script>
+    <script src="script.js?v=20260930010000"></script>
+    <script src="library.js?v=20260930010000"></script>
+    <script src="cookie-consent.js?v=20260917220000"></script>
+  </body>
+</html>

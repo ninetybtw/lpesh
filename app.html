@@ -22,9 +22,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260927030000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20260930010000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
-    <link rel="stylesheet" href="./styles/app.css?v=20260929010000" />
+    <link rel="stylesheet" href="./styles/app.css?v=20260930010000" />
   </head>
   <body class="app-surface" data-tabbar>
     <header class="header" id="header">
@@ -37,6 +37,7 @@
         <nav class="nav" id="nav" aria-label="Разделы">
           <ul class="nav__list">
             <li><a href="app.html" class="nav__link">Тренажёр</a></li>
+            <li><a href="library.html" class="nav__link">Библиотека</a></li>
             <li><a href="exam.html" class="nav__link">Экзамен</a></li>
             <li><a href="duel.html" class="nav__link">Дуэли</a></li>
             <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
@@ -100,6 +101,10 @@
             <a href="exam.html" class="btn btn--primary app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
               <span class="app-toolbar__label app-toolbar__label--long">Пробный экзамен</span><span class="app-toolbar__label app-toolbar__label--short">Экзамен</span>
+            </a>
+            <a href="library.html" class="btn btn--outline app-toolbar__exam app-toolbar__library">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+              <span class="app-toolbar__label">Библиотека</span>
             </a>
             <a href="duel.html" class="btn btn--outline app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/></svg>
@@ -208,16 +213,16 @@
 
     <script src="data.js?v=20260831160000"></script>
     <script src="progress.js?v=20260927030000"></script>
-    <script src="plan.js?v=20260923180000"></script>
+    <script src="plan.js?v=20260930010000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260927010000"></script>
+    <script src="api.js?v=20260930010000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260927030000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="vendor/jspdf.umd.min.js"></script>
     <script src="vendor/roboto-fonts.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260927040000"></script>
+    <script src="script.js?v=20260930010000"></script>
     <script src="app.js?v=20260927040000"></script>
     <script src="cookie-consent.js?v=20260917220000"></script>
   </body>

@@ -1644,6 +1644,30 @@ STYLE.CSS — компоненты и секции страницы
   font-weight: 800;
   color: var(--tab-accent, var(--color-primary));
 }
+.feature-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--tab-accent, var(--color-primary));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 14px 26px -16px var(--tab-accent, var(--color-primary));
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.feature-panel-link:hover {
+  transform: translateY(-2px);
+}
+.feature-panel-link span {
+  transition: transform 0.25s ease;
+}
+.feature-panel-link:hover span {
+  transform: translateX(3px);
+}
 @media (max-width: 960px) {
   .feature-tabs {
     grid-template-columns: 1fr;
@@ -3456,6 +3480,26 @@ body.app-surface::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* Шесть разделов на узком телефоне: чуть плотнее, чтобы «Библиотека»
+   помещалась целиком. */
+@media (max-width: 420px) {
+  body.has-tabbar .tabbar {
+    left: 6px;
+    right: 6px;
+    gap: 0;
+    padding: 6px 4px;
+  }
+  .tabbar__item {
+    font-size: 10px;
+    letter-spacing: -0.01em;
+  }
+}
+@media (max-width: 374px) {
+  .tabbar__item {
+    font-size: 9.5px;
+    letter-spacing: -0.02em;
+  }
 }
 .tabbar__item.is-active {
   color: var(--color-primary);

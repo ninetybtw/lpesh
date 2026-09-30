@@ -1418,8 +1418,109 @@ const LexPrepApi = (function () {
     return data.map(row => ({ id: row.id, name: row.name, avatar: row.avatar_url, xp: row.xp }));
   }
 
+  /* ---------------- Библиотека (library.html) ----------------
+     Каталог сборников и оглавление билетов открыты всем. Текст билета —
+     только через RPC library_read_item: сервер сам проверяет тариф
+     «Про»/«Максимум» и суточный лимит (supabase/library.sql). */
+
+  const LIBRARY_ERROR_MESSAGES = {
+    library_auth_required: 'Войди в аккаунт, чтобы читать библиотеку.',
+    library_plan_required: 'Библиотека открыта на тарифах «Про» и «Максимум».',
+    library_item_not_found: 'Этот билет больше недоступен.',
+    library_daily_limit: 'На сегодня лимит чтения исчерпан — он обновится завтра.'
+  };
+
+  function friendlyLibraryError(error) {
+    const code = Object.keys(LIBRARY_ERROR_MESSAGES).find(key => (error.message || '').includes(key));
+    if (code) {
+      const err = new Error(LIBRARY_ERROR_MESSAGES[code]);
+      err.code = code;
+      return err;
+    }
+    const err = friendlyError(error);
+    // Миграция library.sql ещё не выполнена — таблиц/функций нет.
+    if (error.code === '42P01' || error.code === 'PGRST202' || error.code === 'PGRST205' || error.status === 404) {
+      err.code = 'library_not_ready';
+    }
+    return err;
+  }
+
+  async function listLibrary() {
+    const [collections, items] = await Promise.all([
+      client
+        .from('library_collections')
+        .select('id, discipline_id, discipline_title, title, kind, author, description, actualized, item_count, word_count, sort_order, updated_at')
+        .order('sort_order', { ascending: true })
+        .order('title', { ascending: true }),
+      client
+        .from('library_items')
+        .select('id, collection_id, number, title, part, sections, word_count, sort_order')
+        .order('sort_order', { ascending: true })
+        .order('number', { ascending: true })
+    ]);
+    if (collections.error) throw friendlyLibraryError(collections.error);
+    if (items.error) throw friendlyLibraryError(items.error);
+    return {
+      collections: (collections.data || []).map(c => ({
+        id: c.id,
+        disciplineId: c.discipline_id,
+        disciplineTitle: c.discipline_title,
+        title: c.title,
+        kind: c.kind,
+        author: c.author,
+        description: c.description,
+        actualized: !!c.actualized,
+        itemCount: c.item_count || 0,
+        wordCount: c.word_count || 0,
+        updatedAt: c.updated_at
+      })),
+      items: (items.data || []).map(i => ({
+        id: i.id,
+        collectionId: i.collection_id,
+        number: i.number,
+        title: i.title,
+        part: i.part,
+        sections: Array.isArray(i.sections) ? i.sections : [],
+        wordCount: i.word_count || 0
+      }))
+    };
+  }
+
+  async function getLibraryStatus() {
+    const { data, error } = await client.rpc('library_status');
+    if (error) throw friendlyLibraryError(error);
+    return {
+      authenticated: !!(data && data.authenticated),
+      hasAccess: !!(data && data.has_access),
+      isAdmin: !!(data && data.is_admin),
+      readsToday: (data && data.reads_today) || 0,
+      dailyLimit: (data && data.daily_limit) || 0
+    };
+  }
+
+  async function readLibraryItem(itemId) {
+    await requireSession();
+    const { data, error } = await client.rpc('library_read_item', { p_item_id: itemId });
+    if (error) throw friendlyLibraryError(error);
+    return {
+      id: data.id,
+      collectionId: data.collection_id,
+      number: data.number,
+      title: data.title,
+      part: data.part,
+      sections: Array.isArray(data.sections) ? data.sections : [],
+      wordCount: data.word_count || 0,
+      contentHtml: data.content_html || '',
+      contentMd: data.content_md || '',
+      footnotes: Array.isArray(data.footnotes) ? data.footnotes : [],
+      assets: Array.isArray(data.assets) ? data.assets : [],
+      updatedAt: data.updated_at
+    };
+  }
+
   return {
     register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
+    listLibrary, getLibraryStatus, readLibraryItem,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     adminAuditQuizOptions, adminFixQuizOptions,
