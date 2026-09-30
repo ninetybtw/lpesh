@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="arena-profile__rating">
           <span class="arena-profile__rating-num">${stats.rating}</span>
-          <span class="arena-profile__rating-label">рейтинг</span>
+          <span class="arena-profile__rating-label">рейтинг тренировок</span>
         </div>
       </div>
       <div class="arena-profile__stats" id="duelStats">
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       rightScore: botScore,
       rewards: [
         { icon: 'coin', label: 'монет', value: coinsDelta, tone: coinsDelta > 0 ? 'up' : coinsDelta < 0 ? 'down' : 'neutral' },
-        { icon: 'chart-up', label: `рейтинг · ${stats.rating}`, value: RATING_DELTA[outcome], tone: RATING_DELTA[outcome] >= 0 ? 'up' : 'down' }
+        { icon: 'chart-up', label: `рейтинг тренировок · ${stats.rating}`, value: RATING_DELTA[outcome], tone: RATING_DELTA[outcome] >= 0 ? 'up' : 'down' }
       ]
     });
 
