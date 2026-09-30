@@ -341,7 +341,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       plan: {
         title: 'Билеты открываются с тарифом «Про»',
         text: 'Оглавление видно всем, а текст билетов, схемы и сноски — на тарифах «Про» и «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary">Оформить «Про»</a><a href="index.html#pricing" class="btn btn--outline">Сравнить тарифы</a>'
+        actions: '<a href="profile.html#subscription" class="btn btn--primary">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline">Сравнить тарифы</a>'
       },
       coins: {
         title: 'Нужна оформленная подписка',
@@ -654,7 +654,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       plan: {
         head: 'Открой библиотеку с «Про»',
         text: 'Все сборники билетов по дисциплинам — на тарифах «Про» и «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary btn--block">Оформить «Про»</a><a href="index.html#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>'
+        actions: '<a href="profile.html#subscription" class="btn btn--primary btn--block">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>'
       },
       coins: {
         head: 'Нужна оформленная подписка',
