@@ -1418,7 +1418,7 @@ const LexPrepApi = (function () {
     return data.map(row => ({ id: row.id, name: row.name, avatar: row.avatar_url, xp: row.xp }));
   }
 
-  /* ---------------- Библиотека (library.html) ----------------
+  /* ---------------- Библиотека (/library) ----------------
      Каталог сборников и оглавление билетов открыты всем. Текст билета —
      только через RPC library_read_item: сервер сам проверяет тариф
      «Про»/«Максимум» и суточный лимит (supabase/library.sql). */

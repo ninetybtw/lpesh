@@ -9,6 +9,27 @@ window.LexPrepIcon = function (name, className) {
   return `<img class="lp-icon${className ? ' ' + className : ''}" src="assets/icons/${safe}.svg" alt="" aria-hidden="true" draggable="false" />`;
 };
 
+/* ---------------- Адреса без .html ----------------
+   GitHub Pages сам отдаёт app.html по адресу /app, поэтому все ссылки на
+   сайте — без расширения. Если человек пришёл по старой ссылке
+   (app.html, index.html — из письма, закладки, возврата после оплаты),
+   убираем .html из адресной строки без перезагрузки. */
+window.lexprepPageKey = function (value) {
+  const clean = String(value || '').split('#')[0].split('?')[0];
+  let last = clean.split('/').filter(Boolean).pop() || 'index';
+  if (/\.html$/i.test(last)) last = last.slice(0, -5);
+  return last.toLowerCase() || 'index';
+};
+
+(function cleanPageUrl() {
+  const path = window.location.pathname;
+  const clean = path.replace(/\/index\.html$/i, '/').replace(/\.html$/i, '');
+  if (clean === path || !window.history || !history.replaceState) return;
+  try {
+    history.replaceState(history.state, '', clean + window.location.search + window.location.hash);
+  } catch (e) { /* адрес останется с .html — страница всё равно работает */ }
+})();
+
 initHeroTitle();
 // Меню профиля дооформляем сразу (скрипт в конце body) — чтобы при первом
 // открытии не было скачка вёрстки.
@@ -23,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeaderNav();
   initMobileNav();
   initSmoothAnchors();
+  consumeAnchorHash();
   initAccordion();
   initHeroStudy();
   initHeroBackground();
@@ -170,13 +192,13 @@ function initHeaderNav() {
   const links = Array.from(list.querySelectorAll('.nav__link'));
   if (!links.length) return;
 
-  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const page = lexprepPageKey(location.pathname);
   // Страницы-«дочки» подсвечивают родительский раздел.
-  const PARENT = { 'create-test.html': 'app.html', 'write-article.html': 'article.html' };
+  const PARENT = { 'create-test': 'app', 'write-article': 'article' };
   const current = PARENT[page] || page;
   let active = links.find(a => {
     const href = a.getAttribute('href') || '';
-    return !href.startsWith('#') && href.split('#')[0].toLowerCase() === current;
+    return !href.startsWith('#') && lexprepPageKey(href) === current;
   }) || null;
 
   const indicator = document.createElement('span');
@@ -245,28 +267,31 @@ function enhanceProfileDropdown() {
   // Константы внутри функции: она вызывается в самом начале файла, раньше,
   // чем выполнились бы объявления const ниже по коду.
   const PROFILE_MENU_ICONS = {
-    'admin.html': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
-    'moderator.html': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
-    'profile.html#info': '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
-    'profile.html#subscription': '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
-    'profile.html#stats': '<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="5" width="3" height="13" rx="1"/><rect x="16" y="13" width="3" height="5" rx="1"/>',
-    'profile.html#articles': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
-    'profile.html#tests': '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>',
-    'profile.html#referral': '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8C10 8 7 7.5 7 5.5S10 4 12 8zm0 0c2 0 5-.5 5-2.5S14 4 12 8z"/>',
-    'support.html': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
-    'suggestions.html': '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
-    'profile.html#settings': '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+    '/admin': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    '/moderator': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    '/profile#info': '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    '/profile#subscription': '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+    '/profile#stats': '<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="5" width="3" height="13" rx="1"/><rect x="16" y="13" width="3" height="5" rx="1"/>',
+    '/profile#articles': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+    '/profile#tests': '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>',
+    '/profile#referral': '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8C10 8 7 7.5 7 5.5S10 4 12 8zm0 0c2 0 5-.5 5-2.5S14 4 12 8z"/>',
+    '/support': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
+    '/suggestions': '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    '/profile#settings': '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
   };
   // Перед этими пунктами — разделитель (группы: аккаунт / моё / помощь / выход).
-  const PROFILE_MENU_BREAKS = ['profile.html#info', 'profile.html#articles', 'support.html', 'logout'];
+  const PROFILE_MENU_BREAKS = ['/profile#info', '/profile#articles', '/support', 'logout'];
   const dropdown = document.getElementById('profileDropdown');
   if (!dropdown || dropdown.dataset.enhanced) return;
   dropdown.dataset.enhanced = '1';
   dropdown.setAttribute('role', 'menu');
 
   dropdown.querySelectorAll('.profile-dropdown__item').forEach(item => {
-    const key = item.id === 'logoutBtn' ? 'logout' : (item.getAttribute('href') || '');
+    // Ключ вида «/profile#info» — одинаковый и для старых ссылок profile.html#info.
+    const href = item.getAttribute('href') || '';
+    const hash = href.includes('#') ? href.slice(href.indexOf('#')) : '';
+    const key = item.id === 'logoutBtn' ? 'logout' : `/${lexprepPageKey(href)}${hash}`;
     const path = PROFILE_MENU_ICONS[key];
     if (path) {
       item.insertAdjacentHTML('afterbegin',
@@ -276,14 +301,14 @@ function enhanceProfileDropdown() {
       const sep = document.createElement('div');
       sep.className = 'profile-dropdown__sep';
       // Первый разделитель нужен только если сверху есть пункты модерации.
-      if (key === 'profile.html#info') sep.setAttribute('data-moderator', '');
+      if (key === '/profile#info') sep.setAttribute('data-moderator', '');
       item.before(sep);
     }
   });
 
   const head = document.createElement('a');
   head.className = 'profile-dropdown__head';
-  head.href = 'profile.html';
+  head.href = '/profile';
   head.id = 'profileDropdownHead';
   dropdown.prepend(head);
 }
@@ -358,6 +383,31 @@ function initSmoothAnchors() {
       window.scrollTo({ top, behavior: 'smooth' });
     });
   });
+}
+
+/* ---------------- Якорь при переходе с другой страницы ----------------
+   /#pricing или /legal#privacy: докручиваем к разделу с учётом шапки и
+   убираем #... из адреса. Внутри страницы якоря и так не пишутся в адрес
+   (см. initSmoothAnchors). На остальных страницах # — это состояние
+   (вкладка профиля, билет в библиотеке), его не трогаем. */
+function consumeAnchorHash() {
+  const page = lexprepPageKey(window.location.pathname);
+  if (page !== 'index' && page !== 'legal') return;
+  let id = '';
+  try { id = decodeURIComponent(window.location.hash.slice(1)); } catch (e) { return; }
+  const target = id && document.getElementById(id);
+  if (!target) return;
+  const scrollToTarget = () => {
+    const headerHeight = document.getElementById('header')?.offsetHeight || 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 12;
+    window.scrollTo({ top, behavior: 'instant' });
+  };
+  scrollToTarget();
+  // Картинки и шрифты могут сдвинуть раздел — докручиваем ещё раз.
+  if (document.readyState !== 'complete') window.addEventListener('load', scrollToTarget, { once: true });
+  try {
+    history.replaceState(history.state, '', window.location.pathname + window.location.search);
+  } catch (e) { /* не критично */ }
 }
 
 /* ---------------- FAQ accordion ---------------- */
@@ -689,19 +739,19 @@ function initTabbar() {
   try { cachedUser = JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (e) { /* пусто */ }
   if (!cachedUser) return;
   const TABBAR_ITEMS = [
-    { href: 'app.html', label: 'Тренажёр', icon: '<path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>' },
-    { href: 'library.html', label: 'Библиотека', icon: '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>' },
-    { href: 'exam.html', label: 'Экзамен', icon: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>' },
-    { href: 'duel.html', label: 'Дуэли', match: ['duel.html', 'tournaments.html'], icon: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/>' },
-    { href: 'rating.html', label: 'Рейтинг', icon: '<path d="M3 21h18"/><rect x="9" y="7" width="6" height="14" rx="1.5"/><rect x="3" y="12" width="6" height="9" rx="1.5"/><rect x="15" y="10" width="6" height="11" rx="1.5"/>' },
-    { href: 'profile.html', label: 'Профиль', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>' }
+    { href: '/app', label: 'Тренажёр', icon: '<path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>' },
+    { href: '/library', label: 'Библиотека', icon: '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>' },
+    { href: '/exam', label: 'Экзамен', icon: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>' },
+    { href: '/duel', label: 'Дуэли', match: ['/duel', '/tournaments'], icon: '<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/>' },
+    { href: '/rating', label: 'Рейтинг', icon: '<path d="M3 21h18"/><rect x="9" y="7" width="6" height="14" rx="1.5"/><rect x="3" y="12" width="6" height="9" rx="1.5"/><rect x="15" y="10" width="6" height="11" rx="1.5"/>' },
+    { href: '/profile', label: 'Профиль', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>' }
   ];
-  const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const page = lexprepPageKey(window.location.pathname);
   const nav = document.createElement('nav');
   nav.className = 'tabbar';
   nav.setAttribute('aria-label', 'Разделы приложения');
   nav.innerHTML = TABBAR_ITEMS.map(item => {
-    const active = (item.match || [item.href]).includes(page);
+    const active = (item.match || [item.href]).map(lexprepPageKey).includes(page);
     return `
       <a class="tabbar__item ${active ? 'is-active' : ''}" href="${item.href}" ${active ? 'aria-current="page"' : ''}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${item.icon}</svg>
@@ -957,7 +1007,7 @@ function initAuthState() {
           LexPrepApi.logout().catch(() => {});
           localStorage.removeItem('lexprep_user');
           LexPrepDialog.alert('Аккаунт заблокирован' + (user.banReason ? `: ${user.banReason}` : '.')).then(() => {
-            window.location.href = 'auth.html';
+            window.location.href = '/auth';
           });
           return;
         }

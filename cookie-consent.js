@@ -105,7 +105,7 @@
     el.innerHTML = `
       <div class="cookie-consent__text">
         Используем cookies и localStorage для работы сайта (вход, тема, прогресс) — подробнее в
-        <a href="legal.html#privacy">Политике конфиденциальности</a>.
+        <a href="/legal#privacy">Политике конфиденциальности</a>.
       </div>
       <div class="cookie-consent__actions">
         <button type="button" class="cookie-consent__btn cookie-consent__btn--decline" id="cookieConsentDecline">Не согласен</button>

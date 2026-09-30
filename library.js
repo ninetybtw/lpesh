@@ -1,5 +1,5 @@
 /* ==========================================================================
-LIBRARY.JS — «Библиотека» (library.html): полка сборников билетов,
+LIBRARY.JS — «Библиотека» (/library): полка сборников билетов,
 оглавление сборника и читалка.
 
 Каталог и оглавление приходят из public.library_collections/library_items
@@ -336,17 +336,17 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       guest: {
         title: 'Войди, чтобы читать билеты',
         text: 'Оглавление открыто всем, а сами билеты — на тарифах «Про» и «Максимум».',
-        actions: '<a href="auth.html#login" class="btn btn--primary">Войти</a><a href="auth.html#register" class="btn btn--outline">Регистрация</a>'
+        actions: '<a href="/auth#login" class="btn btn--primary">Войти</a><a href="/auth#register" class="btn btn--outline">Регистрация</a>'
       },
       plan: {
         title: 'Билеты открываются с тарифом «Про»',
         text: 'Оглавление видно всем, а текст билетов, схемы и сноски — на тарифах «Про» и «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline">Сравнить тарифы</a>'
+        actions: '<a href="/profile#subscription" class="btn btn--primary">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline">Сравнить тарифы</a>'
       },
       coins: {
         title: 'Нужна оформленная подписка',
         text: 'Тариф за монеты открывает тренажёр, но не библиотеку: сборники доступны с оплаченной подпиской «Про» или «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary">Оформить подписку</a>'
+        actions: '<a href="/profile#subscription" class="btn btn--primary">Оформить подписку</a>'
       }
     }[reason];
     el.innerHTML = `
@@ -653,17 +653,17 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       guest: {
         head: 'Войди, чтобы читать',
         text: 'Библиотека доступна на тарифах «Про» и «Максимум». Войди в аккаунт или зарегистрируйся.',
-        actions: '<a href="auth.html#login" class="btn btn--primary btn--block">Войти</a><a href="auth.html#register" class="btn btn--outline btn--block">Создать аккаунт</a>'
+        actions: '<a href="/auth#login" class="btn btn--primary btn--block">Войти</a><a href="/auth#register" class="btn btn--outline btn--block">Создать аккаунт</a>'
       },
       plan: {
         head: 'Открой библиотеку с «Про»',
         text: 'Все сборники билетов по дисциплинам — на тарифах «Про» и «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary btn--block">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>'
+        actions: '<a href="/profile#subscription" class="btn btn--primary btn--block">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>'
       },
       coins: {
         head: 'Нужна оформленная подписка',
         text: 'Тариф, полученный за монеты, открывает тренажёр, но не библиотеку. Сборники доступны с оплаченной подпиской «Про» или «Максимум».',
-        actions: '<a href="profile.html#subscription" class="btn btn--primary btn--block">Оформить подписку</a>'
+        actions: '<a href="/profile#subscription" class="btn btn--primary btn--block">Оформить подписку</a>'
       }
     }[reason] || { head: 'Доступ закрыт', text: '', actions: '' };
     openModal(`

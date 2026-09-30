@@ -8,7 +8,7 @@ DUEL.JS — дуэль 1 на 1 против бота: выбор соперни
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth.html';
+    window.location.href = '/auth';
     return;
   }
   await (window.LexPrepContentReady || Promise.resolve());

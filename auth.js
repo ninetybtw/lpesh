@@ -505,4 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (hash === 'register' || hash === 'login') {
     switchTo(hash);
   }
+  // Режим уже выбран — #login/#register в адресе больше не нужен.
+  if (hash) {
+    try { history.replaceState(history.state, '', window.location.pathname + window.location.search); } catch (e) { /* не критично */ }
+  }
 });

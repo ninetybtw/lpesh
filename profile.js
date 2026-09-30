@@ -6,7 +6,7 @@ PROFILE.JS — личный кабинет: навигация по раздел
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {
-    window.location.href = 'auth.html';
+    window.location.href = '/auth';
     return;
   }
 
@@ -124,7 +124,7 @@ function initSections() {
   });
 
   // Ссылки на разделы профиля есть не только в этом сайдбаре, но и в
-  // выпадающем меню профиля в шапке (profile.html#subscription и т.д.).
+  // выпадающем меню профиля в шапке (/profile#subscription и т.д.).
   // Клик по такой ссылке, когда мы уже на profile.html, не перезагружает
   // страницу — меняется только location.hash, поэтому реагируем на
   // hashchange, иначе такие ссылки выглядят нерабочими.
@@ -747,8 +747,7 @@ function initMyTests() {
 /* ---------------- Referral program (код реальный, из profiles.referral_code;
    начисление наград за приглашение всё ещё не реализовано) ---------------- */
 function buildReferralLink(code) {
-  const basePath = window.location.pathname.replace(/profile\.html$/, '');
-  return `${window.location.origin}${basePath}auth.html?ref=${code}`;
+  return `${window.location.origin}/auth?ref=${code}`;
 }
 
 function initReferral() {

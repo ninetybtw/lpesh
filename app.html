@@ -36,17 +36,17 @@
 
         <nav class="nav" id="nav" aria-label="Разделы">
           <ul class="nav__list">
-            <li><a href="app.html" class="nav__link">Тренажёр</a></li>
-            <li><a href="library.html" class="nav__link">Библиотека</a></li>
-            <li><a href="exam.html" class="nav__link">Экзамен</a></li>
-            <li><a href="duel.html" class="nav__link">Дуэли</a></li>
-            <li><a href="tournaments.html" class="nav__link">Турниры</a></li>
-            <li><a href="rating.html" class="nav__link">Рейтинг</a></li>
+            <li><a href="/app" class="nav__link">Тренажёр</a></li>
+            <li><a href="/library" class="nav__link">Библиотека</a></li>
+            <li><a href="/exam" class="nav__link">Экзамен</a></li>
+            <li><a href="/duel" class="nav__link">Дуэли</a></li>
+            <li><a href="/tournaments" class="nav__link">Турниры</a></li>
+            <li><a href="/rating" class="nav__link">Рейтинг</a></li>
           </ul>
         </nav>
 
         <div class="header__actions">
-          <a href="shop.html" class="shop-btn" title="Магазин" aria-label="Магазин, монеты">
+          <a href="/shop" class="shop-btn" title="Магазин" aria-label="Магазин, монеты">
             <img class="shop-btn__coin" src="assets/icons/coin.svg" alt="" />
             <span class="shop-btn__count" id="coinCount">0</span>
           </a>
@@ -66,17 +66,17 @@
               <svg class="profile-btn__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="admin.html" class="profile-dropdown__item" data-admin>Админка</a>
-              <a href="moderator.html" class="profile-dropdown__item" data-moderator>Модерация</a>
-              <a href="profile.html#info" class="profile-dropdown__item">Личная информация</a>
-              <a href="profile.html#subscription" class="profile-dropdown__item">Подписка</a>
-              <a href="profile.html#stats" class="profile-dropdown__item">Статистика</a>
-              <a href="profile.html#articles" class="profile-dropdown__item">Мои статьи</a>
-              <a href="profile.html#tests" class="profile-dropdown__item">Мои тесты</a>
-              <a href="profile.html#referral" class="profile-dropdown__item">Реферальная программа</a>
-              <a href="support.html" class="profile-dropdown__item">Поддержка</a>
-              <a href="suggestions.html" class="profile-dropdown__item">Предложения</a>
-              <a href="profile.html#settings" class="profile-dropdown__item">Настройки</a>
+              <a href="/admin" class="profile-dropdown__item" data-admin>Админка</a>
+              <a href="/moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
+              <a href="/profile#info" class="profile-dropdown__item">Личная информация</a>
+              <a href="/profile#subscription" class="profile-dropdown__item">Подписка</a>
+              <a href="/profile#stats" class="profile-dropdown__item">Статистика</a>
+              <a href="/profile#articles" class="profile-dropdown__item">Мои статьи</a>
+              <a href="/profile#tests" class="profile-dropdown__item">Мои тесты</a>
+              <a href="/profile#referral" class="profile-dropdown__item">Реферальная программа</a>
+              <a href="/support" class="profile-dropdown__item">Поддержка</a>
+              <a href="/suggestions" class="profile-dropdown__item">Предложения</a>
+              <a href="/profile#settings" class="profile-dropdown__item">Настройки</a>
               <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" id="logoutBtn">Выйти</button>
             </div>
           </div>
@@ -97,19 +97,19 @@
               <input type="search" id="topicSearch" class="app-search__input" placeholder="Найти тему по всем дисциплинам..." autocomplete="off" />
               <div class="app-search__results" id="searchResults" hidden></div>
             </div>
-            <a href="exam.html" class="btn btn--primary app-toolbar__exam">
+            <a href="/exam" class="btn btn--primary app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
               <span class="app-toolbar__label app-toolbar__label--long">Пробный экзамен</span><span class="app-toolbar__label app-toolbar__label--short">Экзамен</span>
             </a>
-            <a href="library.html" class="btn btn--outline app-toolbar__exam app-toolbar__library">
+            <a href="/library" class="btn btn--outline app-toolbar__exam app-toolbar__library">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
               <span class="app-toolbar__label">Библиотека</span>
             </a>
-            <a href="duel.html" class="btn btn--outline app-toolbar__exam">
+            <a href="/duel" class="btn btn--outline app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 6.5L21 18v3h-3L6.5 9.5"/><path d="M11 5l-6 6"/><path d="M8 8l-4-4"/><path d="M5 3l-2 2"/></svg>
               <span class="app-toolbar__label">Дуэли</span>
             </a>
-            <a href="tournaments.html" class="btn btn--outline app-toolbar__exam">
+            <a href="/tournaments" class="btn btn--outline app-toolbar__exam">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg>
               <span class="app-toolbar__label">Турниры</span>
             </a>
@@ -214,15 +214,15 @@
     <script src="progress.js?v=20260927030000"></script>
     <script src="plan.js?v=20260930010000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20260930010000"></script>
+    <script src="api.js?v=20260930040000"></script>
     <script src="dialog.js?v=20260924150000"></script>
-    <script src="notifications.js?v=20260927030000"></script>
+    <script src="notifications.js?v=20260930040000"></script>
     <script src="vendor/marked.min.js"></script>
     <script src="vendor/jspdf.umd.min.js"></script>
     <script src="vendor/roboto-fonts.js"></script>
     <script src="content-loader.js?v=20260917080000"></script>
-    <script src="script.js?v=20260930010000"></script>
-    <script src="app.js?v=20260927040000"></script>
-    <script src="cookie-consent.js?v=20260917220000"></script>
+    <script src="script.js?v=20260930040000"></script>
+    <script src="app.js?v=20260930040000"></script>
+    <script src="cookie-consent.js?v=20260930040000"></script>
   </body>
 </html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script>
+      // GitHub Pages отдаёт эту страницу на любой несуществующий адрес.
+      // /app/ (со слешем в конце), /app.html/ и т.п. — это знакомые
+      // страницы, просто в другом написании: сразу переводим на /app.
+      (function () {
+        var PAGES = ['admin', 'app', 'article', 'auth', 'create-test', 'duel', 'exam', 'legal', 'library',
+          'moderator', 'profile', 'rating', 'shop', 'suggestions', 'support', 'tournaments', 'write-article'];
+        var parts = window.location.pathname.split('/').filter(Boolean);
+        var last = (parts[parts.length - 1] || '').replace(/\.html$/i, '').toLowerCase();
+        var target = null;
+        if (!parts.length || last === 'index') target = '/';
+        else if (PAGES.indexOf(last) !== -1 && parts.length === 1) target = '/' + last;
+        if (target && target !== window.location.pathname) {
+          window.location.replace(target + window.location.search + window.location.hash);
+        }
+      })();
+      (function () {
+        var saved = localStorage.getItem('lexprep-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>LexPrep — Страница не найдена</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #14161f;
+        --muted: #5d6479;
+        --border: #e3e6ef;
+        --primary: #3d5afe;
+      }
+      :root[data-theme="dark"] {
+        --bg: #0f1117;
+        --card: #171a26;
+        --text: #f1f3fb;
+        --muted: #9aa3bd;
+        --border: #262b3d;
+        --primary: #6b82ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px 16px;
+        background:
+          radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent),
+          var(--bg);
+        color: var(--text);
+        font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .nf {
+        width: min(440px, 100%);
+        padding: 36px 28px 30px;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        text-align: center;
+        box-shadow: 0 30px 60px -40px rgba(12, 14, 40, 0.5);
+      }
+      .nf__logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+      }
+      .nf__code {
+        margin: 18px 0 4px;
+        font-size: 64px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        background: linear-gradient(90deg, #4f6bff, #8c54ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      h1 {
+        margin: 8px 0 8px;
+        font-size: 21px;
+        font-weight: 800;
+      }
+      p {
+        margin: 0 0 22px;
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .nf__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      .nf__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 46px;
+        padding: 0 22px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 14.5px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .nf__btn--primary {
+        border-color: transparent;
+        background: var(--primary);
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="nf">
+      <img class="nf__logo" src="/assets/favicon/apple-touch-icon.png" alt="LexPrep" />
+      <div class="nf__code">404</div>
+      <h1>Страница не найдена</h1>
+      <p>Возможно, ссылка устарела или в адресе опечатка.</p>
+      <div class="nf__actions">
+        <a class="nf__btn nf__btn--primary" href="/">На главную</a>
+        <a class="nf__btn" href="/app">В тренажёр</a>
+      </div>
+    </main>
+  </body>
+</html>
