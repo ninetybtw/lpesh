@@ -338,3 +338,7 @@ $$;
 revoke all on function public.library_read_item(text) from public, anon;
 grant execute on function public.library_read_item(text) to authenticated;
 grant execute on function public.library_status() to anon, authenticated;
+
+-- PostgREST (API Supabase) держит схему в кэше: без перезагрузки новые
+-- таблицы и функции отвечают 404, пока кэш не обновится сам.
+notify pgrst, 'reload schema';
