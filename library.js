@@ -385,7 +385,6 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
           <span class="lib-book__spine" aria-hidden="true"></span>
           <span class="lib-book__kind">${esc(kindTitle(c))}</span>
           <b class="lib-book__name">${esc(softHyphens(c.disciplineTitle))}</b>
-          ${c.author ? `<span class="lib-book__author">${esc(c.author)}</span>` : ''}
           <span class="lib-book__count"><b>${items.length}</b>${plural(items.length, 'билет', 'билета', 'билетов')}</span>
           <span class="lib-book__emblem" aria-hidden="true">§</span>
           ${locked ? `<span class="lib-book__lock" title="Нужен тариф «Про» или «Максимум»">${ICONS.lock}</span>` : ''}
@@ -393,7 +392,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
         <div class="lib-book__info">
           <h3>${esc(c.title)}</h3>
           <div class="lib-book__meta">
-            ${parts.length ? `<span>${esc(parts.join(' · '))}</span>` : ''}
+            ${parts.length ? `<span>${parts.length <= 3 ? esc(parts.join(' · ')) : `${parts.length} ${plural(parts.length, 'раздел', 'раздела', 'разделов')}`}</span>` : ''}
             <span>${ICONS.clock}≈ ${readingTime(words)}</span>
           </div>
           <div class="lib-book__progress" aria-label="Прочитано ${progress.done} из ${progress.total}">
@@ -544,9 +543,8 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
           ${c.description ? `<p class="lib-col__desc">${esc(c.description)}</p>` : ''}
           <div class="lib-col__chips">
             <span>${items.length} ${plural(items.length, label.toLowerCase(), label === 'Билет' ? 'билета' : 'темы', label === 'Билет' ? 'билетов' : 'тем')}</span>
-            ${parts.length ? `<span>${esc(parts.join(' и '))}</span>` : ''}
+            ${parts.length ? `<span>${parts.length <= 3 ? esc(parts.join(' и ')) : `${parts.length} ${plural(parts.length, 'раздел', 'раздела', 'разделов')}`}</span>` : ''}
             <span>${ICONS.clock}≈ ${readingTime(words)} чтения</span>
-            ${c.author ? `<span>Автор: ${esc(c.author)}</span>` : ''}
             ${c.actualized
               ? `<span class="lib-col__chip--ok">${ICONS.check}Нормы актуальны</span>`
               : '<span class="lib-col__chip--warn">Нормы сверяются с актуальной редакцией</span>'}
