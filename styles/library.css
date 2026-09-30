@@ -830,6 +830,15 @@ LIBRARY.CSS — «Библиотека»: полка сборников-книг
   font-size: 12.5px !important;
 }
 
+.lib-empty__hint--ok {
+  background: color-mix(in srgb, #1fb774 12%, transparent);
+  color: #12925a !important;
+}
+
+[data-theme="dark"] .lib-empty__hint--ok {
+  color: #3fd08f !important;
+}
+
 .lib-empty__hint code {
   font-weight: 800;
 }

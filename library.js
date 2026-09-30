@@ -415,9 +415,13 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       if (toolbar) toolbar.hidden = true;
       const notReady = state.loadError && state.loadError.code === 'library_not_ready';
       const failed = state.loadError && !notReady;
-      const adminHint = state.user && state.user.isAdmin && (notReady || !failed)
-        ? '<p class="lib-empty__hint">Для админа: выполни <code>supabase/library.sql</code> в SQL Editor и загрузи сборники — они сразу появятся здесь.</p>'
-        : '';
+      // Админу — что именно не так: API не видит таблицы или они пустые.
+      let adminHint = '';
+      if (state.user && state.user.isAdmin && notReady) {
+        adminHint = '<p class="lib-empty__hint">Для админа: API не видит таблицы библиотеки. Выполни <code>supabase/library.sql</code> в SQL Editor, затем <code>notify pgrst, \'reload schema\';</code> и обнови страницу.</p>';
+      } else if (state.user && state.user.isAdmin && !failed) {
+        adminHint = '<p class="lib-empty__hint lib-empty__hint--ok">Для админа: таблицы на месте, сборников пока нет. Загрузи их по <code>supabase/content-scripts/README.md</code> (раздел «Библиотека») — они сразу появятся здесь.</p>';
+      }
       shelf.innerHTML = `
         <div class="lib-empty">
           <div class="lib-empty__art" aria-hidden="true"><img class="lp-icon" src="assets/icons/books.svg" alt="" /></div>
