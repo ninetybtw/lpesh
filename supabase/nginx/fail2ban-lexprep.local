@@ -17,6 +17,8 @@
 enabled  = true
 port     = http,https
 logpath  = /var/log/nginx/error.log
+# Ubuntu 24.04 по умолчанию читает journald, а nginx пишет в файл.
+backend  = auto
 findtime = 60
 maxretry = 30
 bantime  = 3600
@@ -25,6 +27,7 @@ ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12
 [recidive]
 enabled  = true
 logpath  = /var/log/fail2ban.log
+backend  = auto
 findtime = 86400
 maxretry = 3
 bantime  = 86400
