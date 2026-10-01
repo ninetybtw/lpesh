@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initReferral();
   initThemeSwitch();
   initNotificationsSwitch();
+  initDevices();
   initPasswordForm();
   initPrivacyModal();
   initDangerZone();
@@ -681,6 +682,90 @@ function initMyArticles() {
           alert('Не удалось удалить: ' + err.message);
         }
       });
+    });
+  }
+
+  render();
+}
+
+/* ---------------- Devices (sessions) ---------------- */
+function describeUserAgent(ua) {
+  if (!ua) return 'Неизвестное устройство';
+  let browser = 'Браузер';
+  if (/YaBrowser\//.test(ua)) browser = 'Яндекс Браузер';
+  else if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\/|Opera/.test(ua)) browser = 'Opera';
+  else if (/Firefox\/|FxiOS/.test(ua)) browser = 'Firefox';
+  else if (/Chrome\/|CriOS/.test(ua)) browser = 'Chrome';
+  else if (/Safari\//.test(ua)) browser = 'Safari';
+  let os = '';
+  if (/iPhone/.test(ua)) os = 'iPhone';
+  else if (/iPad/.test(ua)) os = 'iPad';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Windows/.test(ua)) os = 'Windows';
+  else if (/Mac OS X|Macintosh/.test(ua)) os = 'macOS';
+  else if (/Linux/.test(ua)) os = 'Linux';
+  return os ? `${browser} · ${os}` : browser;
+}
+
+function initDevices() {
+  const list = document.getElementById('devicesList');
+  const othersBtn = document.getElementById('signOutOthersBtn');
+  if (!list || typeof LexPrepApi === 'undefined' || !LexPrepApi.listDevices) return;
+
+  async function render() {
+    list.innerHTML = '<p class="topic-desc">Загрузка…</p>';
+    let devices;
+    try {
+      devices = await LexPrepApi.listDevices();
+    } catch (err) {
+      list.innerHTML = `<p class="topic-desc">Не удалось загрузить: ${escapeAttr(err.message)}</p>`;
+      return;
+    }
+    if (othersBtn) othersBtn.hidden = !devices.some(d => !d.isCurrent);
+    if (!devices.length) {
+      list.innerHTML = '<p class="topic-desc">Нет активных устройств.</p>';
+      return;
+    }
+
+    list.innerHTML = devices.map(d => `
+      <div class="my-article-item">
+        <div class="my-article-item__main">
+          <div class="my-article-item__top">
+            ${d.isCurrent ? '<span class="my-article-item__tag">Это устройство</span>' : ''}
+            <span class="my-article-item__date">Активно: ${escapeAttr(new Date(d.lastActiveAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }))}</span>
+          </div>
+          <span class="my-article-item__title">${escapeAttr(describeUserAgent(d.userAgent))}</span>
+          ${d.ip ? `<span class="my-article-item__date">IP ${escapeAttr(d.ip)}</span>` : ''}
+        </div>
+        ${d.isCurrent ? '' : `<button class="btn btn--outline my-article-item__delete" type="button" data-revoke-id="${escapeAttr(d.id)}">Выйти</button>`}
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-revoke-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await LexPrepApi.revokeDevice(btn.dataset.revokeId);
+        } catch (err) {
+          alert('Не удалось завершить сеанс: ' + err.message);
+        }
+        render();
+      });
+    });
+  }
+
+  if (othersBtn) {
+    othersBtn.addEventListener('click', async () => {
+      if (!(await LexPrepDialog.confirm('Выйти из аккаунта на всех устройствах, кроме этого?'))) return;
+      othersBtn.disabled = true;
+      try {
+        await LexPrepApi.signOutOtherDevices();
+      } catch (err) {
+        alert('Не удалось: ' + err.message);
+      }
+      othersBtn.disabled = false;
+      render();
     });
   }
 

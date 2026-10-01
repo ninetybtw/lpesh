@@ -34,6 +34,11 @@ const LexPrepApi = (function () {
       'Email not confirmed': 'Email ещё не подтверждён — проверь почту и перейди по ссылке из письма.'
     };
     let message = known[error.message] || error.message;
+    // 429 отдаёт nginx перед API (лимит запросов с одного IP) — тело там
+    // HTML, а не JSON, поэтому смотрим на статус и текст.
+    if (error.status === 429 || /429|Too Many Requests/i.test(error.message || '')) {
+      message = 'Слишком много запросов. Подожди минуту и попробуй снова.';
+    }
     // Postgres-ошибки из profiles (уникальность промокода, кастомные
     // exception из триггеров) — код 23505 и текст raise exception
     // приходят как есть, переводим их в понятные формулировки.
@@ -159,6 +164,31 @@ const LexPrepApi = (function () {
 
   async function logout() {
     const { error } = await client.auth.signOut();
+    if (error) throw friendlyError(error);
+  }
+
+  // Устройства (сессии) текущего аккаунта — максимум 3, см. supabase/device-limit.sql.
+  async function listDevices() {
+    const { data, error } = await client.rpc('my_devices');
+    if (error) throw friendlyError(error);
+    return (data || []).map(d => ({
+      id: d.id,
+      createdAt: d.created_at,
+      lastActiveAt: d.last_active_at,
+      userAgent: d.user_agent || '',
+      ip: d.ip || '',
+      isCurrent: !!d.is_current
+    }));
+  }
+
+  async function revokeDevice(sessionId) {
+    const { data, error } = await client.rpc('revoke_my_device', { p_session_id: sessionId });
+    if (error) throw friendlyError(error);
+    return !!data;
+  }
+
+  async function signOutOtherDevices() {
+    const { error } = await client.auth.signOut({ scope: 'others' });
     if (error) throw friendlyError(error);
   }
 
@@ -1519,7 +1549,7 @@ const LexPrepApi = (function () {
   }
 
   return {
-    register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, updateProfile, addAiExtraRequests, toFrontendUser,
+    register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, listDevices, revokeDevice, signOutOtherDevices, updateProfile, addAiExtraRequests, toFrontendUser,
     listLibrary, getLibraryStatus, readLibraryItem,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,

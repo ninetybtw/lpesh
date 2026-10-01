@@ -1,0 +1,30 @@
+# LexPrep — автобан IP, которые раз за разом упираются в лимиты nginx
+# (см. api-limits-*.conf). Фильтр nginx-limit-req входит в пакет fail2ban
+# и ловит строки "limiting requests ... client: <IP>" из error.log.
+#
+# Установка на сервере:
+#   apt install fail2ban
+#   cp fail2ban-lexprep.local /etc/fail2ban/jail.d/lexprep.local
+#   systemctl restart fail2ban
+#   fail2ban-client status nginx-limit-req      # кто сейчас в бане
+#   fail2ban-client set nginx-limit-req unbanip <IP>   # разбанить вручную
+#
+# 30 отказов по лимиту за минуту = бан на час на уровне фаервола (iptables),
+# до nginx такие запросы уже не доходят. Повторные нарушители на сутки —
+# через recidive.
+
+[nginx-limit-req]
+enabled  = true
+port     = http,https
+logpath  = /var/log/nginx/error.log
+findtime = 60
+maxretry = 30
+bantime  = 3600
+ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12
+
+[recidive]
+enabled  = true
+logpath  = /var/log/fail2ban.log
+findtime = 86400
+maxretry = 3
+bantime  = 86400
