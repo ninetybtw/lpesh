@@ -1610,6 +1610,13 @@ LIBRARY.CSS — «Библиотека»: полка сборников-книг
   color: inherit;
 }
 
+/* Цветные выделения из конспектов: зелёный, голубой, красный, сиреневый, синий. */
+.lib-content mark.hl-g { background: color-mix(in srgb, #2fb344 22%, transparent); }
+.lib-content mark.hl-b { background: color-mix(in srgb, #12b5e5 22%, transparent); }
+.lib-content mark.hl-r { background: color-mix(in srgb, #ff4d4f 22%, transparent); }
+.lib-content mark.hl-v { background: color-mix(in srgb, #8c54ff 20%, transparent); }
+.lib-content mark.hl-s { background: color-mix(in srgb, #3d5afe 14%, transparent); }
+
 .lib-content a {
   color: var(--color-primary);
 }
