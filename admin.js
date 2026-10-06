@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderPromoList(list) {
     if (!list.length) {
-      promoBody.innerHTML = '<tr><td colspan="5" class="admin-empty">Промокодов пока нет.</td></tr>';
+      promoBody.innerHTML = '<tr><td colspan="6" class="admin-empty">Промокодов пока нет.</td></tr>';
       return;
     }
     promoBody.innerHTML = list.map(p => `
@@ -388,8 +388,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${escapeHtml(promoParamsText(p))}</td>
         <td>${p.activationsCount} / ${p.maxActivations}</td>
         <td>${new Date(p.createdAt).toLocaleDateString('ru-RU')}</td>
+        <td><button type="button" class="admin-action-btn admin-action-btn--danger" data-promo-delete="${escapeHtml(p.id)}" data-promo-code="${escapeHtml(p.code)}">Удалить</button></td>
       </tr>
     `).join('');
+  }
+
+  if (promoBody) {
+    promoBody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-promo-delete]');
+      if (!btn) return;
+      const code = btn.dataset.promoCode;
+      if (!(await LexPrepDialog.confirm(`Удалить промокод «${code}»? Его больше нельзя будет активировать. Уже выданное по нему останется у пользователей.`))) return;
+      btn.disabled = true;
+      try {
+        await LexPrepApi.deletePromoCode(btn.dataset.promoDelete);
+        await LexPrepApi.logAdminAction('delete-promo', { targetLabel: code, details: 'Промокод удалён' });
+        await loadPromoCodes();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+        btn.disabled = false;
+      }
+    });
   }
 
   async function loadPromoCodes() {
@@ -398,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const list = await LexPrepApi.listPromoCodes();
       renderPromoList(list);
     } catch (err) {
-      promoBody.innerHTML = `<tr><td colspan="5" class="admin-empty">Ошибка: ${escapeHtml(err.message)}</td></tr>`;
+      promoBody.innerHTML = `<tr><td colspan="6" class="admin-empty">Ошибка: ${escapeHtml(err.message)}</td></tr>`;
     }
   }
 
@@ -512,7 +531,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     'comment-suggestion': 'прокомментировал(а) предложение',
     'suggestion-status': 'сменил(а) статус предложения',
     'broadcast-notification': 'разослал(а) уведомление всем',
-    'create-promo': 'создал(а) промокод'
+    'create-promo': 'создал(а) промокод',
+    'delete-promo': 'удалил(а) промокод'
   };
 
   const logsBody = document.getElementById('adminLogsBody');

@@ -1292,9 +1292,20 @@ const LexPrepApi = (function () {
 
   async function listPromoCodes() {
     await requireSession();
-    const { data, error } = await client.from('promo_codes').select('*').order('created_at', { ascending: false });
+    const { data, error } = await client.from('promo_codes').select('*').eq('active', true).order('created_at', { ascending: false });
     if (error) throw friendlyError(error);
     return data.map(toFrontendPromoCode);
+  }
+
+  // «Удаление» — выключение: код сразу перестаёт активироваться
+  // (redeem_promo_code ищет только active) и пропадает из списка, а
+  // история активаций остаётся. Строку не удаляем — у promo_codes нет
+  // delete-политики, а каскад стёр бы, кто и когда код использовал.
+  async function deletePromoCode(id) {
+    await requireSession();
+    const { data, error } = await client.from('promo_codes').update({ active: false }).eq('id', id).select('id');
+    if (error) throw friendlyError(error);
+    if (!data || !data.length) throw new Error('Не удалось удалить промокод — нет прав или он уже удалён.');
   }
 
   async function createPromoCode({ code, type, discountPercent, subscriptionTier, subscriptionDays, coinsAmount, maxActivations, audience }) {
@@ -1574,7 +1585,7 @@ const LexPrepApi = (function () {
     askAiConsultant, askAiConsultantPro,
     initSubscriptionPayment, setSubscriptionAutoRenew, scheduleDowngrade,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
-    redeemPromoCode, listPromoCodes, createPromoCode,
+    redeemPromoCode, listPromoCodes, createPromoCode, deletePromoCode,
     getClient: () => client
   };
 })();
