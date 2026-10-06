@@ -43,7 +43,7 @@ serve(async (req) => {
     const orderId = String(payload.OrderId || '');
     const { data: payment, error: findErr } = await adminClient
       .from('payments')
-      .select('id, user_id, plan_tier, billing_period')
+      .select('id, user_id, plan_tier, billing_period, discount_percent')
       .eq('id', orderId)
       .maybeSingle();
     if (findErr) throw findErr;
@@ -92,6 +92,8 @@ serve(async (req) => {
           // сбрасываем, чтобы напоминания сработали заново перед новой.
           plan_expiry_notice_3d_sent: false,
           plan_expiry_notice_1d_sent: false,
+          // Скидка по промокоду применена к этой оплате — использована.
+          ...(payment.discount_percent ? { pending_discount_percent: 0 } : {}),
           ...(rebillId ? { tbank_rebill_id: rebillId } : {})
         })
         .eq('id', payment.user_id);

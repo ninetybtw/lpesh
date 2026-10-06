@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20260930010000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20261006120000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
   <body>
@@ -866,7 +866,7 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20261001120000"></script>
+    <script src="api.js?v=20261006120000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260930040000"></script>
     <script src="script.js?v=20260930040000"></script>
@@ -1039,6 +1039,23 @@
           }
         });
       });
+
+      // Скидка по промокоду: показываем её на платных тарифах — Т-Касса
+      // спишет уже уменьшенную сумму (см. payments-init).
+      (function showPromoDiscount() {
+        let user = null;
+        try { user = JSON.parse(localStorage.getItem('lexprep_user') || 'null'); } catch (e) { /* ignore */ }
+        const pct = user && Number(user.pendingDiscountPercent);
+        if (!pct) return;
+        document.querySelectorAll('[data-price-card][data-plan-tier]').forEach(card => {
+          if (card.querySelector('.price-card__promo')) return;
+          const note = document.createElement('p');
+          note.className = 'price-card__annual price-card__promo';
+          note.textContent = `Ваша скидка по промокоду: −${pct}% на первую оплату`;
+          const anchor = card.querySelector('.price-card__annual') || card.querySelector('.price-card__price');
+          if (anchor) anchor.after(note);
+        });
+      })();
     </script>
     <script src="cookie-consent.js?v=20260930040000"></script>
   </body>

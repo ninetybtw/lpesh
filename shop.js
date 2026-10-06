@@ -464,11 +464,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const result = await LexPrepApi.redeemPromoCode(code);
         let message;
-        if (result.type === 'subscription') {
-          message = `Готово! Подписка «${PLAN_TITLES[result.subscriptionTier]}» на ${result.subscriptionDays} дн.`;
+        // Подписка/монеты/скидка уже записаны на сервере — подтягиваем
+        // свежий профиль, чтобы тариф и баланс обновились без перезагрузки.
+        try {
           const fresh = await LexPrepApi.me();
           user = { ...user, ...fresh };
           localStorage.setItem('lexprep_user', JSON.stringify(user));
+        } catch (e) { /* профиль обновится при следующей загрузке страницы */ }
+        if (result.type === 'subscription') {
+          message = `Готово! Подписка «${PLAN_TITLES[result.subscriptionTier]}» на ${result.subscriptionDays} дн.`;
         } else if (result.type === 'coins') {
           message = `Готово! Начислено ${result.coinsAmount} монет.`;
         } else if (result.type === 'discount') {

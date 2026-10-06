@@ -2249,6 +2249,12 @@ STYLE.CSS — компоненты и секции страницы
   transition: opacity 0.15s ease;
 }
 
+.price-card__promo {
+  margin-top: -12px;
+  color: #1f9d55;
+  font-weight: 700;
+}
+
 /* ---------------- Переключатель "помесячно / год" (в стиле iOS) ---------------- */
 .price-card__toggle {
   display: flex;

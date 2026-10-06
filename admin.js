@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ---------------- Промокоды ---------------- */
 
   const PROMO_TYPE_LABEL = { subscription: 'Подписка', discount: 'Скидка', coins: 'Монеты' };
+  const PROMO_AUDIENCE_LABEL = { new: 'новым', existing: 'существующим', all: 'всем' };
   const promoBody = document.getElementById('adminPromoBody');
   const promoRefreshBtn = document.getElementById('adminPromoRefreshBtn');
   const promoCreateBtn = document.getElementById('adminPromoCreateBtn');
@@ -368,8 +369,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let promoLoaded = false;
 
   function promoParamsText(p) {
-    if (p.type === 'subscription') return `${p.subscriptionTier === 'max' ? 'Максимум' : 'Про'}, ${p.subscriptionDays} дн.`;
-    if (p.type === 'discount') return `${p.discountPercent}%`;
+    const who = PROMO_AUDIENCE_LABEL[p.audience || 'new'];
+    if (p.type === 'subscription') return `${p.subscriptionTier === 'max' ? 'Максимум' : 'Про'}, ${p.subscriptionDays} дн. · ${who}`;
+    if (p.type === 'discount') return `${p.discountPercent}% · ${who}`;
     if (p.type === 'coins') return `${p.coinsAmount} монет`;
     return '';
   }
@@ -408,6 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('adminPromoSubscriptionFields').hidden = type !== 'subscription';
       document.getElementById('adminPromoDiscountFields').hidden = type !== 'discount';
       document.getElementById('adminPromoCoinsFields').hidden = type !== 'coins';
+      document.getElementById('adminPromoAudienceField').hidden = type === 'coins';
     });
   }
 
@@ -419,7 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const type = promoTypeSelect.value;
       const maxActivations = Number(document.getElementById('adminPromoMaxActivations').value) || 1;
 
-      const payload = { code, type, maxActivations };
+      const payload = { code, type, maxActivations, audience: type === 'coins' ? 'all' : document.getElementById('adminPromoAudience').value };
       if (type === 'subscription') {
         payload.subscriptionTier = document.getElementById('adminPromoTier').value;
         const duration = Number(document.getElementById('adminPromoDuration').value) || 1;

@@ -91,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!code || typeof LexPrepApi === 'undefined' || !LexPrepApi.redeemPromoCode) return;
     try {
       const result = await LexPrepApi.redeemPromoCode(code);
+      try {
+        const fresh = await LexPrepApi.me();
+        const cached = JSON.parse(localStorage.getItem('lexprep_user') || 'null') || {};
+        localStorage.setItem('lexprep_user', JSON.stringify({ ...cached, ...fresh }));
+      } catch (e) { /* профиль обновится при следующей загрузке страницы */ }
       let message;
       if (result.type === 'subscription') {
         message = `Промокод активирован: подписка «${result.subscriptionTier === 'max' ? 'Максимум' : 'Про'}» на ${result.subscriptionDays} дн.`;

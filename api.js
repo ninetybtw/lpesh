@@ -86,6 +86,7 @@ const LexPrepApi = (function () {
       planAutoRenew: !!(profile && profile.plan_auto_renew),
       pendingPlanTier: profile && profile.pending_plan_tier,
       pendingPlanBillingPeriod: profile && profile.pending_plan_billing_period,
+      pendingDiscountPercent: (profile && profile.pending_discount_percent) || 0,
       duelRating: (profile && profile.duel_rating) || 1000,
       aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
@@ -1244,7 +1245,9 @@ const LexPrepApi = (function () {
     promo_not_found: 'Такой промокод не найден или уже неактивен.',
     promo_exhausted: 'У этого промокода закончились активации.',
     promo_already_used: 'Ты уже активировал(а) этот промокод.',
-    promo_new_users_only: 'Этот промокод только для новых пользователей.'
+    promo_new_users_only: 'Этот промокод только для новых пользователей.',
+    promo_existing_users_only: 'Этот промокод для тех, кто уже пользуется LexPrep, — новым аккаунтам он не подходит.',
+    invalid_discount: 'Скидка — от 1 до 99%.'
   };
 
   function friendlyPromoError(error) {
@@ -1280,6 +1283,7 @@ const LexPrepApi = (function () {
       subscriptionDays: p.subscription_days,
       coinsAmount: p.coins_amount,
       maxActivations: p.max_activations,
+      audience: p.audience || 'new',
       activationsCount: p.activations_count,
       active: p.active,
       createdAt: p.created_at
@@ -1293,7 +1297,7 @@ const LexPrepApi = (function () {
     return data.map(toFrontendPromoCode);
   }
 
-  async function createPromoCode({ code, type, discountPercent, subscriptionTier, subscriptionDays, coinsAmount, maxActivations }) {
+  async function createPromoCode({ code, type, discountPercent, subscriptionTier, subscriptionDays, coinsAmount, maxActivations, audience }) {
     await requireSession();
     const { data, error } = await client.rpc('create_promo_code', {
       p_code: code,
@@ -1302,7 +1306,8 @@ const LexPrepApi = (function () {
       p_subscription_tier: subscriptionTier || null,
       p_subscription_days: subscriptionDays || null,
       p_coins_amount: coinsAmount || null,
-      p_max_activations: maxActivations || 1
+      p_max_activations: maxActivations || 1,
+      p_audience: audience || 'new'
     });
     if (error) throw friendlyError(error);
     return toFrontendPromoCode(data);

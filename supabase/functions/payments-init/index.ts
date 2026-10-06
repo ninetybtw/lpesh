@@ -57,19 +57,25 @@ serve(async (req) => {
     if (!PRICES_KOPECKS[planTier]) throw new Error('planTier должен быть "pro" или "max"');
     if (!PERIOD_TITLES[billingPeriod]) throw new Error('billingPeriod должен быть "monthly" или "annual"');
 
-    const amountKopecks = PRICES_KOPECKS[planTier][billingPeriod];
-    const description = `Подписка LexPrep «${TIER_TITLES[planTier]}», ${PERIOD_TITLES[billingPeriod]} оплата`;
-
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     const { data: profile, error: profileErr } = await adminClient
       .from('profiles')
-      .select('email, is_banned')
+      .select('email, is_banned, pending_discount_percent')
       .eq('id', caller.id)
       .single();
     if (profileErr) throw profileErr;
     if (profile.is_banned) throw new Error('Аккаунт заблокирован.');
     if (!profile.email) throw new Error('У аккаунта не указан email — нужен для чека.');
+
+    // Скидка по промокоду (redeem_promo_code) — на эту оплату. Списывается
+    // с профиля только после успешной оплаты (payments-notification), так
+    // что брошенная оплата скидку не сжигает. Минимум — 1 ₽ (требование банка).
+    const discountPercent = Math.min(99, Math.max(0, Number(profile.pending_discount_percent) || 0));
+    const fullKopecks = PRICES_KOPECKS[planTier][billingPeriod];
+    const amountKopecks = Math.max(100, Math.round(fullKopecks * (100 - discountPercent) / 100));
+    const description = `Подписка LexPrep «${TIER_TITLES[planTier]}», ${PERIOD_TITLES[billingPeriod]} оплата`
+      + (discountPercent ? `, скидка ${discountPercent}%` : '');
 
     const { data: paymentRow, error: insertErr } = await adminClient
       .from('payments')
@@ -78,6 +84,7 @@ serve(async (req) => {
         plan_tier: planTier,
         billing_period: billingPeriod,
         amount_kopecks: amountKopecks,
+        discount_percent: discountPercent,
         status: 'pending'
       })
       .select('id')
