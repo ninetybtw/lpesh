@@ -560,6 +560,43 @@ body.arena-body::before {
   color: var(--color-text-muted);
 }
 
+/* Кэф на победу: чем сильнее бот, тем больше выигрыш. */
+.bot-card__odds {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: #12925a;
+  background: rgba(47, 217, 138, 0.16);
+}
+
+.bot-card--medium .bot-card__odds {
+  color: #b86e00;
+  background: rgba(255, 176, 32, 0.18);
+}
+
+.bot-card--hard .bot-card__odds {
+  color: #d92a3d;
+  background: rgba(255, 77, 94, 0.15);
+}
+
+[data-theme="dark"] .bot-card__odds {
+  color: #3fe09a;
+}
+
+[data-theme="dark"] .bot-card--medium .bot-card__odds {
+  color: #ffc24d;
+}
+
+[data-theme="dark"] .bot-card--hard .bot-card__odds {
+  color: #ff7a87;
+}
+
 .bot-card.is-active {
   border-color: var(--arena-red);
   background: linear-gradient(180deg, rgba(255, 77, 94, 0.1), var(--color-bg-alt));
@@ -680,6 +717,25 @@ body.arena-body::before {
   gap: 6px;
 }
 
+/* Пять быстрых ставок (до 200) — в один ряд на телефоне. */
+@media (max-width: 560px) {
+  .arena-wager__presets {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+    gap: 5px;
+  }
+
+  .arena-wager__presets .arena-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 4px;
+    font-size: 12.5px;
+  }
+}
+
 .arena-chip {
   padding: 8px 12px;
   border-radius: 999px;
@@ -711,7 +767,25 @@ body.arena-body::before {
   margin-top: 6px;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.6;
   color: var(--color-success);
+}
+
+.arena-wager__hint b {
+  font-weight: 900;
+}
+
+.arena-wager__hint.is-warn {
+  color: var(--arena-red);
+}
+
+.arena-wager__odds {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  font-weight: 900;
 }
 
 /* ---------------- Главная кнопка ---------------- */

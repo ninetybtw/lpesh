@@ -27,13 +27,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.scrollTo({ top: 0, behavior: Arena.reduced() ? 'auto' : 'smooth' });
   }
 
-  const WAGER_PRESETS = [10, 25, 50, 100];
+  // Ставка: от 1 до MAX_WAGER монет. Выигрыш = ставка × кэф соперника
+  // (чем сильнее бот, тем выше кэф), ничья — ставка возвращается,
+  // поражение — ставка сгорает. Рейтинг тренировок тоже зависит от бота:
+  // победа над сильным даёт больше, проигрыш слабому отнимает больше.
+  const MAX_WAGER = 200;
+  const WAGER_PRESETS = [10, 25, 50, 100, 200];
   const BOTS = {
-    easy: { icon: 'bot-easy', name: 'Бот-стажёр', power: 1, hint: 'Ошибается часто' },
-    medium: { icon: 'bot-medium', name: 'Бот-юрист', power: 2, hint: 'Честный соперник' },
-    hard: { icon: 'bot-hard', name: 'Бот-судья', power: 3, hint: 'Почти не ошибается' }
+    easy: { icon: 'bot-easy', name: 'Бот-стажёр', power: 1, hint: 'Ошибается часто', odds: 1.2, rating: { win: 10, loss: -18, draw: 0 } },
+    medium: { icon: 'bot-medium', name: 'Бот-юрист', power: 2, hint: 'Честный соперник', odds: 1.5, rating: { win: 18, loss: -12, draw: 2 } },
+    hard: { icon: 'bot-hard', name: 'Бот-судья', power: 3, hint: 'Почти не ошибается', odds: 2, rating: { win: 28, loss: -6, draw: 6 } }
   };
-  const RATING_DELTA = { win: 18, loss: -12, draw: 2 };
+
+  function botFor(difficulty) {
+    return BOTS[difficulty] || BOTS.medium;
+  }
+
+  function formatOdds(odds) {
+    return `×${String(odds).replace('.', ',')}`;
+  }
+
+  // Сколько вернётся на баланс при победе (вместе со ставкой). Всегда
+  // хотя бы на 1 монету больше ставки — иначе на маленьких ставках у
+  // «Стажёра» победа ничего бы не давала.
+  function winPayout(wager, difficulty) {
+    return Math.max(wager + 1, Math.round(wager * botFor(difficulty).odds));
+  }
 
   /* ---------------- Шапка арены ---------------- */
   const profileEl = document.getElementById('arenaProfile');
@@ -108,12 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${[1, 2, 3].map(n => `<i class="${n <= bot.power ? 'is-on' : ''}"></i>`).join('')}
         </span>
         <span class="bot-card__hint">${esc(bot.hint)}</span>
+        <span class="bot-card__odds" title="Кэф на победу: выигрыш = ставка ${formatOdds(bot.odds)}">${formatOdds(bot.odds)}</span>
       </button>`;
   }).join('');
   botPicker.querySelectorAll('[data-bot]').forEach(card => {
     card.addEventListener('click', () => {
       difficultySelect.value = card.dataset.bot;
       botPicker.querySelectorAll('[data-bot]').forEach(c => c.classList.toggle('is-active', c === card));
+      renderWagerHint();
     });
   });
 
@@ -135,7 +156,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderWagerHint() {
     const wager = Math.floor(Number(wagerInput.value)) || 0;
-    wagerHint.innerHTML = wager > 0 ? `Победа: +${wager} ${Arena.icon('coin')} · ничья: ставка вернётся` : '';
+    const bot = botFor(difficultySelect.value);
+    wagerHint.classList.toggle('is-warn', wager > MAX_WAGER);
+    if (wager > MAX_WAGER) {
+      wagerHint.innerHTML = `Максимальная ставка — ${MAX_WAGER} ${Arena.icon('coin')}`;
+    } else if (wager > 0) {
+      const profit = winPayout(wager, difficultySelect.value) - wager;
+      wagerHint.innerHTML = `
+        <span class="arena-wager__odds">${formatOdds(bot.odds)}</span>
+        Победа: <b>+${profit}</b> ${Arena.icon('coin')} · ничья: ставка вернётся · поражение: −${wager}`;
+    } else {
+      wagerHint.innerHTML = '';
+    }
     document.querySelectorAll('[data-wager]').forEach(b => b.classList.toggle('is-active', Number(b.dataset.wager) === wager));
   }
 
@@ -181,6 +213,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const balance = LexPrepProgress.getCoins();
     if (!wager || wager < 1) {
       showError('Укажи ставку от 1 монеты.');
+      return;
+    }
+    if (wager > MAX_WAGER) {
+      showError(`Максимальная ставка — ${MAX_WAGER} монет.`);
       return;
     }
     if (wager > balance) {
@@ -233,12 +269,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerStreak = 0;
     roundLog.length = 0;
 
-    const bot = BOTS[difficulty] || BOTS.medium;
+    const bot = botFor(difficulty);
     mePlayer = Arena.me(user);
     botPlayer = {
       name: bot.name,
       icon: bot.icon,
-      meta: `${DuelEngine.DIFFICULTIES[difficulty].label} · ставка ${Arena.coins(wager)}`,
+      meta: `${DuelEngine.DIFFICULTIES[difficulty].label} · кэф ${formatOdds(bot.odds)} · ставка ${Arena.coins(wager)}`,
       tone: 'red'
     };
 
@@ -344,11 +380,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (playerScore < botScore) outcome = 'loss';
     else outcome = 'draw';
 
-    if (outcome === 'win') LexPrepProgress.addCoins(duelWager * 2);
+    const bot = botFor(duelDifficulty);
+    const payout = winPayout(duelWager, duelDifficulty);
+    if (outcome === 'win') LexPrepProgress.addCoins(payout);
     else if (outcome === 'draw') LexPrepProgress.addCoins(duelWager);
 
-    const stats = LexPrepProgress.recordDuelResult(outcome);
-    const coinsDelta = outcome === 'win' ? duelWager : outcome === 'loss' ? -duelWager : 0;
+    const ratingDelta = bot.rating[outcome];
+    const stats = LexPrepProgress.recordDuelResult(outcome, ratingDelta);
+    const coinsDelta = outcome === 'win' ? payout - duelWager : outcome === 'loss' ? -duelWager : 0;
     const subtitles = {
       win: 'Соперник повержен — так держать!',
       loss: 'В этот раз бот оказался сильнее. Реванш?',
@@ -364,8 +403,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       leftScore: playerScore,
       rightScore: botScore,
       rewards: [
-        { icon: 'coin', label: 'монет', value: coinsDelta, tone: coinsDelta > 0 ? 'up' : coinsDelta < 0 ? 'down' : 'neutral' },
-        { icon: 'chart-up', label: `рейтинг тренировок · ${stats.rating}`, value: RATING_DELTA[outcome], tone: RATING_DELTA[outcome] >= 0 ? 'up' : 'down' }
+        { icon: 'coin', label: outcome === 'win' ? `монет · кэф ${formatOdds(bot.odds)}` : 'монет', value: coinsDelta, tone: coinsDelta > 0 ? 'up' : coinsDelta < 0 ? 'down' : 'neutral' },
+        { icon: 'chart-up', label: `рейтинг тренировок · ${stats.rating}`, value: ratingDelta, tone: ratingDelta > 0 ? 'up' : ratingDelta < 0 ? 'down' : 'neutral' }
       ]
     });
 

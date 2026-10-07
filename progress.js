@@ -434,18 +434,16 @@ const LexPrepProgress = (function () {
     }
   }
 
-  function recordDuelResult(outcome) {
+  // ratingDelta — сколько рейтинга дать/снять (зависит от силы бота, см.
+  // BOTS в duel.js); без него — прежние значения +18 / −12 / +2.
+  function recordDuelResult(outcome, ratingDelta) {
     const stats = getDuelStats();
-    if (outcome === 'win') {
-      stats.wins++;
-      stats.rating += 18;
-    } else if (outcome === 'loss') {
-      stats.losses++;
-      stats.rating = Math.max(0, stats.rating - 12);
-    } else {
-      stats.draws++;
-      stats.rating += 2;
-    }
+    const fallback = { win: 18, loss: -12, draw: 2 }[outcome] || 0;
+    const delta = typeof ratingDelta === 'number' ? ratingDelta : fallback;
+    if (outcome === 'win') stats.wins++;
+    else if (outcome === 'loss') stats.losses++;
+    else stats.draws++;
+    stats.rating = Math.max(0, stats.rating + delta);
     localStorage.setItem(DUEL_STATS_KEY, JSON.stringify(stats));
     return stats;
   }
