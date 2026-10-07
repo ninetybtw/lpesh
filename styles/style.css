@@ -1392,6 +1392,12 @@ STYLE.CSS — компоненты и секции страницы
 .section--alt {
   background: var(--color-bg-alt);
 }
+/* Соседние секции одного фона (Возможности → Процесс, Статьи → Тарифы):
+   нижний отступ одной и верхний другой складывались в ~200px пустоты. */
+.section:not(.section--alt) + .section:not(.section--alt),
+.section--alt + .section--alt {
+  padding-top: 24px;
+}
 .section__head {
   text-align: center;
   max-width: 640px;
@@ -1443,7 +1449,8 @@ STYLE.CSS — компоненты и секции страницы
   display: grid;
   grid-template-columns: 360px 1fr;
   gap: 28px;
-  align-items: start;
+  /* Карточка справа — во всю высоту списка, без пустого угла под ней. */
+  align-items: stretch;
 }
 .feature-tabs__list {
   display: flex;
