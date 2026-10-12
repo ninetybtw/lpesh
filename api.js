@@ -87,6 +87,7 @@ const LexPrepApi = (function () {
       pendingPlanTier: profile && profile.pending_plan_tier,
       pendingPlanBillingPeriod: profile && profile.pending_plan_billing_period,
       pendingDiscountPercent: (profile && profile.pending_discount_percent) || 0,
+      planIsTrial: !!(profile && profile.plan_is_trial),
       duelRating: (profile && profile.duel_rating) || 1000,
       aiExtraRequests: (profile && profile.ai_extra_requests) || 0
     };
@@ -1378,7 +1379,31 @@ const LexPrepApi = (function () {
      (payments-init/payments-notification/payments-autocharge/payments-cancel,
      см. supabase/payments.sql). Отсюда только вызовы. */
 
-  async function initSubscriptionPayment({ planTier, billingPeriod }) {
+  // Счётчик «онлайн» (supabase/online.sql): вошедший пользователь
+  // отмечается, общее число активных за 5 минут видят все.
+  async function pingPresence() {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) return;
+    await client.rpc('presence_ping');
+  }
+
+  async function getOnlineCount() {
+    const { data, error } = await client.rpc('online_count');
+    if (error) throw friendlyError(error);
+    return Number(data) || 0;
+  }
+
+  // Пробный период «Про» на 14 дней за 1 ₽ (supabase/trial.sql): можно ли
+  // его оформить этому пользователю. Гостю — false (сначала регистрация).
+  async function getTrialEligibility() {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) return false;
+    const { data, error } = await client.rpc('trial_eligible');
+    if (error) return false;
+    return !!data;
+  }
+
+  async function initSubscriptionPayment({ planTier, billingPeriod, trial }) {
     const session = await requireSession();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/payments-init`, {
       method: 'POST',
@@ -1387,7 +1412,7 @@ const LexPrepApi = (function () {
         Authorization: `Bearer ${session.access_token}`,
         apikey: SUPABASE_ANON_KEY
       },
-      body: JSON.stringify({ planTier, billingPeriod })
+      body: JSON.stringify(trial ? { trial: true } : { planTier, billingPeriod })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -1583,7 +1608,7 @@ const LexPrepApi = (function () {
     listTournamentParticipants, listTournamentMatches, getPublicProfiles,
     forfeitTournamentMatch, leaveTournamentLobby,
     askAiConsultant, askAiConsultantPro,
-    initSubscriptionPayment, setSubscriptionAutoRenew, scheduleDowngrade,
+    initSubscriptionPayment, getTrialEligibility, pingPresence, getOnlineCount, setSubscriptionAutoRenew, scheduleDowngrade,
     listNotifications, getUnreadNotificationCount, markNotificationsRead, createSelfNotification, broadcastNotification,
     redeemPromoCode, listPromoCodes, createPromoCode, deletePromoCode,
     getClient: () => client

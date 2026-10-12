@@ -2305,6 +2305,12 @@ body {
   background: color-mix(in srgb, var(--color-primary) 9%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
+a.topic-meta__chip--fresh {
+  text-decoration: none;
+}
+a.topic-meta__chip--fresh:hover {
+  color: var(--color-primary);
+}
 .topic-meta__chip svg {
   width: 14px;
   height: 14px;

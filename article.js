@@ -183,10 +183,21 @@ function renderArticles() {
   const { items, totalPages } = paginate(filtered);
   grid.innerHTML = '';
 
-  articlesCountChip.textContent = `${filtered.length} статей`;
+  const n = filtered.length;
+  const word = n % 10 === 1 && n % 100 !== 11 ? 'статья' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'статьи' : 'статей');
+  articlesCountChip.textContent = `${n} ${word}`;
+  articlesCountChip.hidden = !n;
   articlesPageChip.textContent = `Страница ${state.page} из ${totalPages}`;
+  articlesPageChip.hidden = totalPages <= 1;
 
-  if (!filtered.length) {
+  if (!articles.length) {
+    // Статей ещё нет совсем — это не «пустой фильтр», а приглашение стать первым.
+    grid.innerHTML = '<div class="empty-state">Статей пока нет. Здесь будут разборы дел, шпаргалки и опыт подготовки от студентов — <a href="/write-article">напишите первую</a>, после проверки модератором она появится в каталоге.</div>';
+    pagination.innerHTML = '';
+    return;
+  }
+
+  if (!n) {
     grid.innerHTML = '<div class="empty-state">По этому фильтру пока нет статей. Сними часть ограничений или открой все статьи.</div>';
     pagination.innerHTML = '';
     return;

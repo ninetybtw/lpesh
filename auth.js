@@ -3,6 +3,13 @@ AUTH.JS — переключение вкладок Вход/Регистрац�
 Подключается отдельным тегом <script src="auth.js"></script>,
 ничего менять в script.js не нужно.
 ========================================================================== */
+// Куда вернуть после входа/регистрации: ?next=/... (только пути этого же
+// сайта — чужой адрес или //host не принимаем), иначе на главную.
+function afterAuthUrl() {
+  const next = new URLSearchParams(window.location.search).get('next');
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('.auth-tab');
   const panels = document.querySelectorAll('.auth-panel');
@@ -15,7 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function switchTo(name) {
     // Заголовок карточки и «ползунок» вкладок следуют за режимом.
-    if (authCard) authCard.dataset.mode = name;
+    if (authCard) {
+      authCard.dataset.mode = name;
+      // Тексты другого режима прячем и атрибутом hidden — чтобы и без
+      // стилей (поисковики, читалки) было видно только нужный заголовок.
+      authCard.querySelectorAll('[data-mode-text]').forEach(el => { el.hidden = el.dataset.modeText !== name; });
+    }
     tabs.forEach(t => {
       t.classList.toggle('is-active', t.dataset.tab === name);
       t.setAttribute('aria-selected', String(t.dataset.tab === name));
@@ -155,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (successText) successText.textContent = 'Готово, входим…';
             if (success) success.classList.add('is-visible');
             await redeemPromoIfEntered();
-            setTimeout(() => { window.location.href = '/'; }, 900);
+            setTimeout(() => { window.location.href = afterAuthUrl(); }, 900);
           }
         } catch (err) {
           showAuthError(err.message);
@@ -170,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('lexprep_user', JSON.stringify(user));
           if (successText) successText.textContent = 'Готово, входим…';
           if (success) success.classList.add('is-visible');
-          setTimeout(() => { window.location.href = '/'; }, 900);
+          setTimeout(() => { window.location.href = afterAuthUrl(); }, 900);
         } catch (err) {
           showAuthError(err.message);
         } finally {
@@ -274,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successText) successText.textContent = 'Готово, входим…';
         if (success) success.classList.add('is-visible');
         await redeemPromoIfEntered();
-        setTimeout(() => { window.location.href = '/'; }, 900);
+        setTimeout(() => { window.location.href = afterAuthUrl(); }, 900);
       } catch (err) {
         otpSlots.forEach(s => s.classList.add('is-error'));
         showOtpError(err.message);
@@ -481,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeResetOverlay();
         if (successText) successText.textContent = 'Пароль обновлён, входим…';
         if (success) success.classList.add('is-visible');
-        setTimeout(() => { window.location.href = '/'; }, 900);
+        setTimeout(() => { window.location.href = afterAuthUrl(); }, 900);
       } catch (err) {
         resetOtpSlots.forEach(s => s.classList.add('is-error'));
         showResetConfirmError(err.message);

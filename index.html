@@ -51,7 +51,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20261007010000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20261012120000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
   <body>
@@ -67,16 +67,16 @@
           <ul class="nav__list">
             <li><a href="#features" class="nav__link">Возможности</a></li>
             <li><a href="#how" class="nav__link">Как это работает</a></li>
-            <li><a href="#articles" class="nav__link">Статьи</a></li>
+            <li><a href="/article" class="nav__link">Статьи</a></li>
             <li><a href="#pricing" class="nav__link">Тарифы</a></li>
             <li><a href="#faq" class="nav__link">FAQ</a></li>
           </ul>
         </nav>
 
         <div class="header__actions">
-          <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+          <div class="online-badge" id="onlineBadge" title="Сколько пользователей занимались на сайте за последние 5 минут" hidden>
             <span class="online-badge__dot"></span>
-            <span id="onlineCount">–</span> онлайн
+            <span id="onlineCount"></span> онлайн
           </div>
           <a href="/auth#login" class="btn btn--outline" data-auth="guest"
             >Войти</a
@@ -99,8 +99,6 @@
             </button>
 
             <div class="profile-dropdown" id="profileDropdown">
-              <a href="/admin" class="profile-dropdown__item" data-admin>Админка</a>
-              <a href="/moderator" class="profile-dropdown__item" data-moderator>Модерация</a>
               <a href="/profile#info" class="profile-dropdown__item">Личная информация</a>
               <a href="/profile#subscription" class="profile-dropdown__item">Подписка</a>
               <a href="/profile#stats" class="profile-dropdown__item">Статистика</a>
@@ -128,7 +126,7 @@
       <ul class="mobile-nav__list">
         <li><a href="#features" class="mobile-nav__link">Возможности</a></li>
         <li><a href="#how" class="mobile-nav__link">Как это работает</a></li>
-        <li><a href="#articles" class="mobile-nav__link">Статьи</a></li>
+        <li><a href="/article" class="mobile-nav__link">Статьи</a></li>
         <li><a href="#pricing" class="mobile-nav__link">Тарифы</a></li>
         <li><a href="#faq" class="mobile-nav__link">FAQ</a></li>
         <!--  -->
@@ -168,11 +166,11 @@
               <a href="/auth#register" class="btn btn--primary btn--lg btn--shine" data-auth="guest"
                 >Создать аккаунт</a
               >
-              <a href="/auth#login" class="btn btn--outline btn--lg" data-auth="guest"
-                >Посмотреть демо</a
-              >
               <a href="/app" class="btn btn--primary btn--lg btn--shine" data-auth="user">Перейти к программе</a>
             </div>
+            <p class="hero__trial" data-auth="guest">
+              Новым пользователям — <a href="#pricing">«Про» на 14 дней за 1 ₽</a>
+            </p>
             <div class="hero__stats">
               <div class="stat">
                 <span class="stat__num" id="statDisciplines">7</span
@@ -324,42 +322,42 @@
           <div class="feature-tabs reveal" id="featureTabs">
             <div class="feature-tabs__list" role="tablist">
               <button class="feature-tabs__item is-active" type="button" data-feature-tab="tree" style="--tab-accent: var(--color-primary)">
-                <span class="feature-card__icon feature-card__icon--blue"><img src="./images/images icon-tree.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--blue"><img src="/images/icon-tree.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Дерево категорий</strong>
                   <small>Категория → предмет → тема</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="cards" style="--tab-accent: #ff7a45">
-                <span class="feature-card__icon feature-card__icon--orange"><img src="./images/images icon-ai-cards.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--orange"><img src="/images/icon-ai-cards.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>ИИ-карточки под уровень</strong>
                   <small>Сложность подбирается автоматически</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="tests" style="--tab-accent: #1fb774">
-                <span class="feature-card__icon feature-card__icon--green"><img src="./images/images icon-tests.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--green"><img src="/images/icon-tests.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Тесты трёх видов</strong>
                   <small>Редакция, ИИ и сообщество</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="practice" style="--tab-accent: #8c54ff">
-                <span class="feature-card__icon feature-card__icon--purple"><img src="./images/images icon-court.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--purple"><img src="/images/icon-court.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Судебная практика</strong>
                   <small>Пленумы и решения судов</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="tickets" style="--tab-accent: #5865f2">
-                <span class="feature-card__icon feature-card__icon--indigo"><img src="./images/images icon-tickets.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--indigo"><img src="/images/icon-tickets.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Готовые билеты к экзамену</strong>
                   <small>Собраны заранее</small>
                 </span>
               </button>
               <button class="feature-tabs__item" type="button" data-feature-tab="rewards" style="--tab-accent: #e0a316">
-                <span class="feature-card__icon feature-card__icon--yellow"><img src="./images/images icon-rewards.svg" alt="" /></span>
+                <span class="feature-card__icon feature-card__icon--yellow"><img src="/images/icon-rewards.svg" alt="" /></span>
                 <span class="feature-tabs__item-text">
                   <strong>Награды за вклад</strong>
                   <small>Бонусы к подписке</small>
@@ -490,7 +488,7 @@
       </section>
 
       <!-- ARTICLES / BLOG -->
-      <section class="section section--alt" id="articles">
+      <section class="section section--alt" id="articles" hidden>
         <div class="container">
           <div class="articles__head-row reveal">
             <div class="section__head">
@@ -508,9 +506,7 @@
               <a href="/write-article" class="btn btn--primary">Написать статью</a>
             </div>
           </div>
-          <div class="grid grid--3" id="homeArticlesGrid">
-            <p class="topic-desc">Загружаем статьи…</p>
-          </div>
+          <div class="grid grid--3" id="homeArticlesGrid"></div>
           <div class="articles__cta reveal">
             <p>Есть чем поделиться с другими студентами?</p>
             <a href="/write-article" class="btn btn--primary">Опубликовать свою статью</a>
@@ -525,16 +521,33 @@
             <span class="eyebrow">Тарифы</span>
             <h2 class="section__title">Выбери подходящий уровень</h2>
             <p class="section__subtitle">
-              Все цены указаны за месяц. Можно отменить в любой момент.
+              Цены указаны за месяц. Отменить подписку можно в любой момент, а за неиспользованные дни вернём деньги.
             </p>
           </div>
+
+          <div class="trial-banner reveal" id="trialBanner">
+            <div class="trial-banner__text">
+              <span class="trial-banner__badge">Для новых пользователей</span>
+              <h3 class="trial-banner__title">14 дней «Про» за 1 ₽</h3>
+              <p>
+                Все дисциплины, тесты с разбором ответов, ИИ-консультант, библиотека билетов, дуэли и турниры.
+                Через 14 дней подписка продлится автоматически: <b>600 ₽ за месяц «Про»</b>.
+                Не понравится — отмените в профиле до конца пробного периода, и больше ничего не спишется.
+              </p>
+            </div>
+            <div class="trial-banner__action">
+              <a href="/auth?next=%2F%3Ftrial%3D1%23pricing#register" class="btn btn--primary btn--lg" id="trialBannerBtn">Попробовать за 1 ₽</a>
+              <small id="trialBannerHint">Сначала создайте аккаунт — после регистрации вернётесь сюда к оплате</small>
+            </div>
+          </div>
+
           <div class="grid grid--3 pricing">
             <div class="price-card reveal">
               <h3 class="price-card__name">Базовый</h3>
               <div class="price-card__price price-card__price--free">Бесплатно</div>
               <ul class="price-card__list">
                 <li>Конспект — 1 предмет полностью, у остальных только оглавление</li>
-                <li>Карточки — 10–15 повторений в день</li>
+                <li>Карточки — 15 повторений в день</li>
                 <li>Тесты — 1 попытка в день, без разбора ответов</li>
                 <li>Без ИИ-консультанта, дуэлей и турниров, с рекламой партнёров</li>
                 <li>Нельзя публиковать свои тесты и статьи</li>
@@ -558,19 +571,19 @@
               <p class="price-card__annual" data-price-annual>5 040 ₽ раз в год</p>
 
               <ul class="price-card__list">
-                <li>Все конспекты и карточки без ограничений</li>
-                <li>Карточки — полная колода, интервальное повторение</li>
-                <li data-plan-monthly hidden>Тесты — 3 попытки в день с разбором ответов</li>
-                <li data-plan-annual>Тесты — 5 попыток в день с разбором ответов</li>
+                <li>Все дисциплины: конспекты и карточки без ограничений</li>
+                <li>Тесты с разбором ответов — 3 попытки в день <span class="price-card__annual-plus">5 при оплате за год</span></li>
                 <li>Пробный экзамен — 3 попытки в месяц</li>
-                <li>Библиотека — сборники билетов по дисциплинам</li>
-                <li data-plan-monthly hidden>ИИ-консультант — 5 запросов в день, проверка эссе — 2/мес</li>
-                <li data-plan-annual>Продвинутый ИИ-консультант — 10 запросов в день</li>
-                <li data-plan-monthly hidden>Дуэли — 3 в день, турниры — 1 открытый в месяц, без взноса</li>
-                <li data-plan-annual>Дуэли — 5 в день, турниры — 3 в месяц, без взноса</li>
+                <li>Библиотека — сборники экзаменационных билетов</li>
+                <li>ИИ-консультант — 5 запросов в день</li>
+                <li>Дуэли — 3 в день <span class="price-card__annual-plus">5 при оплате за год</span></li>
+                <li>Турниры без взноса — 1 в месяц <span class="price-card__annual-plus">3 при оплате за год</span></li>
+                <li>При оплате за год ещё продвинутый ИИ-консультант: 10 запросов в день, можно прикрепить свой файл</li>
+                <li>Публикация своих тестов и статей</li>
                 <li>Без рекламы</li>
               </ul>
-              <a href="#cta" class="btn btn--primary btn--block price-card__cta">Выбрать</a>
+              <a href="/auth?next=%2F%23pricing#register" class="btn btn--primary btn--block price-card__cta">Зарегистрироваться и выбрать</a>
+              <p class="price-card__cta-hint" data-guest-hint>Оплата — сразу после регистрации, на этой же странице</p>
             </div>
             <div class="price-card is-annual reveal" data-price-card data-plan-tier="max">
               <div class="price-card__head">
@@ -589,15 +602,15 @@
               <p class="price-card__annual" data-price-annual>9 600 ₽ раз в год</p>
 
               <ul class="price-card__list">
-                <li>Всё из Про</li>
-                <li data-plan-monthly hidden>ИИ-консультант — 25–40 запросов в день</li>
-                <li data-plan-annual>Продвинутый ИИ-консультант — 40–60 запросов в день</li>
-                <li>Возможность скачивания PDF-конспектов</li>
-                <li>Безлимит: пробные экзамены, дуэли</li>
-                <li data-plan-monthly hidden>Турниры — до 5 участий в месяц, без взноса</li>
-                <li data-plan-annual>Турниры — до 10 участий в месяц, без взноса</li>
+                <li>Всё из «Про», а также:</li>
+                <li>Тесты, пробные экзамены и дуэли — без ограничений</li>
+                <li>ИИ-консультант — 35 запросов в день</li>
+                <li>Турниры без взноса — 5 в месяц <span class="price-card__annual-plus">10 при оплате за год</span></li>
+                <li>При оплате за год ещё продвинутый ИИ-консультант: 50 запросов в день, можно прикрепить свой файл</li>
+                <li>Скачивание конспектов в PDF</li>
               </ul>
-              <a href="#cta" class="btn btn--primary btn--block price-card__cta">Выбрать</a>
+              <a href="/auth?next=%2F%23pricing#register" class="btn btn--primary btn--block price-card__cta">Зарегистрироваться и выбрать</a>
+              <p class="price-card__cta-hint" data-guest-hint>Оплата — сразу после регистрации, на этой же странице</p>
             </div>
           </div>
 
@@ -609,8 +622,24 @@
               Оплата подписки — через <a href="https://www.tbank.ru" target="_blank" rel="noopener noreferrer">Т-Банк</a>
               (T-Pay). Оплата проходит на защищённой странице банка по протоколу TLS — номер карты, CVC и другие
               платёжные реквизиты вводятся там же и никогда не передаются и не хранятся на серверах LexPrep.
+              Оплачивая подписку или пробный период, вы принимаете условия <a href="/legal#offer">публичной оферты</a>.
             </p>
           </div>
+
+          <ul class="pricing__guarantees">
+            <li>
+              <b>Отмена в любой момент.</b> Профиль → «Подписка» → «Отменить подписку». Без звонков и заявлений;
+              доступ сохранится до конца оплаченного периода, следующего списания не будет.
+            </li>
+            <li>
+              <b>Возврат за неиспользованное время.</b> Если передумали — напишите в
+              <a href="/support">поддержку</a>, и мы вернём деньги за оставшиеся дни пропорционально, в том числе
+              за годовую подписку. Порядок — в разделе 8 <a href="/legal#offer">оферты</a>.
+            </li>
+            <li>
+              <b>Напоминание перед списанием.</b> За 3 дня и за 1 день до автопродления пришлём уведомление с датой и суммой.
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -634,11 +663,31 @@
             </div>
             <div class="accordion__item">
               <button class="accordion__trigger">
+                Насколько актуальны материалы?<span class="accordion__icon">+</span>
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  У каждого конспекта в тренажёре указана дата последнего обновления. Сборники билетов в библиотеке сверены с действующим законодательством на дату, указанную в описании сборника, а места, где закон или практика изменились, отмечены в тексте отдельными врезками «Актуализация». Если заметили устаревшую норму или ошибку, напишите нам через форму обратной связи внизу страницы — проверим и исправим.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
                 Что входит в бесплатный «Базовый» тариф?<span class="accordion__icon">+</span>
               </button>
               <div class="accordion__panel">
                 <p>
-                  Гражданское право полностью, у остальных дисциплин только оглавление. До 15 карточек и одна попытка теста в день, без разбора ответов. ИИ-консультанта, дуэлей, турниров, пробного экзамена и библиотеки на нём нет. Тариф включается сразу после регистрации, оплачивать ничего не нужно.
+                  Гражданское право полностью, у остальных дисциплин только оглавление. До 15 карточек и одна попытка теста в день, без разбора ответов. ИИ-консультанта, дуэлей, турниров, пробного экзамена и библиотеки на нём нет. Тариф включается сразу после регистрации, оплачивать ничего не нужно. Чтобы попробовать всё остальное, оформите пробный период «Про»: 14 дней за 1 ₽.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
+                Как работает пробный период за 1 ₽?<span class="accordion__icon">+</span>
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Новым пользователям — тем, кто ещё не оформлял подписку, — доступен тариф «Про» на 14 дней за 1 ₽. При оплате карта привязывается для автопродления: через 14 дней спишется 600 ₽ за месяц «Про», дальше — раз в месяц. За 3 дня и за 1 день до списания придёт напоминание. Если не хотите продолжать, в профиле откройте «Подписка» → «Отменить подписку» до конца пробного периода: доступ сохранится до этой даты, и больше ничего не спишется. Пробный период можно оформить один раз.
                 </p>
               </div>
             </div>
@@ -658,7 +707,7 @@
               </button>
               <div class="accordion__panel">
                 <p>
-                  В пересчёте на месяц она дешевле: «Про» стоит 420 ₽ вместо 600 ₽, «Максимум» — 800 ₽ вместо 1000 ₽. Кроме того, она даёт больше: продвинутый ИИ-консультант, которому можно прикрепить свой файл, больше попыток тестов, дуэлей и турниров.
+                  В пересчёте на месяц она дешевле: «Про» стоит 420 ₽ вместо 600 ₽ (5 040 ₽ за год), «Максимум» — 800 ₽ вместо 1000 ₽ (9 600 ₽ за год). И даёт больше. На «Про»: 5 попыток теста в день вместо 3, 5 дуэлей в день вместо 3, 3 турнира в месяц вместо 1. На «Максимуме»: 10 турниров в месяц вместо 5. На обоих тарифах добавляется продвинутый ИИ-консультант, которому можно прикрепить свой файл: 10 запросов в день на «Про», 50 на «Максимуме» — сверх обычных 5 и 35. Если передумаете, за неиспользованные месяцы вернём деньги.
                 </p>
               </div>
             </div>
@@ -688,7 +737,7 @@
               </button>
               <div class="accordion__panel">
                 <p>
-                  Это чат в тренажёре, кнопка в правом нижнем углу. Он объясняет понятия, разбирает вопросы по темам и сравнивает теории в таблице. Это помощник для подготовки, а не юридическая консультация по жизненной ситуации. Он доступен с «Про», число запросов в день зависит от тарифа. Сверх лимита запросы можно докупить за монеты в магазине.
+                  Это чат в тренажёре, кнопка в правом нижнем углу. Он объясняет понятия, разбирает вопросы по темам и сравнивает теории в таблице. Это помощник для подготовки, а не юридическая консультация по жизненной ситуации. Он доступен с «Про»: 5 запросов в день, на «Максимуме» — 35. При годовой подписке добавляется продвинутый консультант с прикреплением файла: 10 запросов в день на «Про», 50 на «Максимуме». Сверх лимита запросы можно докупить за монеты в магазине.
                 </p>
               </div>
             </div>
@@ -744,6 +793,16 @@
             </div>
             <div class="accordion__item">
               <button class="accordion__trigger">
+                Можно ли вернуть деньги?<span class="accordion__icon">+</span>
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Да. Отказаться от подписки можно в любой момент, и мы вернём деньги за неиспользованное время — пропорционально оставшимся дням. Это касается и годовой подписки: например, если отказаться через 3 месяца, вернём стоимость оставшихся 9 месяцев (без 3 использованных). Напишите в поддержку с email, на который зарегистрирован аккаунт, и укажите дату платежа. Порядок описан в разделе 8 публичной оферты.
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
                 Когда откроется доступ после оплаты?<span class="accordion__icon">+</span>
               </button>
               <div class="accordion__panel">
@@ -761,7 +820,7 @@
       <section class="cta-section" id="cta" data-auth="guest">
         <div class="container cta-section__inner reveal">
           <h2>Начни готовиться уже сегодня</h2>
-          <p>Регистрация бесплатная: базовый тариф доступен сразу, без оплаты.</p>
+          <p>Регистрация бесплатная: базовый тариф доступен сразу, без оплаты. А всё из «Про» можно попробовать 14 дней за 1 ₽.</p>
           <div class="cta-section__actions">
             <a href="/auth#register" class="btn btn--primary btn--lg"
               >Создать аккаунт</a
@@ -858,7 +917,7 @@
         <div class="footer__col">
           <h4>Навигация</h4>
           <a href="#features">Возможности</a>
-          <a href="#articles">Статьи</a>
+          <a href="/article">Статьи</a>
           <a href="#pricing">Тарифы</a>
           <a href="#faq">Вопросы</a>
         </div>
@@ -883,10 +942,10 @@
 
     <script src="validation.js?v=20260831160000"></script>
     <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20261006140000"></script>
+    <script src="api.js?v=20261012120000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260930040000"></script>
-    <script src="script.js?v=20260930040000"></script>
+    <script src="script.js?v=20261012120000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');
@@ -894,10 +953,11 @@
         try {
           const articles = await LexPrepApi.listPublishedUserArticles();
           const latest = articles.slice(0, 3);
-          if (!latest.length) {
-            grid.innerHTML = '<p class="topic-desc">Пока нет опубликованных статей — стань первым автором!</p>';
-            return;
-          }
+          // Раздел статей на главной показываем, только когда есть что
+          // показать: пустой блог выглядит заброшенным.
+          if (!latest.length) return;
+          const section = document.getElementById('articles');
+          if (section) section.hidden = false;
           grid.innerHTML = latest.map(a => `
             <a class="article-card reveal" href="/article?open=${encodeURIComponent(a.id)}">
               <div class="article-card__body">
@@ -915,7 +975,7 @@
             </a>
           `).join('');
         } catch (e) {
-          grid.innerHTML = '<p class="topic-desc">Не удалось загрузить статьи.</p>';
+          /* раздел остаётся скрытым */
         }
       })();
     </script>
@@ -992,15 +1052,24 @@
         if (!cta) return;
         const planTier = card.dataset.planTier;
 
+        const guestHint = card.querySelector('[data-guest-hint]');
+
         function refreshCtaState() {
           const user = getCachedUser();
           const currentTier = getActiveServerTier(user);
-          if (user && currentTier === planTier) {
+          if (guestHint) guestHint.hidden = !!user;
+          if (!user) {
+            // Гость: сначала регистрация, потом возврат сюда к оплате (auth.js
+            // уводит по ?next=/#pricing).
+            cta.textContent = 'Зарегистрироваться и выбрать';
+            cta.removeAttribute('aria-disabled');
+            cta.classList.remove('price-card__cta--current');
+          } else if (currentTier === planTier) {
             cta.textContent = 'Ваш текущий тариф';
             cta.setAttribute('aria-disabled', 'true');
             cta.classList.add('price-card__cta--current');
           } else {
-            cta.textContent = 'Выбрать';
+            cta.textContent = 'Перейти к оплате';
             cta.removeAttribute('aria-disabled');
             cta.classList.remove('price-card__cta--current');
           }
@@ -1009,7 +1078,7 @@
 
         cta.addEventListener('click', async (e) => {
           const user = getCachedUser();
-          if (!user || typeof LexPrepApi === 'undefined') return; // гость — обычный переход на #cta
+          if (!user || typeof LexPrepApi === 'undefined') return; // гость — обычный переход на регистрацию
 
           e.preventDefault();
           if (cta.getAttribute('aria-disabled') === 'true') return;
@@ -1056,6 +1125,51 @@
           }
         });
       });
+
+      // Пробный период «Про» на 14 дней за 1 ₽ (supabase/trial.sql). Гость
+      // видит баннер с переходом на регистрацию; вошедший — только если
+      // ещё имеет право на пробный (иначе баннер прячем).
+      (async function initTrialBanner() {
+        const banner = document.getElementById('trialBanner');
+        const btn = document.getElementById('trialBannerBtn');
+        const hint = document.getElementById('trialBannerHint');
+        if (!banner || !btn) return;
+        const user = getCachedUser();
+        if (!user || typeof LexPrepApi === 'undefined') return;
+
+        let eligible = false;
+        try { eligible = await LexPrepApi.getTrialEligibility(); } catch (e) { eligible = false; }
+        if (!eligible) {
+          banner.hidden = true;
+          return;
+        }
+        hint.textContent = 'Спишем 1 ₽ и привяжем карту для автопродления. Отменить можно в профиле.';
+        if (new URLSearchParams(location.search).get('trial') === '1') {
+          banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const until = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+            .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+          const confirmed = await LexPrepDialog.confirm(
+            `Сейчас спишем 1 ₽ — тариф «Про» включится на 14 дней, до ${until}.\n\n` +
+            `${until} подписка продлится автоматически: 600 ₽ за месяц «Про», дальше — каждый месяц. ` +
+            'Чтобы не продлевать, отмените подписку в профиле до этой даты — больше ничего не спишется.',
+            'Пробный период за 1 ₽'
+          );
+          if (!confirmed) return;
+          const original = btn.textContent;
+          btn.textContent = 'Открываем оплату…';
+          btn.style.pointerEvents = 'none';
+          try {
+            window.location.href = await LexPrepApi.initSubscriptionPayment({ trial: true });
+          } catch (err) {
+            alert('Ошибка: ' + err.message);
+            btn.textContent = original;
+            btn.style.pointerEvents = '';
+          }
+        });
+      })();
 
       // Скидка по промокоду: показываем её на платных тарифах — Т-Касса
       // спишет уже уменьшенную сумму (см. payments-init).

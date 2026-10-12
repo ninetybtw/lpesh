@@ -145,26 +145,38 @@ function initCoinBadge() {
   }
 }
 
-/* ---------------- Online users counter (demo, no real backend/websocket yet) ---------------- */
+/* ---------------- Счётчик «онлайн» (supabase/online.sql) ---------------- */
+// Настоящее число: сколько вошедших пользователей были активны за последние
+// 5 минут. Пока число не пришло (или сервер его не отдаёт) — плашку прячем,
+// без прочерков и выдуманных цифр.
 function initOnlineCounter() {
   const countEl = document.getElementById('onlineCount');
-  if (!countEl) return;
+  const badge = document.getElementById('onlineBadge');
+  if (!countEl || !badge || typeof LexPrepApi === 'undefined' || !LexPrepApi.getOnlineCount) return;
+  badge.hidden = true;
 
-  function computeBase() {
-    const hour = new Date().getHours();
-    const activity = hour >= 8 && hour <= 23 ? 1 : 0.4;
-    return Math.round((60 + Math.random() * 60) * activity);
+  async function ping() {
+    if (document.visibilityState !== 'visible') return;
+    try { await LexPrepApi.pingPresence(); } catch (e) { /* не критично */ }
   }
 
-  let current = Number(sessionStorage.getItem('lexprep_online_count')) || computeBase();
-  countEl.textContent = current;
+  async function refresh() {
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const count = await LexPrepApi.getOnlineCount();
+      countEl.textContent = String(count);
+      badge.hidden = count < 1;
+    } catch (e) {
+      badge.hidden = true;
+    }
+  }
 
-  setInterval(() => {
-    const drift = Math.round((Math.random() - 0.5) * 6);
-    current = Math.max(12, current + drift);
-    sessionStorage.setItem('lexprep_online_count', String(current));
-    countEl.textContent = current;
-  }, 4000 + Math.random() * 3000);
+  ping().then(refresh);
+  setInterval(ping, 2 * 60 * 1000);
+  setInterval(refresh, 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') ping().then(refresh);
+  });
 }
 
 /* ---------------- Header shadow on scroll ---------------- */
@@ -913,11 +925,37 @@ function initRevealOnScroll() {
   items.forEach(item => observer.observe(item));
 }
 
+// Ссылки «Админка»/«Модерация» в меню профиля добавляем только тем, у кого
+// есть права, — в разметке страницы их нет. Сами данные админки и модерации
+// защищены на сервере (RLS и проверки в RPC), ссылка — лишь удобство.
+function syncStaffLinks(user) {
+  const dropdown = document.getElementById('profileDropdown');
+  if (!dropdown) return;
+  const links = [
+    { href: '/admin', text: 'Админка', show: !!(user && user.isAdmin) },
+    { href: '/moderator', text: 'Модерация', show: !!(user && (user.isModerator || user.isAdmin)) }
+  ];
+  links.slice().reverse().forEach(l => {
+    let a = dropdown.querySelector(`a[data-staff-link="${l.href}"]`);
+    if (l.show && !a) {
+      a = document.createElement('a');
+      a.href = l.href;
+      a.className = 'profile-dropdown__item';
+      a.dataset.staffLink = l.href;
+      a.textContent = l.text;
+      dropdown.prepend(a);
+    } else if (!l.show && a) {
+      a.remove();
+    }
+  });
+}
+
 function applyAuthUi(user) {
   document.body.classList.toggle('is-authed', !!user);
   document.body.classList.toggle('is-guest', !user);
   document.body.classList.toggle('is-admin', !!(user && user.isAdmin));
   document.body.classList.toggle('is-moderator', !!(user && (user.isModerator || user.isAdmin)));
+  syncStaffLinks(user);
 
   if (user) {
     const nameEl = document.getElementById('profileName');

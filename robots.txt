@@ -1,8 +1,4 @@
 User-agent: *
-Disallow: /admin
-Disallow: /moderator
-Disallow: /profile
-Disallow: /create-test
-Disallow: /write-article
+Allow: /
 
 Sitemap: https://lexprep.ru/sitemap.xml

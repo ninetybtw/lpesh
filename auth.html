@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="./styles/global.css?v=20260927050000">
-<link rel="stylesheet" href="./styles/style.css?v=20261007010000">
+<link rel="stylesheet" href="./styles/style.css?v=20261012120000">
 <link rel="stylesheet" href="./styles/auth.css?v=20260927040000">
 </head>
 <body>
@@ -33,9 +33,9 @@
   <div class="container header__inner">
     <a href="/" class="logo"><img class="logo__icon" src="assets/favicon/apple-touch-icon.png" alt="LexPrep" /><span class="logo__text">LexPrep</span></a>
     <div class="header__actions">
-      <div class="online-badge" id="onlineBadge" title="Пользователей на сайте сейчас">
+      <div class="online-badge" id="onlineBadge" title="Сколько пользователей занимались на сайте за последние 5 минут" hidden>
         <span class="online-badge__dot"></span>
-        <span id="onlineCount">–</span> онлайн
+        <span id="onlineCount"></span> онлайн
       </div>
       <a href="/" class="btn btn--ghost">На главную</a>
     </div>
@@ -94,11 +94,11 @@
         <div class="auth-card__head">
           <h2 class="auth-card__title">
             <span data-mode-text="login">С возвращением!</span>
-            <span data-mode-text="register">Создай аккаунт</span>
+            <span data-mode-text="register" hidden>Создай аккаунт</span>
           </h2>
           <p class="auth-card__sub">
             <span data-mode-text="login">Войди, чтобы продолжить подготовку с того же места.</span>
-            <span data-mode-text="register">Пара минут — и весь прогресс начнёт сохраняться.</span>
+            <span data-mode-text="register" hidden>Пара минут — и весь прогресс начнёт сохраняться.</span>
           </p>
         </div>
 
@@ -164,7 +164,6 @@
             </div>
             <ul class="password-rules" id="passwordRules">
                     <li class="password-rules__item" data-rule="length"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Не менее 8 символов</li>
-                    <li class="password-rules__item" data-rule="letter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Есть буква</li>
                     <li class="password-rules__item" data-rule="digit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Есть цифра</li>
                     <li class="password-rules__item" data-rule="case"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Заглавная и строчная</li>
                   </ul>
@@ -193,7 +192,7 @@
           <label class="auth-checkbox">
             <input type="checkbox" required>
             <span class="auth-checkbox__box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>
-            <span>Согласен с <a href="/legal#privacy" target="_blank" rel="noopener">Политикой конфиденциальности</a> и <a href="/legal#terms" target="_blank" rel="noopener">Пользовательским соглашением</a> (офертой)</span>
+            <span>Согласен с <a href="/legal#privacy" target="_blank" rel="noopener">Политикой конфиденциальности</a> и <a href="/legal#terms" target="_blank" rel="noopener">Пользовательским соглашением</a></span>
           </label>
           <label class="auth-checkbox">
             <input type="checkbox" required>
@@ -283,7 +282,6 @@
                 </div>
                 <ul class="password-rules" id="resetPasswordRules">
                     <li class="password-rules__item" data-rule="length"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Не менее 8 символов</li>
-                    <li class="password-rules__item" data-rule="letter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Есть буква</li>
                     <li class="password-rules__item" data-rule="digit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Есть цифра</li>
                     <li class="password-rules__item" data-rule="case"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Заглавная и строчная</li>
                   </ul>
@@ -318,10 +316,10 @@
 
 <script src="validation.js?v=20260831160000"></script>
 <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20261006140000"></script>
+    <script src="api.js?v=20261012120000"></script>
 <script src="dialog.js?v=20260924150000"></script>
-<script src="script.js?v=20260930040000"></script>
-<script src="auth.js?v=20261006120000"></script>
+<script src="script.js?v=20261012120000"></script>
+<script src="auth.js?v=20261012120000"></script>
 <script src="cookie-consent.js?v=20260930040000"></script>
 </body>
 </html>

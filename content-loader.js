@@ -167,7 +167,8 @@ function lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTo
         theory: `<div class="theory">${marked.parse(t.body_markdown || '')}</div>`,
         test: lexprepConvertQuiz(quizByTopic[t.id]),
         cards: lexprepConvertFlashcards(cardsByTopic[t.id]),
-        practice: practiceHtml
+        practice: practiceHtml,
+        updatedAt: t.updated_at || null
       };
     });
     return { id: d.id, title: d.title, topics: dbTopics };

@@ -22,7 +22,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { verifyNotificationToken, PERIOD_DAYS, TIER_TITLES, PERIOD_TITLES } from '../_shared/tbank.ts';
+import { verifyNotificationToken, PERIOD_DAYS, TIER_TITLES, PERIOD_TITLES, PRICES_KOPECKS, TRIAL_DAYS } from '../_shared/tbank.ts';
 
 serve(async (req) => {
   try {
@@ -43,7 +43,7 @@ serve(async (req) => {
     const orderId = String(payload.OrderId || '');
     const { data: payment, error: findErr } = await adminClient
       .from('payments')
-      .select('id, user_id, plan_tier, billing_period, discount_percent')
+      .select('id, user_id, plan_tier, billing_period, discount_percent, is_trial, status')
       .eq('id', orderId)
       .maybeSingle();
     if (findErr) throw findErr;
@@ -55,6 +55,12 @@ serve(async (req) => {
     }
 
     const status = String(payload.Status || '');
+
+    if (status === 'CONFIRMED' && payment.status === 'confirmed') {
+      // Банк повторил уже обработанное уведомление — второй раз подписку
+      // не продлеваем.
+      return new Response('OK', { status: 200 });
+    }
 
     if (status === 'CONFIRMED') {
       const { data: profile, error: profileErr } = await adminClient
@@ -70,7 +76,8 @@ serve(async (req) => {
       // даты её окончания (не теряем оплаченные дни), иначе — от текущего
       // момента (новая подписка или апгрейд с другого тарифа).
       const base = (profile.plan_tier === payment.plan_tier && currentExpiry > now) ? currentExpiry : now;
-      const days = PERIOD_DAYS[payment.billing_period] || 30;
+      // Пробный период — 14 дней, дальше автосписание за обычный месяц.
+      const days = payment.is_trial ? TRIAL_DAYS : (PERIOD_DAYS[payment.billing_period] || 30);
       const newExpiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
 
       const rebillId = payload.RebillId ? String(payload.RebillId) : null;
@@ -92,6 +99,8 @@ serve(async (req) => {
           // сбрасываем, чтобы напоминания сработали заново перед новой.
           plan_expiry_notice_3d_sent: false,
           plan_expiry_notice_1d_sent: false,
+          plan_is_trial: !!payment.is_trial,
+          ...(payment.is_trial ? { trial_used_at: new Date().toISOString() } : {}),
           // Скидка по промокоду применена к этой оплате — использована.
           ...(payment.discount_percent ? { pending_discount_percent: 0 } : {}),
           ...(rebillId ? { tbank_rebill_id: rebillId } : {})
@@ -111,10 +120,18 @@ serve(async (req) => {
       if (updatePaymentErr) throw updatePaymentErr;
 
       const expiresLabel = new Date(newExpiresAt).toLocaleDateString('ru-RU');
-      const { error: notifyErr } = await adminClient.from('notifications').insert({
+      const tierTitle = TIER_TITLES[payment.plan_tier] || payment.plan_tier;
+      const fullPrice = (PRICES_KOPECKS[payment.plan_tier]?.[payment.billing_period] || 0) / 100;
+      const { error: notifyErr } = await adminClient.from('notifications').insert(payment.is_trial ? {
         user_id: payment.user_id,
         type: 'plan_activated',
-        title: `Поздравляем, вы оформили тариф «${TIER_TITLES[payment.plan_tier] || payment.plan_tier}»!`,
+        title: `Пробный период «${tierTitle}» включён до ${expiresLabel}`,
+        body: `${expiresLabel} подписка продлится автоматически: ${fullPrice} ₽ за месяц «${tierTitle}». Не хотите продолжать — отмените подписку в профиле до этой даты, списания не будет.`,
+        link: 'profile.html#subscription'
+      } : {
+        user_id: payment.user_id,
+        type: 'plan_activated',
+        title: `Поздравляем, вы оформили тариф «${tierTitle}»!`,
         body: `Оплата (${PERIOD_TITLES[payment.billing_period] || payment.billing_period}) прошла успешно. Подписка активна до ${expiresLabel}.`,
         link: 'profile.html#subscription'
       });

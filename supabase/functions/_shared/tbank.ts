@@ -28,6 +28,13 @@ export const TIER_TITLES: Record<string, string> = { pro: 'Про', max: 'Мак
 export const PERIOD_TITLES: Record<string, string> = { monthly: 'помесячная', annual: 'годовая' };
 export const PERIOD_DAYS: Record<string, number> = { monthly: 30, annual: 365 };
 
+// Пробный период для новых пользователей: «Про» на 14 дней за 1 ₽ (см.
+// supabase/trial.sql). Платёж рекуррентный — привязывает карту, дальше
+// payments-autocharge продлевает помесячную «Про» по полной цене.
+export const TRIAL_TIER = 'pro';
+export const TRIAL_KOPECKS = 100;
+export const TRIAL_DAYS = 14;
+
 async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest('SHA-256', bytes);

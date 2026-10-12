@@ -20,7 +20,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { tbankInit, type TBankReceiptItem, PRICES_KOPECKS, TIER_TITLES, PERIOD_TITLES } from '../_shared/tbank.ts';
+import { tbankInit, type TBankReceiptItem, PRICES_KOPECKS, TIER_TITLES, PERIOD_TITLES, TRIAL_TIER, TRIAL_KOPECKS, TRIAL_DAYS } from '../_shared/tbank.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,9 +53,22 @@ serve(async (req) => {
     const { data: { user: caller } } = await callerClient.auth.getUser();
     if (!caller) throw new Error('Not authenticated');
 
-    const { planTier, billingPeriod } = await req.json();
+    const body = await req.json();
+    const trial = body.trial === true;
+    // Пробный период — всегда «Про» помесячно (после него автосписание за
+    // месяц «Про» по полной цене), что бы ни прислал фронт.
+    const planTier = trial ? TRIAL_TIER : body.planTier;
+    const billingPeriod = trial ? 'monthly' : body.billingPeriod;
     if (!PRICES_KOPECKS[planTier]) throw new Error('planTier должен быть "pro" или "max"');
     if (!PERIOD_TITLES[billingPeriod]) throw new Error('billingPeriod должен быть "monthly" или "annual"');
+
+    if (trial) {
+      // Та же проверка, что видит пользователь на сайте (supabase/trial.sql),
+      // от его имени — один источник правды.
+      const { data: eligible, error: eligibleErr } = await callerClient.rpc('trial_eligible');
+      if (eligibleErr) throw eligibleErr;
+      if (!eligible) throw new Error('Пробный период доступен только тем, кто ещё не оформлял подписку и не брал пробный период.');
+    }
 
     const adminClient = createClient(supabaseUrl, serviceKey);
 
@@ -71,11 +84,14 @@ serve(async (req) => {
     // Скидка по промокоду (redeem_promo_code) — на эту оплату. Списывается
     // с профиля только после успешной оплаты (payments-notification), так
     // что брошенная оплата скидку не сжигает. Минимум — 1 ₽ (требование банка).
-    const discountPercent = Math.min(99, Math.max(0, Number(profile.pending_discount_percent) || 0));
+    // Пробный платёж скидку не тратит — она останется на первую полную оплату.
+    const discountPercent = trial ? 0 : Math.min(99, Math.max(0, Number(profile.pending_discount_percent) || 0));
     const fullKopecks = PRICES_KOPECKS[planTier][billingPeriod];
-    const amountKopecks = Math.max(100, Math.round(fullKopecks * (100 - discountPercent) / 100));
-    const description = `Подписка LexPrep «${TIER_TITLES[planTier]}», ${PERIOD_TITLES[billingPeriod]} оплата`
-      + (discountPercent ? `, скидка ${discountPercent}%` : '');
+    const amountKopecks = trial ? TRIAL_KOPECKS : Math.max(100, Math.round(fullKopecks * (100 - discountPercent) / 100));
+    const description = trial
+      ? `Пробный период LexPrep «${TIER_TITLES[planTier]}» на ${TRIAL_DAYS} дней`
+      : `Подписка LexPrep «${TIER_TITLES[planTier]}», ${PERIOD_TITLES[billingPeriod]} оплата`
+        + (discountPercent ? `, скидка ${discountPercent}%` : '');
 
     const { data: paymentRow, error: insertErr } = await adminClient
       .from('payments')
@@ -85,6 +101,7 @@ serve(async (req) => {
         billing_period: billingPeriod,
         amount_kopecks: amountKopecks,
         discount_percent: discountPercent,
+        is_trial: trial,
         status: 'pending'
       })
       .select('id')

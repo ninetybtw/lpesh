@@ -546,7 +546,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
             ${parts.length ? `<span>${parts.length <= 3 ? esc(parts.join(' и ')) : `${parts.length} ${plural(parts.length, 'раздел', 'раздела', 'разделов')}`}</span>` : ''}
             <span>${ICONS.clock}≈ ${readingTime(words)} чтения</span>
             ${c.actualized
-              ? `<span class="lib-col__chip--ok">${ICONS.check}Нормы актуальны</span>`
+              ? `<span class="lib-col__chip--ok">${ICONS.check}Нормы актуальны${c.updatedAt ? ` · обновлено ${esc(new Date(c.updatedAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</span>`
               : '<span class="lib-col__chip--warn">Нормы сверяются с актуальной редакцией</span>'}
           </div>
           <div class="lib-col__progress">

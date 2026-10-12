@@ -130,6 +130,10 @@ STYLE.CSS — компоненты и секции страницы
   white-space: nowrap;
 }
 
+.online-badge[hidden] {
+  display: none;
+}
+
 .online-badge__dot {
   width: 8px;
   height: 8px;
@@ -2136,7 +2140,125 @@ STYLE.CSS — компоненты и секции страницы
   }
 }
 
+.hero__trial {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+.hero__trial a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ---------------- PRICING ---------------- */
+.trial-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto 28px;
+  padding: 24px 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-white));
+}
+.trial-banner__badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+.trial-banner__title {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.trial-banner__text p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+.trial-banner__text b {
+  color: var(--color-text);
+}
+.trial-banner__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  max-width: 240px;
+  text-align: center;
+}
+.trial-banner__action small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+@media (max-width: 760px) {
+  .trial-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+  }
+  .trial-banner__action {
+    max-width: none;
+  }
+}
+.price-card__annual-plus {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  white-space: nowrap;
+}
+.price-card__cta-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.pricing__guarantees {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 980px;
+  margin: 24px auto 0;
+  padding: 0;
+  list-style: none;
+}
+.pricing__guarantees li {
+  padding: 16px 18px;
+  border-radius: var(--radius-md, 14px);
+  border: 1px solid var(--color-border);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.pricing__guarantees b {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+.pricing__guarantees a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+@media (max-width: 760px) {
+  .pricing__guarantees {
+    grid-template-columns: 1fr;
+  }
+}
 .pricing__payment-note {
   display: flex;
   align-items: center;
@@ -3147,6 +3269,9 @@ body.is-guest .cta-section[data-auth="guest"] {
 }
 body.is-authed .cta-section[data-auth="guest"] {
   display: none !important;
+}
+body.is-guest .hero__trial[data-auth="guest"] {
+  display: block !important;
 }
 
 /* видно только администраторам (profiles.is_admin = true) */
