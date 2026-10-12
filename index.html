@@ -51,7 +51,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
-    <link rel="stylesheet" href="./styles/style.css?v=20261012120000" />
+    <link rel="stylesheet" href="./styles/style.css?v=20261012160000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
   <body>
@@ -571,14 +571,16 @@
               <p class="price-card__annual" data-price-annual>5 040 ₽ раз в год</p>
 
               <ul class="price-card__list">
-                <li>Все дисциплины: конспекты и карточки без ограничений</li>
-                <li>Тесты с разбором ответов — 3 попытки в день <span class="price-card__annual-plus">5 при оплате за год</span></li>
+                <li>Все конспекты и карточки без ограничений</li>
+                <li>Карточки — полная колода, интервальное повторение</li>
+                <li data-plan-monthly hidden>Тесты — 3 попытки в день с разбором ответов</li>
+                <li data-plan-annual>Тесты — 5 попыток в день с разбором ответов</li>
                 <li>Пробный экзамен — 3 попытки в месяц</li>
-                <li>Библиотека — сборники экзаменационных билетов</li>
-                <li>ИИ-консультант — 5 запросов в день</li>
-                <li>Дуэли — 3 в день <span class="price-card__annual-plus">5 при оплате за год</span></li>
-                <li>Турниры без взноса — 1 в месяц <span class="price-card__annual-plus">3 при оплате за год</span></li>
-                <li>При оплате за год ещё продвинутый ИИ-консультант: 10 запросов в день, можно прикрепить свой файл</li>
+                <li>Библиотека — сборники билетов по дисциплинам</li>
+                <li data-plan-monthly hidden>ИИ-консультант — 5 запросов в день</li>
+                <li data-plan-annual>ИИ-консультант — 5 запросов в день и продвинутый, с файлами, — ещё 10</li>
+                <li data-plan-monthly hidden>Дуэли — 3 в день, турниры — 1 в месяц, без взноса</li>
+                <li data-plan-annual>Дуэли — 5 в день, турниры — 3 в месяц, без взноса</li>
                 <li>Публикация своих тестов и статей</li>
                 <li>Без рекламы</li>
               </ul>
@@ -602,12 +604,13 @@
               <p class="price-card__annual" data-price-annual>9 600 ₽ раз в год</p>
 
               <ul class="price-card__list">
-                <li>Всё из «Про», а также:</li>
-                <li>Тесты, пробные экзамены и дуэли — без ограничений</li>
-                <li>ИИ-консультант — 35 запросов в день</li>
-                <li>Турниры без взноса — 5 в месяц <span class="price-card__annual-plus">10 при оплате за год</span></li>
-                <li>При оплате за год ещё продвинутый ИИ-консультант: 50 запросов в день, можно прикрепить свой файл</li>
-                <li>Скачивание конспектов в PDF</li>
+                <li>Всё из Про</li>
+                <li data-plan-monthly hidden>ИИ-консультант — 35 запросов в день</li>
+                <li data-plan-annual>ИИ-консультант — 35 запросов в день и продвинутый, с файлами, — ещё 50</li>
+                <li>Возможность скачивания PDF-конспектов</li>
+                <li>Безлимит: тесты, пробные экзамены, дуэли</li>
+                <li data-plan-monthly hidden>Турниры — до 5 участий в месяц, без взноса</li>
+                <li data-plan-annual>Турниры — до 10 участий в месяц, без взноса</li>
               </ul>
               <a href="/auth?next=%2F%23pricing#register" class="btn btn--primary btn--block price-card__cta">Зарегистрироваться и выбрать</a>
               <p class="price-card__cta-hint" data-guest-hint>Оплата — сразу после регистрации, на этой же странице</p>
@@ -1135,14 +1138,17 @@
         const hint = document.getElementById('trialBannerHint');
         if (!banner || !btn) return;
         const user = getCachedUser();
-        if (!user || typeof LexPrepApi === 'undefined') return;
+        if (!user) return; // гость видит баннер с переходом на регистрацию
 
+        // Вошедшему баннер сразу прячем и показываем, только если пробный
+        // ему действительно доступен: нет действующей подписки, не админ и
+        // сервер подтвердил право (никогда не платил и не брал пробный).
+        banner.hidden = true;
+        if (user.isAdmin || getActiveServerTier(user) !== 'basic' || typeof LexPrepApi === 'undefined') return;
         let eligible = false;
         try { eligible = await LexPrepApi.getTrialEligibility(); } catch (e) { eligible = false; }
-        if (!eligible) {
-          banner.hidden = true;
-          return;
-        }
+        if (!eligible) return;
+        banner.hidden = false;
         hint.textContent = 'Спишем 1 ₽ и привяжем карту для автопродления. Отменить можно в профиле.';
         if (new URLSearchParams(location.search).get('trial') === '1') {
           banner.scrollIntoView({ behavior: 'smooth', block: 'center' });

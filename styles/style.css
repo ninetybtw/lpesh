@@ -2164,6 +2164,9 @@ STYLE.CSS — компоненты и секции страницы
   border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-white));
 }
+.trial-banner[hidden] {
+  display: none;
+}
 .trial-banner__badge {
   display: inline-block;
   margin-bottom: 6px;
@@ -2210,17 +2213,6 @@ STYLE.CSS — компоненты и секции страницы
   .trial-banner__action {
     max-width: none;
   }
-}
-.price-card__annual-plus {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  white-space: nowrap;
 }
 .price-card__cta-hint {
   margin: 8px 0 0;
