@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fresh = await LexPrepApi.me();
         const cached = JSON.parse(localStorage.getItem('lexprep_user') || 'null') || {};
         localStorage.setItem('lexprep_user', JSON.stringify({ ...cached, ...fresh }));
+            if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
       } catch (e) { /* профиль обновится при следующей загрузке страницы */ }
       let message;
       if (result.type === 'subscription') {
@@ -164,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showConfirmCodeForm(result.email);
           } else {
             localStorage.setItem('lexprep_user', JSON.stringify(result.user));
+            if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
             if (successText) successText.textContent = 'Готово, входим…';
             if (success) success.classList.add('is-visible');
             await redeemPromoIfEntered();
@@ -180,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const user = await LexPrepApi.login({ email, password });
           localStorage.setItem('lexprep_user', JSON.stringify(user));
+            if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
           if (successText) successText.textContent = 'Готово, входим…';
           if (success) success.classList.add('is-visible');
           setTimeout(() => { window.location.href = afterAuthUrl(); }, 900);
@@ -281,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const user = await LexPrepApi.confirmSignupCode({ email: confirmCodeEmail, code });
         localStorage.setItem('lexprep_user', JSON.stringify(user));
+            if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
         const otpOverlay = document.getElementById('otpOverlay');
         if (otpOverlay) otpOverlay.classList.remove('is-visible');
         if (successText) successText.textContent = 'Готово, входим…';
@@ -490,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
           newPassword: resetNewPasswordInput.value
         });
         localStorage.setItem('lexprep_user', JSON.stringify(user));
+            if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
         closeResetOverlay();
         if (successText) successText.textContent = 'Пароль обновлён, входим…';
         if (success) success.classList.add('is-visible');

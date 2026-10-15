@@ -1011,9 +1011,13 @@ function initDangerZone() {
       console.error('Не удалось завершить сессию на сервере:', err.message);
     }
 
-    Object.keys(localStorage)
-      .filter(key => key.startsWith('lexprep_'))
-      .forEach(key => localStorage.removeItem(key));
+    // Стираем данные только этого аккаунта — прогресс других аккаунтов на
+    // этом устройстве (account-scope.js) не трогаем.
+    if (window.LexPrepAccountScope) {
+      LexPrepAccountScope.forgetCurrent();
+    } else {
+      localStorage.removeItem('lexprep_user');
+    }
     window.location.href = '/';
   });
 }

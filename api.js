@@ -1473,10 +1473,15 @@ const LexPrepApi = (function () {
      profiles закрыта RLS для чужих строк, view отдаёт только безопасные
      публичные поля в обход этого ограничения. */
 
+  // Опыт на сервере только растёт: в «чистом» браузере локальный опыт может
+  // быть меньше настоящего, и обычная перезапись обнулила бы рейтинг.
   async function syncXp(xp) {
     const { data: { session } } = await client.auth.getSession();
     if (!session) return;
-    await client.from('profiles').update({ xp }).eq('id', session.user.id);
+    const value = Math.max(0, Math.floor(Number(xp) || 0));
+    await client.from('profiles').update({ xp: value })
+      .eq('id', session.user.id)
+      .or(`xp.is.null,xp.lt.${value}`);
   }
 
   async function fetchLeaderboard(limit = 50) {

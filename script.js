@@ -1021,9 +1021,10 @@ function initAuthState() {
     logoutBtn.addEventListener('click', () => {
       const finish = () => {
         localStorage.removeItem('lexprep_user');
-        // Иначе на общем устройстве следующий вошедший увидит переписку с
-        // ИИ-консультантом от прошлого аккаунта (см. app.js initAiChat).
-        localStorage.removeItem('lexprep_ai_chat_history');
+        // Прогресс, монеты, заметки, переписка с ИИ и т.п. этого аккаунта
+        // откладываются до его следующего входа — следующий вошедший на этом
+        // устройстве их не увидит (account-scope.js).
+        if (window.LexPrepAccountScope) LexPrepAccountScope.sync();
         window.location.reload();
       };
       if (typeof LexPrepApi !== 'undefined') {
