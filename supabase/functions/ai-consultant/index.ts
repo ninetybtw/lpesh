@@ -17,6 +17,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callGigaChat } from '../_shared/gigachat.ts';
+import { webSearchTool, WEB_SEARCH_PROMPT } from '../_shared/websearch.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -121,12 +122,15 @@ serve(async (req) => {
       scope: gigaScope,
       model: MODEL,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: `${SYSTEM_PROMPT} ${WEB_SEARCH_PROMPT}` },
         ...cleanHistory,
         { role: 'user', content: message }
       ],
       temperature: 0.4,
-      maxTokens: 700
+      maxTokens: 900,
+      // Поиск в интернете (_shared/websearch.ts) — модель вызывает его сама.
+      functions: [webSearchTool()],
+      maxCalls: 2
     });
 
     if (usingExtraRequest) {

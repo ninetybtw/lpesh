@@ -9,7 +9,12 @@
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="assets/favicon/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="LexPrep" />
     <script>
       (function () {
         const saved = localStorage.getItem("lexprep-theme");
@@ -22,7 +27,7 @@
         );
       })();
     </script>
-    <script src="/account-scope.js?v=20261015120000"></script>
+    <script src="/account-scope.js?v=20261016120000"></script>
     <title>LexPrep</title>
     <meta
       name="description"
@@ -51,7 +56,7 @@
     <!-- Шрифт грузится без блокировки первой отрисовки (display=swap). -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
-    <link rel="stylesheet" href="./styles/global.css?v=20260927050000" />
+    <link rel="stylesheet" href="./styles/global.css?v=20261016120000" />
     <link rel="stylesheet" href="./styles/style.css?v=20261012160000" />
     <link rel="stylesheet" href="./styles/notifications.css?v=20260927030000" />
   </head>
@@ -787,6 +792,16 @@
             </div>
             <div class="accordion__item">
               <button class="accordion__trigger">
+                Есть ли приложение для телефона?<span class="accordion__icon">+</span>
+              </button>
+              <div class="accordion__panel">
+                <p>
+                  Да: LexPrep можно установить на iPhone и Android прямо с сайта, без App Store и Google Play. На iPhone откройте сайт в Safari, нажмите «Поделиться» и выберите «На экран „Домой“». На Android в Chrome нажмите ⋮ и выберите «Установить приложение» или «Добавить на главный экран». Значок появится на главном экране, а LexPrep будет открываться на весь экран, как обычное приложение. <a href="#" data-install-app>Подробная инструкция</a>
+                </p>
+              </div>
+            </div>
+            <div class="accordion__item">
+              <button class="accordion__trigger">
                 Как отменить подписку?<span class="accordion__icon">+</span>
               </button>
               <div class="accordion__panel">
@@ -924,6 +939,7 @@
           <a href="/article">Статьи</a>
           <a href="#pricing">Тарифы</a>
           <a href="#faq">Вопросы</a>
+          <a href="#" data-install-app>Скачать приложение (iOS и Android)</a>
         </div>
         <div class="footer__col">
           <h4>Контакты</h4>
@@ -949,7 +965,7 @@
     <script src="api.js?v=20261015120000"></script>
     <script src="dialog.js?v=20260924150000"></script>
     <script src="notifications.js?v=20260930040000"></script>
-    <script src="script.js?v=20261015120000"></script>
+    <script src="script.js?v=20261016120000"></script>
     <script>
       (async function loadHomeArticles() {
         const grid = document.getElementById('homeArticlesGrid');

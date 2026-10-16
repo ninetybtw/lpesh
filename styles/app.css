@@ -609,6 +609,34 @@ body {
   background: rgba(111, 135, 255, 0.24);
 }
 
+.topic-tab--ticket {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  background: rgba(111, 135, 255, 0.14);
+  color: #d3d8ee;
+  text-decoration: none;
+}
+.topic-tab--ticket[hidden] {
+  display: none;
+}
+.topic-tab--ticket svg {
+  width: 15px;
+  height: 15px;
+}
+.topic-tab--ticket:hover {
+  background: rgba(111, 135, 255, 0.24);
+  color: #fff;
+}
+.topic-tab--ticket:not([hidden]) ~ .topic-tab--pdf {
+  margin-left: 0;
+}
+[data-theme="light"] .topic-tab--ticket {
+  background: #e9eeff;
+  color: var(--color-primary-dark);
+}
+
 .note-box {
   background: rgba(111, 135, 255, 0.08);
   border: 1px solid rgba(111, 135, 255, 0.18);
@@ -2921,6 +2949,15 @@ a.topic-meta__chip--fresh:hover {
   }
   .app-toolbar__label--short {
     display: inline;
+  }
+  /* Экзамен, библиотека и дуэли уже есть в нижней панели (script.js
+     initTabbar) — сверху остаётся только поиск. Турниры открываются со
+     страницы дуэлей. Гостям нижней панели нет — им плитки оставляем. */
+  body.has-tabbar .app-toolbar {
+    display: block;
+  }
+  body.has-tabbar .app-toolbar__exam {
+    display: none;
   }
 
   .gamify-bar {

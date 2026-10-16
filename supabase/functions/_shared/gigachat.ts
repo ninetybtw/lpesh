@@ -63,6 +63,62 @@ async function getAccessToken(authKey: string, scope: string): Promise<string> {
   return cachedToken.value;
 }
 
+type GigaMessage = Record<string, unknown> & { role: string; content: string };
+
+export type GigaFunction = {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  run: (args: Record<string, unknown>) => Promise<unknown>;
+};
+
+async function postChat(accessToken: string, body: Record<string, unknown>): Promise<Response> {
+  const startedAt = Date.now();
+  console.log('[gigachat] callGigaChat: старт запроса к', CHAT_URL);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25_000);
+  try {
+    const r = await fetch(CHAT_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    console.log('[gigachat] callGigaChat: ответ получен через', Date.now() - startedAt, 'мс, статус', r.status);
+    return r;
+  } catch (e) {
+    console.error('[gigachat] callGigaChat: fetch упал через', Date.now() - startedAt, 'мс —', e?.name, e?.message);
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function chatOnce(opts: { authKey: string; scope: string }, body: Record<string, unknown>) {
+  let res = await postChat(await getAccessToken(opts.authKey, opts.scope), body);
+  if (res.status === 401) {
+    // Токен мог протухнуть раньше заявленного срока — получаем новый и
+    // пробуем один раз ещё, прежде чем сдаться.
+    cachedToken = null;
+    res = await postChat(await getAccessToken(opts.authKey, opts.scope), body);
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(`GigaChat API error (${res.status}): ${text.slice(0, 300)}`) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
+  }
+  return await res.json();
+}
+
+// Ответ модели. Если переданы functions, модель может сама вызвать их
+// (function calling GigaChat): мы выполняем функцию, отдаём результат и
+// просим ответ дальше — не больше maxCalls раз. Если сервис не принял
+// запрос с функциями, повторяем обычным запросом без них.
 export async function callGigaChat(opts: {
   authKey: string;
   scope: string;
@@ -70,56 +126,68 @@ export async function callGigaChat(opts: {
   messages: Array<{ role: string; content: string }>;
   temperature?: number;
   maxTokens?: number;
+  functions?: GigaFunction[];
+  maxCalls?: number;
 }): Promise<string> {
-  const token = await getAccessToken(opts.authKey, opts.scope);
+  const base = {
+    model: opts.model,
+    temperature: opts.temperature ?? 0.4,
+    max_tokens: opts.maxTokens ?? 700
+  };
+  const messages: GigaMessage[] = opts.messages.map(m => ({ ...m }));
+  const functions = opts.functions || [];
+  const maxCalls = opts.maxCalls ?? 2;
 
-  const doCall = async (accessToken: string) => {
-    const startedAt = Date.now();
-    console.log('[gigachat] callGigaChat: старт запроса к', CHAT_URL);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20_000);
-    try {
-      const r = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify({
-          model: opts.model,
-          messages: opts.messages,
-          temperature: opts.temperature ?? 0.4,
-          max_tokens: opts.maxTokens ?? 700
-        }),
-        signal: controller.signal
-      });
-      console.log('[gigachat] callGigaChat: ответ получен через', Date.now() - startedAt, 'мс, статус', r.status);
-      return r;
-    } catch (e) {
-      console.error('[gigachat] callGigaChat: fetch упал через', Date.now() - startedAt, 'мс —', e?.name, e?.message);
-      throw e;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+  const extractReply = (data: any): string => {
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error('Пустой ответ от ИИ — попробуй переформулировать вопрос.');
+    return reply;
   };
 
-  let res = await doCall(token);
-  if (res.status === 401) {
-    // Токен мог протухнуть раньше заявленного срока — получаем новый и
-    // пробуем один раз ещё, прежде чем сдаться.
-    cachedToken = null;
-    const freshToken = await getAccessToken(opts.authKey, opts.scope);
-    res = await doCall(freshToken);
+  if (!functions.length) {
+    return extractReply(await chatOnce(opts, { ...base, messages }));
   }
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`GigaChat API error (${res.status}): ${text.slice(0, 300)}`);
-  }
+  const declared = functions.map(f => ({ name: f.name, description: f.description, parameters: f.parameters }));
+  let calls = 0;
+  try {
+    while (true) {
+      const allowCall = calls < maxCalls;
+      const data = await chatOnce(opts, {
+        ...base,
+        messages,
+        functions: declared,
+        function_call: allowCall ? 'auto' : 'none'
+      });
+      const choice = data?.choices?.[0];
+      const message = choice?.message;
+      const call = message?.function_call;
+      if (!call || !allowCall) return extractReply(data);
 
-  const data = await res.json();
-  const reply = data?.choices?.[0]?.message?.content?.trim();
-  if (!reply) throw new Error('Пустой ответ от ИИ — попробуй переформулировать вопрос.');
-  return reply;
+      const fn = functions.find(f => f.name === call.name);
+      let args: Record<string, unknown> = {};
+      try {
+        args = typeof call.arguments === 'string' ? JSON.parse(call.arguments) : (call.arguments || {});
+      } catch (_) {
+        args = {};
+      }
+      let result: unknown;
+      try {
+        result = fn ? await fn.run(args) : { error: `Неизвестная функция ${call.name}` };
+      } catch (e) {
+        result = { error: e?.message || 'Ошибка выполнения функции' };
+      }
+      calls += 1;
+      console.log('[gigachat] вызвана функция', call.name, JSON.stringify(args).slice(0, 200));
+      messages.push({ ...message, role: 'assistant', content: message.content || '' });
+      messages.push({ role: 'function', name: call.name, content: JSON.stringify(result) });
+    }
+  } catch (e) {
+    // Модель или формат не поддержали функции — отвечаем без поиска.
+    if (calls === 0 && (e as { status?: number }).status && (e as { status?: number }).status! < 500 && (e as { status?: number }).status !== 401) {
+      console.error('[gigachat] запрос с функциями не принят, отвечаем без них:', e?.message);
+      return extractReply(await chatOnce(opts, { ...base, messages: opts.messages }));
+    }
+    throw e;
+  }
 }

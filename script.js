@@ -30,6 +30,7 @@ window.lexprepPageKey = function (value) {
   } catch (e) { /* адрес останется с .html — страница всё равно работает */ }
 })();
 
+initAppMode();
 initHeroTitle();
 // Меню профиля дооформляем сразу (скрипт в конце body) — чтобы при первом
 // открытии не было скачка вёрстки.
@@ -57,6 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initOnlineCounter();
   initLevelUpToast();
   initCatalogStats();
+  // Прогресс подтянулся с другого устройства (account-scope.js) — обновляем
+  // уровень в меню профиля и баланс монет.
+  window.addEventListener('lexprep:progress-synced', () => {
+    try {
+      renderProfileHead(JSON.parse(localStorage.getItem('lexprep_user') || 'null'));
+    } catch (e) { /* ignore */ }
+    initCoinBadge();
+  });
 });
 
 /* ---------------- Живые цифры "N отраслей права" / "N тем в базе" ----------------
@@ -272,6 +281,130 @@ function initHeaderNav() {
     }
   }, { rootMargin: '-80px 0px -45% 0px', threshold: [0, 0.15, 0.4, 0.7] });
   sections.forEach(x => observer.observe(x.el));
+}
+
+/* ---------------- Режим приложения («На экран Домой») ----------------
+   - html.is-standalone, когда сайт открыт с ярлыка как приложение;
+   - цвет системной панели телефона под текущую тему;
+   - service worker (sw.js): офлайн-страница и кнопка «Установить» на Android;
+   - окно «Скачать приложение» с инструкцией (любая ссылка [data-install-app]). */
+let lexprepInstallPrompt = null;
+
+function lexprepIsStandalone() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+
+function initAppMode() {
+  const root = document.documentElement;
+  if (lexprepIsStandalone()) root.classList.add('is-standalone');
+
+  const syncThemeColor = () => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', root.getAttribute('data-theme') === 'dark' ? '#0f1117' : '#ffffff');
+  };
+  syncThemeColor();
+  if (window.MutationObserver) {
+    new MutationObserver(syncThemeColor).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    lexprepInstallPrompt = e;
+  });
+  window.addEventListener('appinstalled', () => {
+    lexprepInstallPrompt = null;
+  });
+
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest && e.target.closest('[data-install-app]');
+    if (!trigger) return;
+    e.preventDefault();
+    openInstallGuide();
+  });
+}
+
+function openInstallGuide() {
+  if (document.getElementById('installGuide')) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const first = isIOS ? 'ios' : 'android';
+  const standalone = lexprepIsStandalone();
+
+  const modal = document.createElement('div');
+  modal.className = 'install-guide';
+  modal.id = 'installGuide';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'installGuideTitle');
+  modal.innerHTML = `
+    <div class="install-guide__card">
+      <button type="button" class="install-guide__close" aria-label="Закрыть">×</button>
+      <img class="install-guide__icon" src="/assets/favicon/apple-touch-icon.png" alt="" />
+      <h2 class="install-guide__title" id="installGuideTitle">Приложение LexPrep</h2>
+      ${standalone ? '<p class="install-guide__lead">LexPrep уже открыт как приложение — всё готово.</p>' : `
+      <p class="install-guide__lead">
+        Установите LexPrep на телефон: значок появится на главном экране, а сайт будет открываться как
+        приложение — на весь экран, без адресной строки браузера. Скачивать из App Store или Google Play
+        ничего не нужно, места почти не занимает, обновляется само.
+      </p>
+      ${lexprepInstallPrompt ? '<button type="button" class="btn btn--primary btn--block install-guide__install">Установить LexPrep</button>' : ''}
+      <div class="install-guide__tabs" role="tablist">
+        <button type="button" role="tab" class="install-guide__tab ${first === 'ios' ? 'is-active' : ''}" data-install-tab="ios">iPhone и iPad</button>
+        <button type="button" role="tab" class="install-guide__tab ${first === 'android' ? 'is-active' : ''}" data-install-tab="android">Android</button>
+      </div>
+      <ol class="install-guide__steps" data-install-panel="ios" ${first === 'ios' ? '' : 'hidden'}>
+        <li>Откройте <b>lexprep.ru</b> в Safari.</li>
+        <li>Нажмите кнопку «Поделиться» — квадрат со стрелкой вверх внизу экрана (на iPad — вверху).</li>
+        <li>Пролистайте список и выберите <b>«На экран „Домой“»</b>.</li>
+        <li>Нажмите <b>«Добавить»</b>. Значок LexPrep появится на главном экране.</li>
+        <li class="install-guide__note">При первом запуске со значка войдите в аккаунт ещё раз — на iPhone приложение хранит вход отдельно от Safari.</li>
+      </ol>
+      <ol class="install-guide__steps" data-install-panel="android" ${first === 'android' ? '' : 'hidden'}>
+        <li>Откройте <b>lexprep.ru</b> в Chrome.</li>
+        <li>Нажмите <b>⋮</b> в правом верхнем углу.</li>
+        <li>Выберите <b>«Установить приложение»</b> или <b>«Добавить на главный экран»</b>.</li>
+        <li>Подтвердите — значок LexPrep появится на главном экране.</li>
+        <li class="install-guide__note">В Яндекс Браузере и Samsung Internet пункт меню называется похоже: «Добавить ярлык» или «Добавить на главный экран». Входить заново не нужно.</li>
+      </ol>
+      ${isAndroid || isIOS ? '' : '<p class="install-guide__foot">На компьютере в Chrome и Edge LexPrep тоже можно установить — значком «Установить» в адресной строке.</p>'}`}
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.classList.add('install-guide-open');
+
+  const close = () => {
+    modal.remove();
+    document.body.classList.remove('install-guide-open');
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  modal.querySelector('.install-guide__close').addEventListener('click', close);
+  modal.querySelectorAll('[data-install-tab]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      modal.querySelectorAll('[data-install-tab]').forEach(t => t.classList.toggle('is-active', t === tab));
+      modal.querySelectorAll('[data-install-panel]').forEach(p => { p.hidden = p.dataset.installPanel !== tab.dataset.installTab; });
+    });
+  });
+  const installBtn = modal.querySelector('.install-guide__install');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      const promptEvent = lexprepInstallPrompt;
+      if (!promptEvent) return;
+      lexprepInstallPrompt = null;
+      promptEvent.prompt();
+      try { await promptEvent.userChoice; } catch (err) { /* ignore */ }
+      close();
+    });
+  }
+  modal.querySelector('.install-guide__close').focus();
 }
 
 /* ---------------- Меню профиля: карточка с уровнем, иконки, группы ---------------- */
@@ -932,21 +1065,27 @@ function syncStaffLinks(user) {
   const dropdown = document.getElementById('profileDropdown');
   if (!dropdown) return;
   const links = [
-    { href: '/admin', text: 'Админка', show: !!(user && user.isAdmin) },
-    { href: '/moderator', text: 'Модерация', show: !!(user && (user.isModerator || user.isAdmin)) }
+    { href: '/admin', text: 'Админка', show: !!(user && user.isAdmin),
+      icon: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>' },
+    { href: '/moderator', text: 'Модерация', show: !!(user && (user.isModerator || user.isAdmin)),
+      icon: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>' }
   ];
-  links.slice().reverse().forEach(l => {
+  // Место — сразу под карточкой профиля, как было раньше.
+  let anchor = document.getElementById('profileDropdownHead');
+  links.forEach(l => {
     let a = dropdown.querySelector(`a[data-staff-link="${l.href}"]`);
     if (l.show && !a) {
       a = document.createElement('a');
       a.href = l.href;
       a.className = 'profile-dropdown__item';
       a.dataset.staffLink = l.href;
-      a.textContent = l.text;
-      dropdown.prepend(a);
+      a.innerHTML = `<span class="profile-dropdown__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${l.icon}</svg></span>${l.text}`;
+      if (anchor) anchor.after(a); else dropdown.prepend(a);
     } else if (!l.show && a) {
       a.remove();
+      a = null;
     }
+    if (a) anchor = a;
   });
 }
 

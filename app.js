@@ -591,6 +591,7 @@ function initApp() {
         <button class="topic-tab ${activeView === 'test' ? 'is-active' : ''}" type="button" data-view="test">Тесты</button>
         ${hasPractice ? `<button class="topic-tab ${activeView === 'practice' ? 'is-active' : ''}" type="button" data-view="practice">${activeDiscipline.id === 'constitutional' ? 'Практика КС РФ' : 'Практика ВС РФ'}</button>` : ''}
         <button class="topic-tab ${activeView === 'notepad' ? 'is-active' : ''}" type="button" data-view="notepad">Мои заметки</button>
+        <a class="topic-tab topic-tab--ticket" id="topicTicketLink" href="/library" hidden></a>
         ${LexPrepPlan.getLimits().pdfExport ? `
           <button class="topic-tab topic-tab--pdf" type="button" id="downloadPdfBtn">Скачать PDF</button>
         ` : ''}
@@ -707,6 +708,8 @@ function initApp() {
       downloadPdfBtn.addEventListener('click', () => downloadTopicPdf(activeTopic));
     }
 
+    attachTicketLink(activeDiscipline, activeTopic);
+
     contentView.querySelectorAll('[data-view]').forEach(tab => {
       tab.addEventListener('click', () => {
         activeView = tab.dataset.view;
@@ -744,7 +747,144 @@ function initApp() {
   // документ: заголовок темы + текст конспекта построчно с переносом.
   // Разметка (жирный/списки/таблицы) не переносится — это читаемая
   // текстовая копия для офлайн-подготовки, не точная копия вёрстки.
-  function downloadTopicPdf(topic) {
+  /* ---------------- «Перейти к билету»: билет библиотеки по теме ----------------
+     Подбираем билет той же дисциплины, чьё название ближе всего к теме:
+     сравниваем основы слов названия темы (и её подзаголовков) с названием
+     билета, редкие слова весят больше. Если уверенного совпадения нет —
+     ведём в сборник дисциплины. */
+  let libraryIndexPromise = null;
+
+  function loadLibraryIndex() {
+    if (libraryIndexPromise) return libraryIndexPromise;
+    libraryIndexPromise = (async () => {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem('lexprep_library_index') || 'null');
+        if (cached && Date.now() - cached.at < 30 * 60 * 1000) return cached.data;
+      } catch (e) { /* ignore */ }
+      if (typeof LexPrepApi === 'undefined' || !LexPrepApi.listLibrary) return null;
+      const data = await LexPrepApi.listLibrary();
+      const slim = {
+        collections: data.collections.map(c => ({ id: c.id, disciplineId: c.disciplineId, kind: c.kind })),
+        items: data.items.map(i => ({ id: i.id, collectionId: i.collectionId, number: i.number, title: i.title, part: i.part }))
+      };
+      try { sessionStorage.setItem('lexprep_library_index', JSON.stringify({ at: Date.now(), data: slim })); } catch (e) { /* ignore */ }
+      return slim;
+    })().catch(() => null);
+    return libraryIndexPromise;
+  }
+
+  const TICKET_STOP = new Set(['тема', 'понят', 'общая', 'общие', 'основ', 'вопро', 'билет', 'котор', 'также', 'между', 'после', 'перед', 'через', 'особе', 'харак', 'соотн', 'значе', 'систе', 'виды']);
+  const ROMAN_DIGITS = { i: 1, v: 5, x: 10, l: 50, c: 100 };
+
+  function romanToArabic(word) {
+    if (!/^[ivxlc]+$/.test(word)) return null;
+    let n = 0;
+    for (let k = 0; k < word.length; k++) {
+      const a = ROMAN_DIGITS[word[k]];
+      const b = ROMAN_DIGITS[word[k + 1]] || 0;
+      n += a < b ? -a : a;
+    }
+    return n > 0 && n < 40 ? String(n) : null;
+  }
+
+  function ticketStems(text) {
+    return String(text || '').toLowerCase().replace(/ё/g, 'е').replace(/^тема\s+\d+\.?/, ' ')
+      .replace(/[^a-zа-я0-9\s-]/g, ' ').split(/[\s-]+/)
+      .map(w => romanToArabic(w) || w)
+      .filter(w => /^\d{2,4}$/.test(w) || (w.length >= 4 && !/^\d+$/.test(w)))
+      .map(w => w.slice(0, 5))
+      .filter(w => !TICKET_STOP.has(w));
+  }
+
+  const ticketIndexCache = {};
+
+  function ticketIndexFor(library, disciplineId) {
+    if (ticketIndexCache[disciplineId]) return ticketIndexCache[disciplineId];
+    const cols = new Set(library.collections.filter(c => c.disciplineId === disciplineId).map(c => c.id));
+    const list = library.items.filter(i => cols.has(i.collectionId))
+      .map(i => ({ item: i, st: new Set(ticketStems(`${i.title} ${i.part || ''}`)) }));
+    const df = new Map();
+    list.forEach(x => x.st.forEach(s => df.set(s, (df.get(s) || 0) + 1)));
+    const n = list.length;
+    const idf = s => Math.log(1 + n / (1 + (df.get(s) || 0)));
+    ticketIndexCache[disciplineId] = { list, idf, collections: [...cols] };
+    return ticketIndexCache[disciplineId];
+  }
+
+  function ticketCosine(tf, entry, idf) {
+    let nt = 0;
+    const wt = new Map();
+    tf.forEach((c, s) => { const v = (1 + Math.log(c)) * idf(s); wt.set(s, v); nt += v * v; });
+    let dot = 0;
+    let ni = 0;
+    entry.st.forEach(s => { const v = idf(s); ni += v * v; if (wt.has(s)) dot += v * wt.get(s); });
+    return ni && nt ? dot / (Math.sqrt(ni) * Math.sqrt(nt)) : 0;
+  }
+
+  function findTopicTicket(library, disciplineId, topic) {
+    const index = ticketIndexFor(library, disciplineId);
+    if (!index.list.length) return null;
+    const main = `${topic.title} ${topic.description || ''}`;
+    const headings = String(topic.theoryMd || '').split('\n')
+      .filter(l => /^#{1,4}\s|^\s*[-*]\s/.test(l)).slice(0, 25).join(' ');
+    const tfMain = new Map();
+    ticketStems(main).forEach(s => tfMain.set(s, (tfMain.get(s) || 0) + 1));
+    const tfAll = new Map();
+    ticketStems(main).forEach(s => tfAll.set(s, (tfAll.get(s) || 0) + 3));
+    ticketStems(headings).forEach(s => tfAll.set(s, (tfAll.get(s) || 0) + 1));
+    let best = null;
+    index.list.forEach(entry => {
+      const score = Math.max(ticketCosine(tfMain, entry, index.idf), ticketCosine(tfAll, entry, index.idf));
+      if (!best || score > best.score) best = { score, item: entry.item };
+    });
+    if (best && best.score >= 0.45) return { kind: 'ticket', item: best.item };
+    // Уверенного совпадения нет — сборник дисциплины, где больше всего билетов.
+    const counts = {};
+    index.list.forEach(e => { counts[e.item.collectionId] = (counts[e.item.collectionId] || 0) + 1; });
+    const collectionId = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return collectionId ? { kind: 'collection', collectionId } : null;
+  }
+
+  const TICKET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
+
+  async function attachTicketLink(discipline, topic) {
+    const link = document.getElementById('topicTicketLink');
+    if (!link || !discipline || !topic) return;
+    const library = await loadLibraryIndex();
+    // Пока грузили, могли открыть другую тему — тогда ссылка уже другая.
+    if (!library || link !== document.getElementById('topicTicketLink')) return;
+    const found = findTopicTicket(library, discipline.id, topic);
+    if (!found) return;
+    if (found.kind === 'ticket') {
+      link.href = `/library#t/${encodeURIComponent(found.item.id)}`;
+      link.title = `Билет ${found.item.number}. ${found.item.title}`;
+      link.innerHTML = `${TICKET_ICON}Перейти к билету`;
+    } else {
+      link.href = `/library#c/${encodeURIComponent(found.collectionId)}`;
+      link.title = 'Сборник билетов по этой дисциплине';
+      link.innerHTML = `${TICKET_ICON}Билеты по дисциплине`;
+    }
+    link.hidden = false;
+  }
+
+  // jsPDF и шрифт (~840 КБ) нужны только тем, кто жмёт «Скачать PDF», —
+  // грузим их по нажатию, а не на каждом открытии тренажёра.
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+      const el = document.createElement('script');
+      el.src = src;
+      el.onload = () => resolve();
+      el.onerror = () => reject(new Error('script_load_failed'));
+      document.head.appendChild(el);
+    });
+  }
+
+  async function downloadTopicPdf(topic) {
+    try {
+      if (typeof jspdf === 'undefined') await loadScriptOnce('vendor/jspdf.umd.min.js');
+      if (typeof LEXPREP_PDF_FONTS === 'undefined') await loadScriptOnce('vendor/roboto-fonts.js');
+    } catch (e) { /* ниже покажем понятную ошибку */ }
     if (typeof jspdf === 'undefined') {
       alert('Не удалось загрузить модуль PDF — попробуй обновить страницу.');
       return;

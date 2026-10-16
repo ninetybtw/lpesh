@@ -45,7 +45,10 @@ create-test.js), дожидаются этот промис перед стар�
 
 const LEXPREP_CONTENT_DB_NAME = 'lexprep_content_db';
 const LEXPREP_CONTENT_DB_STORE = 'cache';
-const LEXPREP_CONTENT_DB_KEY = 'v1';
+// v2: конспект хранится как markdown (theoryMd) и превращается в HTML только
+// когда тему открывают (см. lexprepHydrateTopics), плюс версия материалов.
+const LEXPREP_CONTENT_DB_KEY = 'v2';
+const LEXPREP_CONTENT_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const LEXPREP_CONTENT_CACHE_KEY_LEGACY = 'lexprep_content_cache_v1';
 
 function lexprepEscapeHtml(str) {
@@ -164,7 +167,7 @@ function lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTo
         id: t.id,
         title: t.title,
         description: t.section || '',
-        theory: `<div class="theory">${marked.parse(t.body_markdown || '')}</div>`,
+        theoryMd: t.body_markdown || '',
         test: lexprepConvertQuiz(quizByTopic[t.id]),
         cards: lexprepConvertFlashcards(cardsByTopic[t.id]),
         practice: practiceHtml,
@@ -175,7 +178,30 @@ function lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTo
   }).filter(d => d.topics.length);
 }
 
+// Раньше все ~800 конспектов переводились из markdown в HTML сразу при
+// загрузке — на телефоне это секунды работы процессора на каждой странице.
+// Теперь topic.theory — ленивое свойство: HTML строится при первом обращении
+// (то есть когда тему открыли) и запоминается.
+function lexprepHydrateTopics(disciplinesData) {
+  disciplinesData.forEach(d => (d.topics || []).forEach(t => {
+    if (Object.getOwnPropertyDescriptor(t, 'theory')) return;
+    let html = null;
+    Object.defineProperty(t, 'theory', {
+      configurable: true,
+      enumerable: false,
+      get() {
+        if (html === null) {
+          html = `<div class="theory">${typeof marked !== 'undefined' ? marked.parse(t.theoryMd || '') : lexprepEscapeHtml(t.theoryMd || '')}</div>`;
+        }
+        return html;
+      }
+    });
+  }));
+  return disciplinesData;
+}
+
 function lexprepApplyDisciplinesData(disciplinesData) {
+  lexprepHydrateTopics(disciplinesData);
   disciplinesData.forEach(d => {
     const existing = LEXPREP_DATA.find(x => x.id === d.id);
     if (existing) {
@@ -233,12 +259,15 @@ async function lexprepLoadContentCache() {
   return lexprepLoadLegacyLocalStorageCache();
 }
 
-async function lexprepSaveContentCache(disciplinesData) {
+async function lexprepSaveContentCache(disciplinesData, version) {
   try {
     const db = await lexprepOpenContentDb();
     await new Promise((resolve, reject) => {
       const tx = db.transaction(LEXPREP_CONTENT_DB_STORE, 'readwrite');
-      tx.objectStore(LEXPREP_CONTENT_DB_STORE).put({ savedAt: Date.now(), disciplines: disciplinesData }, LEXPREP_CONTENT_DB_KEY);
+      const store = tx.objectStore(LEXPREP_CONTENT_DB_STORE);
+      store.put({ savedAt: Date.now(), version: version || null, disciplines: disciplinesData }, LEXPREP_CONTENT_DB_KEY);
+      // Кэш прошлого формата (с готовым HTML всех конспектов) больше не нужен.
+      store.delete('v1');
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error || new Error('lexprep_indexeddb_write_failed'));
     });
@@ -291,7 +320,7 @@ function lexprepSetOverlayStatus(text) {
 // блокирует страницу (кэш уже применён вызывающим кодом), просто тихо
 // обновляет LEXPREP_DATA и кэш в фоне на будущее. Если cache нет — это и
 // есть тот самый await, который ждут страницы через LexPrepContentReady.
-async function lexprepRefreshContent(hadCache) {
+async function lexprepRefreshContent(hadCache, cache) {
   const hideOverlay = hadCache ? null : lexprepShowLoadingOverlay();
   let failed = false;
   try {
@@ -305,6 +334,20 @@ async function lexprepRefreshContent(hadCache) {
     }
 
     const client = LexPrepApi.getClient();
+
+    // Версия материалов (supabase/content-version.sql) — один маленький
+    // запрос. Если с прошлой загрузки ничего не менялось, всю базу заново
+    // не качаем: раньше 6 МБ уходили на каждом открытии страницы.
+    let version = null;
+    try {
+      const { data: v, error: vErr } = await lexprepWithTimeout(client.rpc('content_version'), 8000);
+      if (!vErr && typeof v === 'string') version = v;
+    } catch (e) { /* нет функции или сети — обновим по-старому */ }
+    if (hadCache && cache && version && cache.version === version
+        && Date.now() - (cache.savedAt || 0) < LEXPREP_CONTENT_MAX_AGE) {
+      return;
+    }
+
     const startedAt = Date.now();
     lexprepSetOverlayStatus('Запрашиваем данные…');
     // Раньше здесь было две попытки (8с и затем ещё 15с): при не-успехе
@@ -345,7 +388,7 @@ async function lexprepRefreshContent(hadCache) {
     const disciplinesData = lexprepBuildDisciplinesData(disciplines, topics, quizByTopic, cardsByTopic, practiceByTopic);
     lexprepApplyDisciplinesData(disciplinesData);
     lexprepSetOverlayStatus('Готово: ' + disciplinesData.length + ' дисциплин, сохраняем кэш…');
-    await lexprepSaveContentCache(disciplinesData);
+    await lexprepSaveContentCache(disciplinesData, version);
   } catch (e) {
     failed = true;
     lexprepSetOverlayStatus('Не удалось загрузить: ' + (e && e.message ? e.message : String(e)));
@@ -366,8 +409,8 @@ window.LexPrepContentReady = (async function loadDbContent() {
   if (cache) {
     lexprepApplyDisciplinesData(cache.disciplines);
     // Кэш уже на месте — страницу больше не задерживаем, обновление сети
-    // идёт в фоне и никого не блокирует.
-    lexprepRefreshContent(true);
+    // идёт в фоне и никого не блокирует (и только если материалы менялись).
+    lexprepRefreshContent(true, cache);
     return;
   }
 

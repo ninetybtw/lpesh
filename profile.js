@@ -3,6 +3,13 @@ PROFILE.JS — личный кабинет: навигация по раздел
 подписка, статистика (демо), настройки и переключатель темы
 ========================================================================== */
 
+// Прогресс подтянулся с другого устройства (account-scope.js) — статистика
+// и уровень на этой странице считаются один раз, поэтому просто
+// перерисовываем страницу.
+window.addEventListener('lexprep:progress-synced', () => {
+  window.location.reload();
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = JSON.parse(localStorage.getItem('lexprep_user') || 'null');
   if (!user) {

@@ -26,15 +26,23 @@ anon-ключ в `api.js` — публичный по замыслу, это н�
   `supabase-edge-functions`, `supabase-kong`.
 - `api.js` — единственная обёртка над Supabase (`LexPrepApi`), все запросы
   к бэкенду идут через неё. `friendlyError` переводит ошибки на русский.
-- `content-loader.js` грузит дисциплины/темы/тесты из базы (кэш в IndexedDB);
+- `content-loader.js` грузит дисциплины/темы/тесты из базы (кэш в IndexedDB,
+  ключ `v2`; перекачивает, только если изменилась `content_version()` из
+  `supabase/content-version.sql`). Конспект хранится как markdown
+  (`theoryMd`), `topic.theory` — ленивый геттер, HTML строится при открытии;
   `lexprepConvertQuiz` — единая точка конвертации тестов, там же
   перемешивание вариантов ответа.
 - Локальный прогресс (опыт, монеты, карточки, статистика, заметки, тариф за
   монеты, история ИИ и др.) живёт в localStorage и привязан к аккаунту через
   `account-scope.js` (подключён первым в `<head>` всех страниц): при смене
   пользователя данные прежнего откладываются в `lexprep_stash:<id>`.
-  **Новый ключ с данными пользователя — добавить в `PER_USER_KEYS`.**
-  Опыт на сервер (`syncXp`) пишется только в сторону увеличения.
+  **Новый ключ с данными пользователя — добавить в `PER_USER_KEYS`** (и в
+  `SYNC_KEYS`, если он должен совпадать на всех устройствах). Тот же файл
+  синхронизирует прогресс между устройствами через таблицу `user_progress`
+  (`supabase/progress-sync.sql`): карточки/тесты/экзамены/конспекты
+  объединяются, монеты — по максимуму, остальное — по свежести (время
+  изменения ключей в `lexprep_sync_mtimes`). Опыт на сервер (`syncXp`)
+  пишется только в сторону увеличения.
 - `plan.js` — действующий тариф: из `profiles.plan_tier/plan_expires_at`
   (кэш в `localStorage.lexprep_user`, обновляется `script.js` через `me()`
   при каждой загрузке страницы) и локального тарифа из магазина.
@@ -89,6 +97,12 @@ docker restart supabase-edge-functions
 Оплата — Т-Касса (`payments-*`, `_shared/tbank.ts`), ИИ — GigaChat
 (`ai-consultant*`, `_shared/gigachat.ts`).
 
+ИИ-консультант умеет искать в интернете: инструмент `web_search`
+(`_shared/websearch.ts`) через function calling GigaChat (`callGigaChat` с
+`functions`). С переменными `YANDEX_SEARCH_API_KEY` и
+`YANDEX_SEARCH_FOLDER_ID` в контейнере функций — Yandex Search API, без
+них — поиск по русской Википедии.
+
 ## Промокоды
 
 `supabase/promo-codes.sql` + `supabase/promo-fix.sql`. Типы: `subscription`
@@ -117,6 +131,13 @@ docker restart supabase-edge-functions
 - Ссылки «Админка»/«Модерация» вставляет `script.js` (`syncStaffLinks`)
   только админам/модераторам; данные защищены RLS и проверками в RPC.
 - Счётчик «онлайн» — настоящий (`supabase/online.sql`), без выдуманных цифр.
+- Режим приложения («На экран Домой»): `viewport-fit=cover` + отступы
+  `env(safe-area-inset-*)`, `theme-color` под тему, `sw.js` (только
+  офлайн-страница `offline.html`, ничего не кэширует), окно-инструкция
+  «Скачать приложение» на любой ссылке `[data-install-app]` (script.js).
+- Тяжёлое грузить по требованию: jsPDF и шрифт для PDF подгружает `app.js`
+  при нажатии «Скачать PDF»; `data.js` (демо-данные) — только на страницах,
+  где используется `LEXPREP_DATA`.
 
 ## Библиотека билетов
 
