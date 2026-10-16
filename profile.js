@@ -59,6 +59,15 @@ function saveUser(patch) {
   if (Object.keys(backendPatch).length && typeof LexPrepApi !== 'undefined') {
     LexPrepApi.updateProfile(backendPatch).catch(err => {
       console.error('Не удалось сохранить изменения профиля на сервере:', err.message);
+      // Сервер не принял имя (supabase/name-check.sql) — говорим об этом и
+      // возвращаем прежнее, чтобы на странице не висело несохранённое.
+      if (err.code === 'invalid_name' && 'name' in backendPatch) {
+        LexPrepApi.me().then(fresh => {
+          localStorage.setItem('lexprep_user', JSON.stringify({ ...getUser(), name: fresh.name }));
+          window.location.reload();
+        }).catch(() => {});
+        alert(err.message);
+      }
     });
   }
 
@@ -219,6 +228,12 @@ function initInfoForm(user) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
+    const nameInput = document.getElementById('fieldName');
+    if (typeof validateNameField === 'function' && !validateNameField(nameInput)) {
+      nameInput.focus();
+      return;
+    }
+
     const emailInput = document.getElementById('fieldEmail');
     if (!validateEmailField(emailInput)) {
       emailInput.focus();
@@ -226,7 +241,7 @@ function initInfoForm(user) {
     }
 
     const updated = saveUser({
-      name: document.getElementById('fieldName').value.trim() || 'Профиль',
+      name: nameInput.value.trim().replace(/\s+/g, ' '),
       email: emailInput.value.trim(),
       university: document.getElementById('fieldUniversity').value.trim(),
       course: document.getElementById('fieldCourse').value.trim()

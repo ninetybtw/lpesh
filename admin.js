@@ -92,7 +92,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td>
             ${u.isBanned
               ? `<span class="admin-badge admin-badge--banned" title="${escapeHtml(u.banReason || '')}">заблокирован</span>`
-              : `<span class="admin-badge admin-badge--ok">активен</span>`}
+              : u.emailConfirmedAt === null
+                ? '<span class="admin-badge admin-badge--pending" title="Зарегистрировался, но не ввёл код из письма — войти не может">почта не подтверждена</span>'
+                : `<span class="admin-badge admin-badge--ok" title="${escapeHtml([
+                    u.emailConfirmedAt ? `Почта подтверждена ${formatDate(u.emailConfirmedAt)}` : '',
+                    u.lastSignInAt ? `последний вход ${formatDate(u.lastSignInAt)}` : ''
+                  ].filter(Boolean).join(', '))}">активен</span>`}
+            ${u.lastSignInAt ? `<div class="admin-user-cell__email">вход: ${formatDate(u.lastSignInAt)}</div>` : ''}
           </td>
           <td>${formatDate(u.createdAt)}</td>
           <td>
@@ -116,9 +122,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof AdminUI === 'undefined') return;
     const now = Date.now();
     const banned = users.filter(u => u.isBanned).length;
+    const unconfirmed = users.filter(u => u.emailConfirmedAt === null && !u.isBanned).length;
     const paid = users.filter(u => u.planTier && u.planTier !== 'basic' && u.planExpiresAt && new Date(u.planExpiresAt).getTime() > now);
     const annual = paid.filter(u => u.planBillingPeriod === 'annual').length;
-    AdminUI.setKpi('users', users.length, banned ? `заблокировано: ${banned}` : 'все активны');
+    AdminUI.setKpi('users', users.length, [
+      banned ? `заблокировано: ${banned}` : '',
+      unconfirmed ? `не подтвердили почту: ${unconfirmed}` : ''
+    ].filter(Boolean).join(' · ') || 'все активны');
     AdminUI.setKpi('premium', paid.length, `годовых: ${annual}`);
   }
 

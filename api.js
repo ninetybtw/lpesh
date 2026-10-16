@@ -44,6 +44,8 @@ const LexPrepApi = (function () {
     // приходят как есть, переводим их в понятные формулировки.
     if (error.code === '23505' && /referral_code/.test(error.details || error.message || '')) {
       message = 'Такой промокод уже занят — попробуй другой.';
+    } else if (error.message === 'invalid_name') {
+      message = error.details || 'Такое имя использовать нельзя — выбери другое.';
     } else if (error.message === 'invalid_referral_code') {
       message = error.details || 'Промокод: 3-20 символов, латинские буквы, цифры и дефис.';
     } else if (error.code === '23505' && /suggestion_votes/.test(error.details || error.message || '')) {
@@ -54,7 +56,7 @@ const LexPrepApi = (function () {
       message = DUEL_ERROR_MESSAGES[error.message];
     }
     const err = new Error(message);
-    err.code = error.code || error.name;
+    err.code = error.message === 'invalid_name' ? 'invalid_name' : (error.code || error.name);
     err.status = error.status;
     return err;
   }
@@ -272,12 +274,17 @@ const LexPrepApi = (function () {
 
   async function adminListUsers() {
     await requireSession();
-    const { data, error } = await client
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, authInfo] = await Promise.all([
+      client.from('profiles').select('*').order('created_at', { ascending: false }),
+      // Подтверждена ли почта и последний вход (supabase/name-check.sql). Если
+      // функции ещё нет на сервере — статус показываем по-старому.
+      client.rpc('admin_users_auth_info').then(r => (r.error ? null : r.data), () => null)
+    ]);
     if (error) throw friendlyError(error);
+    const authById = new Map((authInfo || []).map(a => [a.id, a]));
     return data.map(p => ({
+      emailConfirmedAt: authInfo ? ((authById.get(p.id) || {}).email_confirmed_at || null) : undefined,
+      lastSignInAt: authInfo ? ((authById.get(p.id) || {}).last_sign_in_at || null) : undefined,
       id: p.id,
       email: p.email,
       name: p.name,

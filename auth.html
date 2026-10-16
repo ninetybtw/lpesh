@@ -30,7 +30,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="./styles/global.css?v=20261016120000">
-<link rel="stylesheet" href="./styles/style.css?v=20261012160000">
+<link rel="stylesheet" href="./styles/style.css?v=20261017120000">
 <link rel="stylesheet" href="./styles/auth.css?v=20260927040000">
 </head>
 <body>
@@ -144,7 +144,7 @@
             <label for="regName">Имя</label>
             <div class="auth-input">
               <svg class="auth-input__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
-              <input class="form-input" type="text" id="regName" placeholder="Как тебя зовут" autocomplete="name" autocapitalize="words" enterkeyhint="next" required>
+              <input class="form-input" type="text" id="regName" maxlength="24" placeholder="Как тебя зовут" autocomplete="name" autocapitalize="words" enterkeyhint="next" required>
             </div>
           </div>
           <div class="form-group">
@@ -320,12 +320,12 @@
   </div>
 </footer>
 
-<script src="validation.js?v=20260831160000"></script>
+<script src="validation.js?v=20261017120000"></script>
 <script src="vendor/supabase-js.min.js"></script>
-    <script src="api.js?v=20261015120000"></script>
+    <script src="api.js?v=20261017120000"></script>
 <script src="dialog.js?v=20260924150000"></script>
 <script src="script.js?v=20261016120000"></script>
-<script src="auth.js?v=20261015120000"></script>
+<script src="auth.js?v=20261017120000"></script>
 <script src="cookie-consent.js?v=20260930040000"></script>
 </body>
 </html>

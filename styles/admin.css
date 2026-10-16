@@ -571,6 +571,20 @@ ADMIN.CSS — панели администратора и модератора:
   color: #e5484d;
 }
 
+.admin-badge--pending {
+  padding-left: 8px;
+  background: rgba(240, 140, 0, 0.13);
+  color: #e08600;
+}
+
+.admin-badge--pending::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .admin-actions {
   display: flex;
   flex-wrap: wrap;

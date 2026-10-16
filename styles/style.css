@@ -2591,6 +2591,22 @@ select.form-input option {
   color: #e5484d;
   min-height: 0;
 }
+/* Кнопки в подсказке под email: «Исправить на …» / «Всё верно» */
+.field-error__action {
+  display: inline-block;
+  margin: 6px 8px 0 0;
+  padding: 5px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.field-error__action--muted {
+  color: var(--color-text-muted);
+}
 
 .field-error:empty {
   display: none;

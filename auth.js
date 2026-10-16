@@ -5,6 +5,11 @@ AUTH.JS — переключение вкладок Вход/Регистрац�
 ========================================================================== */
 // Куда вернуть после входа/регистрации: ?next=/... (только пути этого же
 // сайта — чужой адрес или //host не принимаем), иначе на главную.
+// Ошибка под полем имени исчезает, как только его начали исправлять.
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'regName' && typeof clearFieldInvalid === 'function') clearFieldInvalid(e.target);
+});
+
 function afterAuthUrl() {
   const next = new URLSearchParams(window.location.search).get('next');
   return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
@@ -141,6 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = panel.querySelector('button[type="submit"]');
 
       if (isRegister) {
+        const nameInput = document.getElementById('regName');
+        if (nameInput && typeof validateNameField === 'function' && !validateNameField(nameInput)) {
+          nameInput.focus();
+          return;
+        }
         const passwordInput = document.getElementById('regPassword');
         const password = passwordInput.value;
         const passwordConfirm = document.getElementById('regPasswordConfirm').value;
@@ -157,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        const name = document.getElementById('regName').value;
+        const name = document.getElementById('regName').value.trim().replace(/\s+/g, ' ');
         submitBtn.disabled = true;
         try {
           const result = await LexPrepApi.register({ name, email, password });
