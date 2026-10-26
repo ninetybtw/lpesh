@@ -126,11 +126,18 @@ ACCOUNT-SCOPE.JS — локальный прогресс принадлежит 
 
   /* ---------------- 1. Владелец данных ---------------- */
 
-  function sync() {
+  function sync(forceUid) {
     try {
       quietly(() => {
-        const now = currentUserId();
+        const now = forceUid || currentUserId();
         const owner = ls.getItem(OWNER_KEY);
+
+        // Вошёл, но данные числились за гостем (кэш пользователя ещё не
+        // успел сохраниться) — это его же занятия, оставляем их ему.
+        if (forceUid && owner === GUEST && !ls.getItem(STASH_PREFIX + forceUid)) {
+          ls.setItem(OWNER_KEY, forceUid);
+          return;
+        }
 
         // Первый запуск этой версии: всё, что уже лежит в браузере,
         // считаем данными того, кто сейчас на странице.
@@ -298,11 +305,33 @@ ACCOUNT-SCOPE.JS — локальный прогресс принадлежит 
       || Object.keys(p.theoryRead || {}).length || (p.examAttempts || []).length);
   }
 
+  // api.js и progress.js объявляют LexPrepApi/LexPrepProgress через const —
+  // такие имена видны всем скриптам страницы, но в window их нет.
   function api() {
-    return window.LexPrepApi && typeof window.LexPrepApi.getClient === 'function' ? window.LexPrepApi : null;
+    const lexApi = typeof LexPrepApi !== 'undefined' ? LexPrepApi : window.LexPrepApi;
+    return lexApi && typeof lexApi.getClient === 'function' ? lexApi : null;
+  }
+
+  function progressApi() {
+    const progress = typeof LexPrepProgress !== 'undefined' ? LexPrepProgress : window.LexPrepProgress;
+    return progress && typeof progress.getGamification === 'function' ? progress : null;
+  }
+
+  function currentXp() {
+    try {
+      const progress = progressApi();
+      return progress ? progress.getGamification().xp : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function isMissingTable(error) {
+    return error && (error.code === '42P01' || error.code === 'PGRST205' || error.status === 404);
   }
 
   let syncDisabled = false;
+  let firstSyncDone = false;
   let syncing = null;
   let pendingAgain = false;
   let pushTimer = null;
@@ -320,17 +349,21 @@ ACCOUNT-SCOPE.JS — локальный прогресс принадлежит 
       const { data: { session } } = await client.auth.getSession();
       if (!session) return;
       const uid = session.user.id;
-      // Сессия и закэшированный пользователь должны совпадать — иначе
-      // ничего не трогаем (sync() разберётся при следующей загрузке).
-      if (uid !== currentUserId() || ls.getItem(OWNER_KEY) !== uid) return;
+      // Хозяин данных — тот, чья сессия. Если кэш пользователя устарел или
+      // ещё не сохранился, данные всё равно переключаются на этот аккаунт.
+      if (ls.getItem(OWNER_KEY) !== uid) sync(uid);
+      if (ls.getItem(OWNER_KEY) !== uid) return;
 
       const { data: row, error } = await client.from('user_progress')
         .select('data, mtimes').eq('user_id', uid).maybeSingle();
       if (error) {
-        // Таблицы ещё нет (не выполнен progress-sync.sql) — работаем как раньше.
-        syncDisabled = true;
+        // Таблицы ещё нет (не выполнен progress-sync.sql) — работаем как
+        // раньше. Сбой сети и т.п. — попробуем при следующем изменении.
+        if (isMissingTable(error)) syncDisabled = true;
+        else console.warn('LexPrep: не удалось получить прогресс с сервера', error.message);
         return;
       }
+      const xpBefore = currentXp();
       const server = { data: (row && row.data) || {}, mtimes: (row && row.mtimes) || {} };
       const local = { data: snapshot(SYNC_KEYS), mtimes: readMtimes() };
 
@@ -366,9 +399,28 @@ ACCOUNT-SCOPE.JS — локальный прогресс принадлежит 
         if (upErr) console.warn('LexPrep: прогресс не сохранился на сервере', upErr.message);
       }
 
-      // Первый вход на новом устройстве: страница уже нарисована «с нуля» —
-      // один раз перезагружаем, чтобы везде были настоящие уровень и прогресс.
-      if (localChanged && !hasLearning(local.data.lexprep_progress) && hasLearning(merged.data.lexprep_progress)) {
+      if (localChanged) {
+        // Уровень пересчитался — запоминаем его без всплывающего «новый
+        // уровень» и обновляем опыт в рейтинге.
+        const progress = progressApi();
+        if (progress) {
+          const g = progress.getGamification();
+          quietly(() => ls.setItem('lexprep_last_seen_level', String(g.level)));
+          if (lexApi.syncXp) await lexApi.syncXp(g.xp).catch(() => {});
+        }
+      }
+
+      // С сервера пришли занятия с другого устройства, а страница уже
+      // нарисована по старым данным — один раз перезагружаем, чтобы везде
+      // были настоящие уровень, опыт и пройденные темы.
+      const xpAfter = currentXp();
+      const progressGrew = (!hasLearning(local.data.lexprep_progress) && hasLearning(merged.data.lexprep_progress))
+        || (xpBefore != null && xpAfter != null && xpAfter > xpBefore);
+      const isFirstSync = !firstSyncDone;
+      firstSyncDone = true;
+      // Перезагружаем только сразу после открытия страницы, чтобы не сбить
+      // человеку тест или карточки посреди занятия.
+      if (localChanged && progressGrew && isFirstSync) {
         let reloaded = false;
         try {
           reloaded = sessionStorage.getItem('lexprep_progress_reloaded') === '1';
@@ -380,17 +432,7 @@ ACCOUNT-SCOPE.JS — локальный прогресс принадлежит 
         }
       }
 
-      if (localChanged) {
-        // Уровень пересчитался — запоминаем его без всплывающего «новый
-        // уровень» и обновляем опыт в рейтинге.
-        const progress = window.LexPrepProgress;
-        if (progress && progress.getGamification) {
-          const g = progress.getGamification();
-          quietly(() => ls.setItem('lexprep_last_seen_level', String(g.level)));
-          if (lexApi.syncXp) lexApi.syncXp(g.xp).catch(() => {});
-        }
-        window.dispatchEvent(new CustomEvent('lexprep:progress-synced'));
-      }
+      if (localChanged) window.dispatchEvent(new CustomEvent('lexprep:progress-synced'));
     })().catch(e => {
       console.warn('LexPrep: синхронизация прогресса не удалась', e && e.message);
     }).finally(() => {
