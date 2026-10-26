@@ -1581,10 +1581,7 @@ const LexPrepApi = (function () {
     };
   }
 
-  async function readLibraryItem(itemId) {
-    await requireSession();
-    const { data, error } = await client.rpc('library_read_item', { p_item_id: itemId });
-    if (error) throw friendlyLibraryError(error);
+  function toLibraryItem(data) {
     return {
       id: data.id,
       collectionId: data.collection_id,
@@ -1597,13 +1594,33 @@ const LexPrepApi = (function () {
       contentMd: data.content_md || '',
       footnotes: Array.isArray(data.footnotes) ? data.footnotes : [],
       assets: Array.isArray(data.assets) ? data.assets : [],
+      preview: !!data.preview,
       updatedAt: data.updated_at
     };
   }
 
+  async function readLibraryItem(itemId) {
+    await requireSession();
+    const { data, error } = await client.rpc('library_read_item', { p_item_id: itemId });
+    if (error) throw friendlyLibraryError(error);
+    return toLibraryItem(data);
+  }
+
+  // Начало билета для тех, у кого нет подписки (и для гостей):
+  // supabase/library-preview.sql, остальной текст сервер не отдаёт.
+  async function previewLibraryItem(itemId) {
+    const { data, error } = await client.rpc('library_preview_item', { p_item_id: itemId });
+    if (error) {
+      const err = friendlyLibraryError(error);
+      if (error.code === 'PGRST202' || error.status === 404 || err.code === 'library_not_ready') err.code = 'library_preview_unavailable';
+      throw err;
+    }
+    return toLibraryItem(data);
+  }
+
   return {
     register, confirmSignupCode, resendSignupCode, requestPasswordReset, confirmPasswordReset, login, logout, me, listDevices, revokeDevice, signOutOtherDevices, updateProfile, addAiExtraRequests, toFrontendUser,
-    listLibrary, getLibraryStatus, readLibraryItem,
+    listLibrary, getLibraryStatus, readLibraryItem, previewLibraryItem,
     syncXp, fetchLeaderboard,
     adminListUsers, adminUpdateUser, adminGrantCoins, adminGrantXp, adminGrantSubscription, adminSetBanned, adminSetModerator, adminDeleteUser,
     adminAuditQuizOptions, adminFixQuizOptions,

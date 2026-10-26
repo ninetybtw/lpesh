@@ -1489,6 +1489,50 @@ LIBRARY.CSS — «Библиотека»: полка сборников-книг
   margin-top: 1px;
 }
 
+/* ---- Превью без подписки: начало билета + «дальше — по подписке» ---- */
+.lib-content--preview {
+  max-height: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 140px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 140px), transparent);
+}
+
+.lib-preview-empty {
+  color: var(--color-text-muted);
+}
+
+.lib-paywall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 460px;
+  margin: 8px auto 28px;
+  padding: 26px 22px 22px;
+  border-radius: 22px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  box-shadow: 0 24px 50px -36px rgba(12, 14, 40, 0.5);
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.lib-paywall h2 {
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.lib-paywall .lib-lock__list {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 560px) {
+  .lib-paywall {
+    padding: 22px 16px 18px;
+  }
+}
+
 /* ---- Типографика билета ---- */
 .lib-content {
   overflow-wrap: break-word;

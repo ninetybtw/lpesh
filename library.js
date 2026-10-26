@@ -332,20 +332,24 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
         ${limitNote}`;
       return;
     }
+    // Начало любого билета видно всем (library-preview.sql), целиком — по подписке.
+    const free = state.previewUnavailable ? '' : 'Начало любого билета можно прочитать бесплатно. ';
     const copy = {
       guest: {
-        title: 'Войди, чтобы читать билеты',
-        text: 'Оглавление открыто всем, а сами билеты — на тарифах «Про» и «Максимум».',
+        title: state.previewUnavailable ? 'Войди, чтобы читать билеты' : 'Начало билетов — бесплатно',
+        text: state.previewUnavailable
+          ? 'Оглавление открыто всем, а сами билеты — на тарифах «Про» и «Максимум».'
+          : `${free}Целиком, со схемами и сносками, — на тарифах «Про» и «Максимум».`,
         actions: '<a href="/auth#login" class="btn btn--primary">Войти</a><a href="/auth#register" class="btn btn--outline">Регистрация</a>'
       },
       plan: {
         title: 'Билеты открываются с тарифом «Про»',
-        text: 'Оглавление видно всем, а текст билетов, схемы и сноски — на тарифах «Про» и «Максимум».',
+        text: `${free}Полный текст билетов, схемы и сноски — на тарифах «Про» и «Максимум».`,
         actions: '<a href="/profile#subscription" class="btn btn--primary">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline">Сравнить тарифы</a>'
       },
       coins: {
         title: 'Нужна оформленная подписка',
-        text: 'Тариф за монеты открывает тренажёр, но не библиотеку: сборники доступны с оплаченной подпиской «Про» или «Максимум».',
+        text: `${free}Тариф за монеты открывает тренажёр, но не библиотеку: целиком сборники доступны с оплаченной подпиской «Про» или «Максимум».`,
         actions: '<a href="/profile#subscription" class="btn btn--primary">Оформить подписку</a>'
       }
     }[reason];
@@ -679,6 +683,50 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       </div>`);
   }
 
+  // Конец превью: остальное — по подписке. Кнопки зависят от того, кто
+  // смотрит: гость, без подписки или с тарифом за монеты.
+  function paywallBlock(reason, item) {
+    const next = encodeURIComponent(`/library#t/${item.id}`);
+    const copy = {
+      guest: {
+        head: 'Дальше — по подписке',
+        text: 'Это начало билета. Полный текст со схемами и сносками открыт на тарифах «Про» и «Максимум». Новым пользователям — 14 дней «Про» за 1 ₽.',
+        actions: `<a href="/auth?next=${next}#register" class="btn btn--primary btn--block">Создать аккаунт</a><a href="/auth?next=${next}#login" class="btn btn--outline btn--block">Войти</a>`
+      },
+      plan: {
+        head: 'Дальше — с «Про»',
+        text: 'Это начало билета. Полный текст со схемами и сносками и все сборники открыты на тарифах «Про» и «Максимум».',
+        actions: '<a href="/profile#subscription" class="btn btn--primary btn--block">Оформить «Про»</a><a href="/#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>'
+      },
+      coins: {
+        head: 'Дальше — по оплаченной подписке',
+        text: 'Это начало билета. Тариф, полученный за монеты, открывает тренажёр, но не библиотеку. Полный текст — с оплаченной подпиской «Про» или «Максимум».',
+        actions: '<a href="/profile#subscription" class="btn btn--primary btn--block">Оформить подписку</a>'
+      }
+    }[reason] || { head: 'Дальше — по подписке', text: '', actions: '' };
+    const box = document.createElement('section');
+    box.className = 'lib-paywall';
+    box.innerHTML = `
+      <span class="lib-lock__icon">${ICONS.lock}</span>
+      <h2>${copy.head}</h2>
+      <p class="lib-lock__text" data-paywall-text>${copy.text}</p>
+      <ul class="lib-lock__list">
+        <li>${ICONS.check}Полный текст билета, схемы и сноски</li>
+        <li>${ICONS.check}Все сборники билетов по дисциплинам</li>
+        <li>${ICONS.check}Оглавление, закладка и отметки прочитанного</li>
+      </ul>
+      <div class="lib-lock__actions" data-paywall-actions>${copy.actions}</div>`;
+    // Пробный период для тех, кто ни разу не платил, — сразу предлагаем его.
+    if (reason === 'plan' && LexPrepApi.getTrialEligibility) {
+      LexPrepApi.getTrialEligibility().then(ok => {
+        if (!ok || !box.isConnected) return;
+        box.querySelector('[data-paywall-text]').innerHTML = 'Это начало билета. Полный текст и все сборники — в «Про»: <b>14 дней за 1 ₽</b>, дальше 600 ₽ в месяц, отменить можно в любой момент.';
+        box.querySelector('[data-paywall-actions]').innerHTML = '<a href="/?trial=1#pricing" class="btn btn--primary btn--block">Попробовать за 1 ₽</a><a href="/#pricing" class="btn btn--outline btn--block">Сравнить тарифы</a>';
+      }).catch(() => {});
+    }
+    return box;
+  }
+
   /* ---------------- Очистка HTML билета ---------------- */
   const ALLOWED_TAGS = new Set(['P', 'DIV', 'SPAN', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'SUB', 'SUP', 'BR', 'HR',
     'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TH', 'TD',
@@ -857,7 +905,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
     const c = state.collectionsById.get(item.collectionId);
     const html = data.contentHtml || markdownToHtml(data.contentMd);
     const content = sanitizeInto(html);
-    content.className = 'lib-content';
+    content.className = data.preview ? 'lib-content lib-content--preview' : 'lib-content';
     if (!data.contentHtml) upgradeAlerts(content);
 
     // Схемы: <img src> сопоставляем с приложенными к билету картинками по
@@ -932,11 +980,17 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       <div class="lib-paper__meta">
         <span>${ICONS.clock}${readingTime(item.wordCount || data.wordCount)} чтения</span>
         ${toc.length ? `<span>${ICONS.list}${toc.length} ${plural(toc.length, 'раздел', 'раздела', 'разделов')}</span>` : ''}
-        <span class="lib-paper__protected">${ICONS.shield}Только для чтения на сайте</span>
+        ${data.preview
+          ? `<span class="lib-paper__protected">${ICONS.lock}Открыто начало билета</span>`
+          : `<span class="lib-paper__protected">${ICONS.shield}Только для чтения на сайте</span>`}
       </div>
       ${c && !c.actualized ? `<div class="lib-paper__notice">${ICONS.alert}<span>Нормы и практика в этом сборнике сейчас сверяются с актуальной редакцией законов.</span></div>` : ''}`;
     frag.append(head);
+    if (data.preview && !content.textContent.trim()) {
+      content.innerHTML = '<p class="lib-preview-empty">Этот билет короткий — он целиком открыт по подписке.</p>';
+    }
     frag.append(content);
+    if (data.preview) frag.append(paywallBlock(lockReason() || 'plan', item));
 
     if (data.footnotes && data.footnotes.length) {
       // Собираем строкой и чистим через DOMParser (инертный документ) —
@@ -962,10 +1016,10 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
     const foot = document.createElement('footer');
     foot.className = 'lib-paper__foot';
     foot.innerHTML = `
-      <div class="lib-paper__done ${read[item.id] ? 'is-done' : ''}" id="libDoneMark">
+      ${data.preview ? '' : `<div class="lib-paper__done ${read[item.id] ? 'is-done' : ''}" id="libDoneMark">
         <span class="lib-paper__done-icon">${ICONS.check}</span>
         <span>${read[item.id] ? 'Билет прочитан' : 'Дочитай до конца — билет отметится прочитанным'}</span>
-      </div>
+      </div>`}
       <nav class="lib-pager" aria-label="Соседние билеты">
         ${prev ? `<a class="lib-pager__link lib-pager__link--prev" href="#t/${encodeURIComponent(prev.id)}"><small>${ICONS.prev}Предыдущий</small><b>${prev.number}. ${esc(prev.title)}</b></a>` : '<span></span>'}
         ${next ? `<a class="lib-pager__link lib-pager__link--next" href="#t/${encodeURIComponent(next.id)}"><small>Следующий${ICONS.chevron}</small><b>${next.number}. ${esc(next.title)}</b></a>` : '<span></span>'}
@@ -1043,8 +1097,9 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       return;
     }
     const reason = lockReason();
-    if (reason) {
-      // Без доступа остаёмся на оглавлении сборника и показываем замок.
+    const preview = !!reason;
+    if (reason && state.previewUnavailable) {
+      // Превью на сервере ещё нет — остаёмся на оглавлении и показываем замок.
       history.replaceState(null, '', `#c/${encodeURIComponent(c.id)}`);
       route();
       showLock(reason, item);
@@ -1067,17 +1122,29 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
     window.scrollTo(0, 0);
     updateProgress();
 
-    let data = state.cache.get(itemId);
+    // Без подписки — только начало билета (library_preview_item), с
+    // подпиской — весь билет. В кэше они лежат под разными ключами.
+    const cacheKey = preview ? `preview:${itemId}` : itemId;
+    let data = state.cache.get(cacheKey);
     if (!data) {
       try {
-        data = await LexPrepApi.readLibraryItem(itemId);
+        data = preview ? await LexPrepApi.previewLibraryItem(itemId) : await LexPrepApi.readLibraryItem(itemId);
         // В памяти держим только несколько последних билетов.
-        state.cache.set(itemId, data);
+        state.cache.set(cacheKey, data);
         if (state.cache.size > 6) state.cache.delete(state.cache.keys().next().value);
         // Счётчик «открыто сегодня» на полке — со свежими данными сервера.
-        LexPrepApi.getLibraryStatus().then(s => { state.status = s; }).catch(() => {});
+        if (!preview) LexPrepApi.getLibraryStatus().then(s => { state.status = s; }).catch(() => {});
       } catch (err) {
         if (token !== state.readerToken) return;
+        if (preview) {
+          if (err.code === 'library_preview_unavailable') state.previewUnavailable = true;
+          if (err.code === 'library_preview_unavailable' || err.code === 'library_item_not_found') {
+            history.replaceState(null, '', `#c/${encodeURIComponent(c.id)}`);
+            route();
+            showLock(reason, item);
+            return;
+          }
+        }
         if (err.status === 401) err.code = 'library_auth_required';
         if (err.code === 'library_plan_required' || err.code === 'library_auth_required') {
           if (err.code === 'library_auth_required') state.user = null;
@@ -1103,9 +1170,13 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
     const { frag, toc } = buildContent(data, item);
     body.innerHTML = '';
     body.append(frag);
-    renderToc(toc);
-    rememberLast(c.id, item.id);
-    watchReading(item);
+    // В превью разделы дальше начала не видны — панель разделов не нужна,
+    // и билет не отмечается прочитанным.
+    renderToc(preview ? [] : toc);
+    if (!preview) {
+      rememberLast(c.id, item.id);
+      watchReading(item);
+    }
     updateProgress();
     if (window.LexPrepMotion && !LexPrepMotion.reduced()) {
       body.classList.remove('is-entering');
@@ -1306,7 +1377,7 @@ Ctrl+S/P/C/A в читалке заблокированы, поверх текс
       if (ticketLink) {
         const id = decodeURIComponent(ticketLink.getAttribute('href').slice(3));
         const reason = lockReason();
-        if (reason) {
+        if (reason && state.previewUnavailable) {
           e.preventDefault();
           showLock(reason, state.itemsById.get(id));
         }
